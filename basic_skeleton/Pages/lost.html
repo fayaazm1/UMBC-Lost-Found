@@ -4,19 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lost Items</title>
+
+    <!-- Skeleton CSS (Global Styles) -->
     <link rel="stylesheet" href="../css/style.css">
+
+    <!-- Custom CSS for Lost Page -->
+    <link rel="stylesheet" href="../Lost&Found Pages/css/style.css">
+
+    <!-- Swiper.js for Auto-Sliding Priority Posts -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 </head>
 <body>
-    <!-- Common Navbar -->
+    <!-- Load Navbar from Skeleton Code -->
     <div id="navbar"></div>
 
-    <h1>Lost Items</h1>
+    <div class="container">
+        <h2 class="section-title">Lost</h2>
+
+        <div class="content-wrapper">
+            <!-- Left Side: Priority Posts -->
+            <div class="priority-section">
+                <h3>Priority Posts</h3>
+                <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                        <!-- Post 1 -->
+                        <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
+                            <p><strong>Friday, March 8, 2025</strong></p>
+                            <p class="post-text">Lost Car Keys near Chemistry Building.</p>
+                        </div>
+                        <!-- Post 2 -->
+                        <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
+                            <p><strong>Saturday, April 12, 2025</strong></p>
+                            <p class="post-text">Lost phone in Library, 2nd Floor.</p>
+                        </div>
+                        <!-- Post 3 -->
+                        <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
+                            <p><strong>Sunday, May 15, 2025</strong></p>
+                            <p class="post-text">Lost wallet near Campus Parking Lot.</p>
+                        </div>
+                         <!-- Post 4 -->
+                         <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
+                            <p><strong>Sunday, May 16, 2025</strong></p>
+                            <p class="post-text">Lost wallet near RAC Parking Lot.</p>
+                        </div>
+                         <!-- Post 5 -->
+                         <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
+                            <p><strong>Sunday, May 15, 2025</strong></p>
+                            <p class="post-text">Lost bike near Campus Parking Lot.</p>
+                        </div>
+                         <!-- Post 6 -->
+                         <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
+                            <p><strong>Sunday, May 15, 2025</strong></p>
+                            <p class="post-text">Lost car near umbc Parking Lot.</p>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Filter Section -->
+            <div class="filter-section">
+                <h3>Filters:</h3>
+                <label for="filterTag"><strong>TAG</strong></label>
+                <input type="text" id="filterTag" placeholder="Enter tag">
+                <button class="filter-btn">Filter Post</button>
+                <button class="clear-btn">Cancel Filters</button>
+            </div>
+        </div>
+
+        <!-- Recent Posts (Side Scrollbar) -->
+        <h3>Recent Posts</h3>
+        <div class="recent-posts">
+            <div class="post">
+                <p><strong>Wednesday, February 19, 2025</strong></p>
+                <p>Lost Car & Office Keys</p>
+            </div>
+            <div class="post">
+                <p><strong>Monday, February 10, 2025</strong></p>
+                <p>Missing green pouch - It's green in color</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Swiper.js for Auto Sliding -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
-        // Load navbar from navbar.html
-        fetch('./Navbar.html')
-        .then(response => response.text())
-        .then(data => document.getElementById('navbar').innerHTML = data);
+        window.onload = function() {
+            var swiper = new Swiper('.swiper-container', {
+                loop: true, // Enable infinite looping
+                autoplay: { delay: 2000, disableOnInteraction: false }, // Auto-slide every 2s
+                slidesPerView: 3,  // Show 3 posts at a time
+                spaceBetween: 10,  // Reduce spacing for better fit
+                loopPreventsSlide: false, // Ensures smooth looping
+                speed: 600, // Smooth transition speed (600ms)
+                simulateTouch: false, // Prevents manual dragging breaking the loop
+                effect: "slide", // Ensures natural sliding effect
+                observer: true, // Reinitialize when container changes
+                observeParents: true // Reinitialize when parent container changes
+            });
+
+            // Pause Auto-Slide on Hard Press
+            function pauseOnPress() {
+                swiper.autoplay.stop();
+            }
+
+            // Resume Auto-Slide When Released
+            function resumeOnRelease() {
+                swiper.autoplay.start();
+            }
+
+            window.pauseOnPress = pauseOnPress;
+            window.resumeOnRelease = resumeOnRelease;
+
+            // Load Navbar from Skeleton Code
+            fetch('Navbar.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar').innerHTML = data);
+        };
     </script>
 </body>
 </html>
