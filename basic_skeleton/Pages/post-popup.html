@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details</title>
+
+    <!-- Popup Styling -->
+    <style>
+        /* Background blur effect */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Popup container */
+        .popup-container {
+            background: white;
+            width: 50%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Close button */
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Post details styling */
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .post-header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+
+        .post-content {
+            margin-top: 10px;
+        }
+
+        /* Comment Section */
+        .comment-section {
+            margin-top: 20px;
+        }
+
+        .comment-box {
+            width: 100%;
+            height: 60px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background: #f8f8f8;
+        }
+
+        .message-btn {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .message-btn:hover {
+            background: #0056b3;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Cursor Pointer for Read More */
+        .read-more {
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .read-more:hover {
+            color: darkblue;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Popup Overlay -->
+    <div class="popup-overlay" id="postPopup">
+        <div class="popup-container">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            
+            <div class="post-header">
+                <img src="https://via.placeholder.com/50" alt="User Avatar">
+                <h3 id="postTitle">Post Title</h3>
+            </div>
+
+            <div class="post-content">
+                <p><strong>ITEM:</strong> <span id="postItem"></span></p>
+                <p><strong>Date:</strong> <span id="postDate"></span></p>
+                <p><strong>DESCRIPTION:</strong> <span id="postDescription"></span></p>
+            </div>
+
+            <div class="comment-section">
+                <h4>Comments</h4>
+                <p id="noComments">There are no comments...</p>
+                <textarea class="comment-box" placeholder="Post a comment..."></textarea>
+            </div>
+
+            <button class="message-btn">Message</button>
+        </div>
+    </div>
+
+    <!-- JavaScript for Opening and Closing Popup -->
+    <script>
+        function openPopup(title, item, date, description) {
+            document.getElementById("postTitle").innerText = title;
+            document.getElementById("postItem").innerText = item;
+            document.getElementById("postDate").innerText = date;
+            document.getElementById("postDescription").innerText = description;
+
+            document.getElementById("postPopup").style.display = "flex";
+        }
+
+        function closePopup() {
+            document.getElementById("postPopup").style.display = "none";
+        }
+    </script>
+
+</body>
+</html>

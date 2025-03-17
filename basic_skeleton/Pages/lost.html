@@ -8,56 +8,118 @@
     <!-- Skeleton CSS (Global Styles) -->
     <link rel="stylesheet" href="../css/style.css">
 
+    <!-- Custom CSS for Posts -->
+    <link rel="stylesheet" href="../Lost&Found_Style/css/post_user.css">
+
     <!-- Custom CSS for Lost Page -->
     <link rel="stylesheet" href="../Lost&Found_Style/css/style.css">
 
     <!-- Swiper.js for Auto-Sliding Priority Posts -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <!-- Font Awesome for Icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 </head>
 <body>
     <!-- Load Navbar from Skeleton Code -->
     <div id="navbar"></div>
 
-    <div class="container">
-        <h2 class="section-title">Lost</h2>
+    <!-- Centered Lost Heading -->
+    <h1 class="lost-heading">Lost</h1>
 
+    <div class="container">
         <div class="content-wrapper">
             <!-- Left Side: Priority Posts -->
             <div class="priority-section">
-                <h3>Priority Posts</h3>
+                <h2 class="priority-title">Priority Posts</h2>
                 <div class="swiper-container">
                     <div class="swiper-wrapper">
+                        
                         <!-- Post 1 -->
-                        <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
-                            <p><strong>Friday, March 8, 2025</strong></p>
-                            <p class="post-text">Lost Car Keys near Chemistry Building.</p>
+                        <div class="swiper-slide priority-post">
+                            <p><strong>Friday, March 9, 2025</strong></p>
+                            <p class="post-text">
+                                Lost Car Keys near Chemistry Building.
+                                <span class="read-more" onclick="openPopup(
+                                    'Lost Car Keys near Chemistry Building',
+                                    'Car Keys',
+                                    'March 8, 2025',
+                                    'Lost my car keys near the Chemistry Building after the lab session. If found, please contact me.')">
+                                    Continue...
+                                </span>
+                            </p>
                         </div>
                         <!-- Post 2 -->
-                        <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
-                            <p><strong>Saturday, April 12, 2025</strong></p>
-                            <p class="post-text">Lost phone in Library, 2nd Floor.</p>
+                        <div class="swiper-slide priority-post">
+                            <p><strong>Friday, March 8, 2025</strong></p>
+                            <p class="post-text">
+                                Lost Car Keys near Chemistry Building.
+                                <span class="read-more" onclick="openPopup(
+                                    'Lost Car Keys near Chemistry Building',
+                                    'Car Keys',
+                                    'March 8, 2025',
+                                    'Lost my car keys near the Chemistry Building after the lab session. If found, please contact me.')">
+                                    Continue...
+                                </span>
+                            </p>
                         </div>
                         <!-- Post 3 -->
-                        <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
-                            <p><strong>Sunday, May 15, 2025</strong></p>
-                            <p class="post-text">Lost wallet near Campus Parking Lot.</p>
+                        <div class="swiper-slide priority-post">
+                            <p><strong>Friday, March 8, 2025</strong></p>
+                            <p class="post-text">
+                                Lost Car Keys near Chemistry Building.
+                                <span class="read-more" onclick="openPopup(
+                                    'Lost Car Keys near Chemistry Building',
+                                    'Car Keys',
+                                    'March 8, 2025',
+                                    'Lost my car keys near the Chemistry Building after the lab session. If found, please contact me.')">
+                                    Continue...
+                                </span>
+                            </p>
                         </div>
                          <!-- Post 4 -->
-                         <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
-                            <p><strong>Sunday, May 16, 2025</strong></p>
-                            <p class="post-text">Lost wallet near RAC Parking Lot.</p>
+                         <div class="swiper-slide priority-post">
+                            <p><strong>Friday, March 8, 2025</strong></p>
+                            <p class="post-text">
+                                Lost Car Keys near Chemistry Building.
+                                <span class="read-more" onclick="openPopup(
+                                    'Lost Car Keys near Chemistry Building',
+                                    'Car Keys',
+                                    'March 8, 2025',
+                                    'Lost my car keys near the Chemistry Building after the lab session. If found, please contact me.')">
+                                    Continue...
+                                </span>
+                            </p>
                         </div>
                          <!-- Post 5 -->
-                         <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
-                            <p><strong>Sunday, May 15, 2025</strong></p>
-                            <p class="post-text">Lost bike near Campus Parking Lot.</p>
+                         <div class="swiper-slide priority-post">
+                            <p><strong>Friday, March 8, 2025</strong></p>
+                            <p class="post-text">
+                                Lost Car Keys near Chemistry Building.
+                                <span class="read-more" onclick="openPopup(
+                                    'Lost Car Keys near Chemistry Building',
+                                    'Car Keys',
+                                    'March 8, 2025',
+                                    'Lost my car keys near the Chemistry Building after the lab session. If found, please contact me.')">
+                                    Continue...
+                                </span>
+                            </p>
                         </div>
                          <!-- Post 6 -->
-                         <div class="swiper-slide priority-post" onmousedown="pauseOnPress()" onmouseup="resumeOnRelease()">
-                            <p><strong>Sunday, May 15, 2025</strong></p>
-                            <p class="post-text">Lost car near umbc Parking Lot.</p>
+                         <div class="swiper-slide priority-post">
+                            <p><strong>Friday, March 8, 2025</strong></p>
+                            <p class="post-text">
+                                Lost Car Keys near Chemistry Building.
+                                <span class="read-more" onclick="openPopup(
+                                    'Lost Car Keys near Chemistry Building',
+                                    'Car Keys',
+                                    'March 8, 2025',
+                                    'Lost my car keys near the Chemistry Building after the lab session. If found, please contact me.')">
+                                    Continue...
+                                </span>
+                            </p>
                         </div>
-                        
                     </div>
                 </div>
             </div>
@@ -72,66 +134,176 @@
             </div>
         </div>
 
-
-        <!-- Recent Posts (Side Scrollbar) -->
-        <h3>Recent Posts</h3>
-        <div class="recent-posts">
-            <div class="post">
-                <p><strong>Wednesday, February 19, 2025</strong></p>
-                <p>Lost Car & Office Keys</p>
-            </div>
-            <div class="post">
-                <p><strong>Monday, February 10, 2025</strong></p>
-                <p>Missing green pouch - It's green in color</p>
+        <!-- Recent Posts Section -->
+        <div class="recent-posts_section">
+            <h2 class="recent-title">Recent Posts</h2>
+            <div class="recent-posts-container">
+                <div class="recent-posts">
+                    <div class="post">
+                        <p><strong>Wednesday, February 19, 2025</strong></p>
+                        <p>Lost Car & Office Keys</p>
+                    </div>
+                    <div class="post">
+                        <p><strong>Monday, February 10, 2025</strong></p>
+                        <p>Missing green pouch - It's green in color</p>
+                    </div>
+                    <div class="post">
+                        <p><strong>Wednesday, March 5, 2025</strong></p>
+                        <p>Lost headphones near cafeteria.</p>
+                    </div>
+                    <div class="post">
+                        <p><strong>Sunday, April 21, 2025</strong></p>
+                        <p>Lost smartwatch in the gym.</p>
+                    </div>
+                    <div class="post">
+                        <p><strong>Friday, May 30, 2025</strong></p>
+                        <p>Lost student ID near the library.</p>
+                    </div>
+                </div>
             </div>
         </div>
-        
-            <!-- *****************Nivya changes -->
-
-         <!-- Lost Something Section (Positioned at Bottom Right) -->
-        <div class="lost-something">
-            <h3>Lost Something?</h3>
-            <button onclick="window.location.href='post.html'" class="post-here-btn">Post Here</button>
-        </div>
-
     </div>
+
+        <!-- Popup Overlay (Place at the bottom of lost.html) -->
+    <div class="popup-overlay" id="postPopup">
+        <div class="popup-container">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            
+            <div class="post-header">
+                <img src="https://via.placeholder.com/50" alt="User Avatar">
+                <h3 id="postTitle">Post Title</h3>
+            </div>
+
+            <div class="post-content">
+                <p><strong>ITEM:</strong> <span id="postItem"></span></p>
+                <p><strong>Date:</strong> <span id="postDate"></span></p>
+                <p><strong>DESCRIPTION:</strong> <span id="postDescription"></span></p>
+            </div>
+
+            <div class="comment-section">
+                <h4>Comments</h4>
+                <p id="noComments">There are no comments...</p>
+            
+                <div class="comment-input-container">
+                    <textarea class="comment-box" id="commentInput" placeholder="Post a comment..."></textarea>
+                    <!-- Small Post Button -->
+                    <button class="post-comment-btn" onclick="postComment()">➤</button>
+                </div>
+            
+                <!-- Display Comments -->
+                <div class="comment-list" id="commentList"></div>
+            </div>
+            
+            
+
+            <button class="message-btn">Message</button>
+        </div>
+     </div>
+
+
+    <!-- *****************Nivya changes -->
+
+    <!-- Lost Something Section (Positioned at Bottom Right) -->
+    <div class="lost-something">
+        <h3>Lost Something?</h3>
+        <button onclick="window.location.href='post.html'" class="post-here-btn">Post Here</button>
+    </div>
+
+
 
     <!-- Swiper.js for Auto Sliding -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
     <script>
-        window.onload = function() {
-            var swiper = new Swiper('.swiper-container', {
-                loop: true, // Enable infinite looping
-                autoplay: { delay: 2000, disableOnInteraction: false }, // Auto-slide every 2s
-                slidesPerView: 3,  // Show 3 posts at a time
-                spaceBetween: 10,  // Reduce spacing for better fit
-                loopPreventsSlide: false, // Ensures smooth looping
-                speed: 600, // Smooth transition speed (600ms)
-                simulateTouch: false, // Prevents manual dragging breaking the loop
-                effect: "slide", // Ensures natural sliding effect
-                observer: true, // Reinitialize when container changes
-                observeParents: true // Reinitialize when parent container changes
-            });
+       window.onload = function() {
+        var swiper = new Swiper('.swiper-container', {
+            loop: true, // Enable infinite looping
+            autoplay: { delay: 2000, disableOnInteraction: false }, // Auto-slide every 2s
+            slidesPerView: 3,  // Show 3 posts at a time
+            spaceBetween: 10,  // Reduce spacing for better fit
+            speed: 600, // Smooth transition speed (600ms)
+            simulateTouch: false, // Prevents manual dragging breaking the loop
+            effect: "slide", // Ensures natural sliding effect
+            observer: true, // Reinitialize when container changes
+            observeParents: true // Reinitialize when parent container changes
+        });
 
-            // Pause Auto-Slide on Hard Press
-            function pauseOnPress() {
-                swiper.autoplay.stop();
-            }
+        // Function to Pause Auto-Slide on Press
+        function pauseOnPress(event) {
+            swiper.autoplay.stop();
+            event.currentTarget.classList.add('paused'); // Optional: Add a visual effect
+        }
 
-            // Resume Auto-Slide When Released
-            function resumeOnRelease() {
-                swiper.autoplay.start();
-            }
+        // Function to Resume Auto-Slide on Release
+        function resumeOnRelease(event) {
+            swiper.autoplay.start();
+            event.currentTarget.classList.remove('paused'); // Remove visual effect
+        }
 
-            window.pauseOnPress = pauseOnPress;
-            window.resumeOnRelease = resumeOnRelease;
+        // Add event listeners to all priority posts
+        document.querySelectorAll('.priority-post').forEach(post => {
+            post.addEventListener('mousedown', pauseOnPress);  // Desktop: Mouse Click & Hold
+            post.addEventListener('mouseup', resumeOnRelease);  // Desktop: Mouse Release
+            post.addEventListener('touchstart', pauseOnPress);  // Mobile: Finger Press
+            post.addEventListener('touchend', resumeOnRelease);  // Mobile: Finger Release
+        });
 
-            // Load Navbar from Skeleton Code
-            fetch('Navbar.html')
-            .then(response => response.text())
-            .then(data => document.getElementById('navbar').innerHTML = data);
-        };
+        // Load Navbar from Skeleton Code
+        fetch('Navbar.html')
+        .then(response => response.text())
+        .then(data => document.getElementById('navbar').innerHTML = data);
+    };
+
     </script>
+   <script>
+       function openPopup(title, item, date, description) {
+            document.getElementById("postTitle").innerText = title;
+            document.getElementById("postItem").innerText = item;
+            document.getElementById("postDate").innerText = date;
+            document.getElementById("postDescription").innerText = description;
+
+            // Display the popup and blur background
+            document.getElementById("postPopup").style.display = "flex";
+            document.body.style.overflow = "hidden"; 
+        }
+
+        function closePopup() {
+            document.getElementById("postPopup").style.display = "none";
+            document.body.style.overflow = "auto"; 
+        }
+
+    </script>
+    <script>
+        function postComment() {
+            var commentInput = document.getElementById("commentInput");
+            var commentList = document.getElementById("commentList");
+            var noCommentsText = document.getElementById("noComments");
+    
+            var commentText = commentInput.value.trim();
+    
+            if (commentText === "") {
+                alert("Please enter a comment before posting.");
+                return;
+            }
+    
+            // Hide "no comments" text if it's the first comment
+            noCommentsText.style.display = "none";
+    
+            // Create a new comment element
+            var newComment = document.createElement("p");
+            newComment.classList.add("comment");
+            newComment.innerHTML = `<strong>Anonymous:</strong> ${commentText}`;
+    
+            // Append comment to the list
+            commentList.appendChild(newComment);
+    
+            // Clear the comment input box after posting
+            commentInput.value = "";
+        }
+    </script>
+    
+
+    
+    
 </body>
 </html>
