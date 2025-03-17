@@ -1,0 +1,85 @@
+/* Center the title */
+.section-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Wrapper for content */
+.content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    max-width: 90%;
+    margin: auto;
+}
+
+/* Image Section */
+.image-section {
+    flex: 1;
+    max-width: 40%;
+    text-align: center;
+}
+
+.image-section img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+}
+
+/* Form Section */
+.form-section {
+    flex: 1;
+    max-width: 50%;
+    min-width: 300px;
+}
+
+/* Form Input Styles */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+input, textarea {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    max-width: 200px;
+    padding: 10px;
+    background-color: blue;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .content-wrapper {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .image-section, .form-section {
+        max-width: 100%;
+    }
+
+    .submit-btn {
+        width: 100%;
+    }
+}

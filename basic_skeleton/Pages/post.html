@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Here</title>
+
+    <!-- Link CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/post.css">
+</head>
+<body>
+    <!-- Load Navbar -->
+    <div id="navbar"></div>
+
+    <div class="container">
+        <h2 class="section-title">Post Here!!</h2>
+
+        <div class="content-wrapper">
+            <!-- Left Side: Image Section -->
+            <div class="image-section">
+                <img src="../images/lost-8868214_1280.jpg" alt="Lost Cat">
+            </div>
+
+            <!-- Right Side: Form Section -->
+            <div class="form-section">
+                <form action="submit_post.php" method="POST">
+                    <div class="form-group">
+                        <label>Report Type</label>
+                        <input type="checkbox" name="lost" value="lost"> Lost
+                        <input type="checkbox" name="found" value="found"> Found
+                    </div>
+
+                    <div class="form-group">
+                        <label>Item Name</label>
+                        <input type="text" name="item_name" placeholder="Enter item name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" placeholder="Enter description"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="location" placeholder="Enter location">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact Details</label>
+                        <input type="text" name="contact" placeholder="Enter contact details">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date of Incident (MM/DD/YYYY)</label>
+                        <input type="date" name="date">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Time Lost/Found</label>
+                        <input type="time" name="time">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Photo Upload (Optional)</label>
+                        <input type="file" name="photo">
+                    </div>
+
+                    <button type="submit" class="submit-btn">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Navbar -->
+    <script>
+        window.onload = function () {
+            fetch("../Pages/Navbar.html")
+                .then(response => response.text())
+                .then(data => document.getElementById("navbar").innerHTML = data);
+        };
+    </script>
+</body>
+</html>

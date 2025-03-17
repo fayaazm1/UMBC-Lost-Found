@@ -26,6 +26,7 @@
     flex-direction: column;
     justify-content: center;
     text-align: center;
+
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -82,4 +83,32 @@
 
 .clear-btn:hover {
     background-color: #a71d2a;
+}
+
+.lost-something {
+    width: 30%;
+    font-size: 140%;
+    position: absolute;
+    right: 10px; /* Adjust distance from the right */
+    bottom: 200px; /* Adjust distance from the bottom */
+    text-align: center;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+ .post-here-btn {
+    background-color: black;
+    color: white;
+    padding: 14px 28px; /* Increased padding for larger button */
+    border: none;
+    border-radius: 25px; /* More rounded shape */
+    font-size: 16px; /* Slightly bigger text */
+    font-weight: bold;
+    cursor: pointer;
+ }
+
+ .post-here-btn:hover {
+    background-color: #333;
 }
