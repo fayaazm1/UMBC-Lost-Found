@@ -10,6 +10,20 @@
     <!-- Common Navbar -->
     <div id="navbar"></div>
 
+    <body>
+        <h2>Chat Box</h2>
+        
+        <div class="chat-container">
+            <div id="chat-box"></div>
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    
+        <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+        <script src="../Js/chat.js"></script>
+    </body>
+
+
     <h1>Messages</h1>
 
     <script>
