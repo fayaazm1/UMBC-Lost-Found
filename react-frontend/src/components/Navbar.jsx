@@ -1,33 +1,29 @@
-import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import './navbar.css';
-import NotificationBell from './NotificationBell';
+import React from "react";
+import { Link } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
+import "./navbar.css";
 
-
-const CustomNavbar = () => {
+const Navbar = () => {
   return (
-    <Navbar expand="lg" className="navbar-dark" style={{ backgroundColor: "#02577a", padding: "12px 24px", transition: "0.3s ease" }}>
-      <Container>
-        <Navbar.Brand as={Link} to="/" className="glow-text fw-bold">
-          UMBC Lost & Found
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="ms-auto">
-            <Nav.Link as={Link} to="/" className="nav-link text-light">Home</Nav.Link>
-            <Nav.Link as={Link} to="/lost" className="nav-link text-light">Lost</Nav.Link>
-            <Nav.Link as={Link} to="/found" className="nav-link text-light">Found</Nav.Link>
-            <Nav.Link as={Link} to="/profile" className="nav-link text-light">Profile</Nav.Link>
-            <Nav.Link as={Link} to="/message" className="nav-link text-light">Messages</Nav.Link>
-            <div className="d-flex align-items-center ms-auto">
-  <NotificationBell />
-</div>
-          </Nav>
-        </Navbar.Collapse>
-      </Container>
-    </Navbar>
+    <nav className="navbar">
+      <div className="navbar-left">
+        <h3 className="navbar-title">UMBC Lost & Found</h3>
+      </div>
+
+      <div className="navbar-center">
+        <ul className="nav-links">
+          <li><Link to="/">Home</Link></li>
+          <li><Link to="/lost">Lost</Link></li>
+          <li><Link to="/found">Found</Link></li>
+          <li><Link to="/profile">Profile</Link></li>
+          <li className="messages-with-bell">
+            <Link to="/messages">Messages</Link>
+            <NotificationBell />
+          </li>
+        </ul>
+      </div>
+    </nav>
   );
 };
 
-export default CustomNavbar;
+export default Navbar;

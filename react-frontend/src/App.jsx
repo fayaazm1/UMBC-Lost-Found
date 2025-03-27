@@ -1,26 +1,24 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import Lost from "./pages/Lost";
-import Found from "./pages/Found";
-import Profile from "./pages/Profile";
-import Messages from "./pages/Messages";
-import CustomNavbar from "./components/Navbar";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import NotificationBell from "./components/NotificationBell";
+import MessageBox from "./components/MessageBox"; // This is your main chat component
+import LostPage from "./pages/Lost";
+import UserListPage from "./pages/UserListPage";
 
 const App = () => {
   return (
-    <>
-      <CustomNavbar />
-      <div className="container mt-4">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/lost" element={<Lost />} />
-          <Route path="/found" element={<Found />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/message" element={<Messages />} />
-        </Routes>
-      </div>
-    </>
+    <Router>
+      <Navbar />
+      <NotificationBell />
+
+      <Routes>
+        <Route path="/" element={<UserListPage />} />
+        <Route path="/messages" element={<UserListPage />} />
+        <Route path="/message/:receiverId" element={<MessageBox />} />
+        <Route path="/lost" element={<LostPage />} />
+      </Routes>
+    </Router>
   );
 };
 

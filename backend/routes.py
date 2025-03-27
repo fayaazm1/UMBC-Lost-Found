@@ -1,139 +1,142 @@
-from fastapi import APIRouter, HTTPException
-from database import messages_collection, get_mysql_connection
+from fastapi import APIRouter, HTTPException, Body
+from database import messages_collection, mongo_db, get_mysql_connection, MYSQL_CONFIG
 from models import Message, Notification
-from firebase import send_firebase_notification  # Import Firebase function
+from firebase import send_firebase_notification
 import mysql.connector
-from database import MYSQL_CONFIG
-from fastapi import Body
-
-from bson import ObjectId  # Needed for MongoDB ObjectId
+from bson import ObjectId
 
 router = APIRouter()
 
+
+# 🔹 Get Firebase Token (from MySQL)
 def get_user_firebase_token(user_id):
-    """Fetch Firebase token for a user from the database."""
     try:
-        connection = mysql.connector.connect(**MYSQL_CONFIG)
-        cursor = connection.cursor(dictionary=True)
-        
-        query = "SELECT firebase_token FROM users WHERE id = %s"
-        cursor.execute(query, (user_id,))
+        conn = mysql.connector.connect(**MYSQL_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT firebase_token FROM users WHERE id = %s", (user_id,))
         result = cursor.fetchone()
-        
         cursor.close()
-        connection.close()
-        
-        if result:
-            return result["firebase_token"]
-        return None
+        conn.close()
+        return result["firebase_token"] if result else None
     except Exception as e:
         print(f"🔥 Error fetching Firebase token: {e}")
         return None
-    
-    
+
+
+# 🔹 Save Firebase Token (MySQL)
 @router.post("/save_firebase_token/")
 def save_firebase_token(user_id: int = Body(...), token: str = Body(...)):
     try:
-        connection = get_mysql_connection()
-        cursor = connection.cursor()
-        query = "UPDATE users SET firebase_token = %s WHERE id = %s"
-        cursor.execute(query, (token, user_id))
-        connection.commit()
+        conn = get_mysql_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET firebase_token = %s WHERE id = %s", (token, user_id))
+        conn.commit()
         return {"status": "success", "message": "Token saved!"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
-        connection.close()
+        conn.close()
 
-# ✅ Send a Message (MongoDB)
+
+# 🔹 Send Message (MongoDB)
 @router.post("/send_message/")
 def send_message(message: Message):
-    message_data = message.dict()
-    messages_collection.insert_one(message_data)
-    return {"status": "success", "message": "Message sent!"}
+    try:
+        messages_collection.insert_one(message.dict())
+        return {"status": "success", "message": "Message saved"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-# ✅ Get Messages (MongoDB)
+
+# 🔹 Get Messages for a user (MongoDB)
 @router.get("/get_messages/{user_id}")
 def get_messages(user_id: str):
-    messages = list(messages_collection.find({"receiver_id": user_id}, {"_id": 0}))
-    return {"messages": messages}
+    try:
+        # Returns both sent and received messages
+        messages = list(messages_collection.find({
+            "$or": [{"sender_id": user_id}, {"receiver_id": user_id}]
+        }, {"_id": 0}))
+        return {"messages": messages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-# ✅ Mark Message as Read (MongoDB) (Fix: Convert `message_id` to ObjectId)
+
+# 🔹 Mark message as read
 @router.put("/mark_message_read/{message_id}")
 def mark_message_read(message_id: str):
     try:
-        messages_collection.update_one({"_id": ObjectId(message_id)}, {"$set": {"status": "read"}})
-        return {"status": "success", "message": "Message marked as read"}
+        messages_collection.update_one(
+            {"_id": ObjectId(message_id)},
+            {"$set": {"status": "read"}}
+        )
+        return {"status": "success", "message": "Marked as read"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ✅ Create Notification (MySQL) + Send Firebase Push Notification
+
+# 🔹 Create Notification (MySQL)
 @router.post("/create_notification/")
 def create_notification(notification: Notification):
-    connection = get_mysql_connection()
-    cursor = connection.cursor()
-
     try:
-        # Fix: Ensure user_id is an integer in the request
-        if not isinstance(notification.user_id, int):
-            raise HTTPException(status_code=400, detail="Invalid user_id. It must be an integer.")
+        conn = get_mysql_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO notifications (user_id, message, is_read) VALUES (%s, %s, %s)",
+            (notification.user_id, notification.message, notification.is_read or False)
+        )
+        conn.commit()
 
-        # Fix: Ensure is_read has a default value
-        query = "INSERT INTO notifications (user_id, message, is_read) VALUES (%s, %s, %s)"
-        cursor.execute(query, (notification.user_id, notification.message, notification.is_read or False))
-        connection.commit()
+        token = get_user_firebase_token(notification.user_id)
+        if token:
+            send_firebase_notification(token, "New Notification", notification.message)
 
-        # Fix: Fetch the actual user Firebase token from the DB
-        user_token = get_user_firebase_token(notification.user_id)  # Implement this function in database.py
-
-        # Send Firebase Notification
-        if user_token:
-            send_firebase_notification(user_token, "New Notification", notification.message)
-
-        return {"status": "success", "message": "Notification created & Firebase notification sent"}
-
+        return {"status": "success", "message": "Notification created"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
     finally:
         cursor.close()
-        connection.close()
+        conn.close()
 
-# ✅ Get Unread Notifications (MySQL)
+
+# 🔹 Get unread notifications
 @router.get("/get_notifications/{user_id}")
-def get_notifications(user_id: int):  # Fix: Ensure user_id is an int
-    connection = get_mysql_connection()
-    cursor = connection.cursor(dictionary=True)
-
+def get_notifications(user_id: int):
     try:
-        query = "SELECT * FROM notifications WHERE user_id = %s AND is_read = FALSE"
-        cursor.execute(query, (user_id,))
-        notifications = cursor.fetchall()
-        return {"notifications": notifications}
-
+        conn = get_mysql_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM notifications WHERE user_id = %s AND is_read = FALSE", (user_id,))
+        return {"notifications": cursor.fetchall()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
     finally:
         cursor.close()
-        connection.close()
+        conn.close()
 
-# ✅ Mark Notification as Read (MySQL)
+
+# 🔹 Mark notification as read
 @router.put("/mark_notification_read/{notification_id}")
 def mark_notification_read(notification_id: int):
-    connection = get_mysql_connection()
-    cursor = connection.cursor()
-
     try:
-        query = "UPDATE notifications SET is_read = TRUE WHERE id = %s"
-        cursor.execute(query, (notification_id,))
-        connection.commit()
-        return {"status": "success", "message": "Notification marked as read"}
-
+        conn = get_mysql_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE notifications SET is_read = TRUE WHERE id = %s", (notification_id,))
+        conn.commit()
+        return {"status": "success", "message": "Marked as read"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
     finally:
         cursor.close()
-        connection.close()
+        conn.close()
+
+
+# 🔹 Get all users (MongoDB)
+@router.get("/users/")
+def get_users():
+    try:
+        users_collection = mongo_db["users"]
+        users = list(users_collection.find({}, {"_id": 1, "username": 1}))
+        formatted_users = [{"_id": str(user["_id"]), "username": user["username"]} for user in users]
+        return {"users": formatted_users}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

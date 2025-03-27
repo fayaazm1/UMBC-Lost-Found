@@ -1,19 +1,28 @@
 from pymongo import MongoClient
 import mysql.connector
-import os
 
-# MongoDB Connection (Messaging Database)
+# ---------------------------
+# ✅ MongoDB Configuration
+# ---------------------------
 MONGO_URI = "mongodb://localhost:27017"
 mongo_client = MongoClient(MONGO_URI)
-mongo_db = mongo_client["lost_found_db"]
-messages_collection = mongo_db["messages"]
 
-# MySQL Connection (Notifications Database)
+# ✅ MongoDB Database Name
+mongo_db = mongo_client["lost_found"]
+
+# ✅ MongoDB Collections
+users_collection = mongo_db["users"]
+messages_collection = mongo_db["messages"]
+conversations_collection = mongo_db["conversations"]
+
+# ---------------------------
+# ✅ MySQL Configuration
+# ---------------------------
 MYSQL_CONFIG = {
     "host": "127.0.0.1",
-    "user": "lavanya",  # Use your MySQL username
-    "password": "Lavanya@123",  # Use your correct MySQL password
-    "database": "lost_found",  # Ensure this database exists
+    "user": "lavanya",           # ✅ Your MySQL username
+    "password": "Lavanya@123",   # ✅ Your MySQL password
+    "database": "lost_found",    # ✅ Make sure this DB exists
     "port": 3306
 }
 

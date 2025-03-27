@@ -16,3 +16,10 @@ class Notification(BaseModel):
     message: str
     created_at: datetime = datetime.utcnow()
     is_read: bool = False
+
+    
+
+class User(BaseModel):
+    id: str
+    username: str
+

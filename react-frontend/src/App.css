@@ -2,6 +2,10 @@
   text-align: center;
 }
 
+body {
+  margin-top: 80px; /* adjust based on your navbar height */
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -34,5 +38,7 @@
   }
   to {
     transform: rotate(360deg);
+  
   }
+  
 }

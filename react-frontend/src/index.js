@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { UserContext } from './UserContext';
-import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 // 🔐 Simulated dynamic user ID (later from login/auth)
 const userId = 1;

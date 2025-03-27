@@ -1,25 +1,59 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import Lost from "./pages/Lost";
-import Found from "./pages/Found";
-import Profile from "./pages/Profile";
-import Message from "./pages/Message";
+import UserList from "./components/UserList";
+import MessageBox from "./components/MessageBox";
+import { UserProvider } from "./UserContext";
 
-function App() {
+const App = () => {
   return (
-    <div>
+    <UserProvider>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/lost" element={<Lost />} />
-        <Route path="/found" element={<Found />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/message" element={<Message />} />
-      </Routes>
-    </div>
+
+      <div style={{ padding: "20px", position: "relative" }}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <h2 className="text-dark">Welcome to Lost & Found</h2>
+            }
+          />
+
+          <Route
+            path="/messages"
+            element={
+              <div style={{ position: "relative", minHeight: "200px" }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "30px",
+                    zIndex: 1000,
+                  }}
+                >
+                  <UserList />
+                </div>
+              </div>
+            }
+          />
+
+          <Route
+            path="/chat/:receiverId"
+            element={
+              <div style={{ display: "flex", gap: "20px" }}>
+                <div style={{ width: "25%", minWidth: "200px" }}>
+                  <UserList />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <MessageBox />
+                </div>
+              </div>
+            }
+          />
+        </Routes>
+      </div>
+    </UserProvider>
   );
-}
+};
 
 export default App;

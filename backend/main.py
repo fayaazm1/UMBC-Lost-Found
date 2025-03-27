@@ -1,99 +1,47 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from datetime import datetime
-from typing import List
-from routes import router  # Import routes.py
-from fastapi import WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.websockets import WebSocketState
+from routes import router  # ✅ Using only /api routes
 
 app = FastAPI()
 
-
-# Include the API routes from routes.py
-app.include_router(router)
-
-
-# Define Message Schema
-class Message(BaseModel):
-    sender_id: str
-    receiver_id: str
-    message: str
-
-# Mock Database (Replace with real DB logic)
-messages = []
-
-# ✅ **CREATE (POST) - Send a Message**
-@app.post("/send_message/", response_model=dict)
-async def send_message(msg: Message):
-    try:
-        new_message = {
-            "id": len(messages) + 1,  # Mock ID (Replace with DB auto-increment ID)
-            "sender_id": msg.sender_id,
-            "receiver_id": msg.receiver_id,
-            "message": msg.message,
-            "timestamp": datetime.utcnow()
-        }
-        messages.append(new_message)
-        return {"status": "success", "message": "Message sent successfully!", "data": new_message}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    # 🚨 Add this block below your FastAPI app
+# ✅ Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # ✅ React frontend origin
+    allow_origins=["http://localhost:3000"],
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ **READ (GET) - Get All Messages**
-@app.get("/messages/", response_model=List[dict])
-async def get_all_messages():
-    return messages
+# ✅ Include only /api router
+app.include_router(router, prefix="/api")
 
-# ✅ **READ (GET) - Get a Single Message by ID**
-@app.get("/messages/{message_id}", response_model=dict)
-async def get_message_by_id(message_id: int):
-    for msg in messages:
-        if msg["id"] == message_id:
-            return msg
-    raise HTTPException(status_code=404, detail="Message not found")
-
-# ✅ **UPDATE (PUT) - Update a Message**
-@app.put("/messages/{message_id}", response_model=dict)
-async def update_message(message_id: int, updated_message: Message):
-    for msg in messages:
-        if msg["id"] == message_id:
-            msg["message"] = updated_message.message
-            msg["timestamp"] = datetime.utcnow()
-            return {"status": "success", "message": "Message updated successfully!", "data": msg}
-    raise HTTPException(status_code=404, detail="Message not found")
-
-# ✅ **DELETE (DELETE) - Delete a Message**
-@app.delete("/messages/{message_id}", response_model=dict)
-async def delete_message(message_id: int):
-    for msg in messages:
-        if msg["id"] == message_id:
-            messages.remove(msg)
-            return {"status": "success", "message": "Message deleted successfully!"}
-    raise HTTPException(status_code=404, detail="Message not found")
-
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+# ✅ WebSocket Endpoint for real-time messaging
+@app.websocket("/ws/{sender_id}_{receiver_id}")
+async def websocket_endpoint(websocket: WebSocket, sender_id: str, receiver_id: str):
     await websocket.accept()
+    print(f"🟢 WebSocket connected: {sender_id} -> {receiver_id}")
     try:
         while True:
             data = await websocket.receive_text()
-            print(f"📩 Received from client: {data}")
-            await websocket.send_text(f"Echo: {data}")
-    except Exception as e:
-        print(f"❌ WebSocket disconnected: {e}")
+            print(f"📨 Message from {sender_id} to {receiver_id}: {data}")
+            await websocket.send_text(f"{sender_id}: {data}")
+    except WebSocketDisconnect:
+        print(f"🔌 WebSocket disconnected: {sender_id} -> {receiver_id}")
+    finally:
+        if websocket.application_state != WebSocketState.DISCONNECTED:
+            await websocket.close()
+        print(f"🔴 WebSocket closed: {sender_id} -> {receiver_id}")
 
+# Dummy route to prevent 404 from React
+@app.get("/lost")
+def get_lost_items():
+    return {"message": "This is the /lost endpoint!"}
 
-
+# Root test route
 @app.get("/")
-def read_root():
+def root():
     return {"message": "FastAPI server is running!"}
