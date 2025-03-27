@@ -147,7 +147,7 @@ const Lost = () => {
                 <div className="recent-post-desc">{post.description}</div>
                 {post.image_path && (
                   <img
-                    src={`http://localhost:8000/${post.image_path}`}
+                  src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
                     alt="Lost Item"
                     style={{ width: "120px", marginTop: "8px" }}
                   />

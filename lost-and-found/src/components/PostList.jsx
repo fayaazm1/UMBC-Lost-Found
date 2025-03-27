@@ -34,7 +34,7 @@ const PostList = () => {
             <p><strong>Date:</strong> {new Date(post.date).toLocaleDateString()}</p>
             {post.image_path && (
               <img
-                src={`http://localhost:8000/${post.image_path}`}
+              src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
                 alt="Uploaded"
                 width="150"
               />
