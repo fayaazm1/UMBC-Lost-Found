@@ -13,6 +13,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",  # Local development
         "https://umbc-lost-found.onrender.com",  # Production frontend URL
+        "https://umbc-lost-found.vercel.app",
         "https://lost-and-found-frontend.onrender.com"  # Alternative production URL
     ],
     allow_credentials=True,
