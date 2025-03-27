@@ -2,11 +2,11 @@ import os
 import shutil
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
-from backend.database import SessionLocal
-from backend import models
-from backend.models.post import Post
-from backend.models.user import User
-from backend.schemas import PostOut
+from database import SessionLocal
+import models
+from models.post import Post
+from models.user import User
+from schemas import PostOut
 
 router = APIRouter(prefix="/api/posts")
 
