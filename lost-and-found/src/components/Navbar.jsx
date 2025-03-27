@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { FaSearch, FaUser, FaCog, FaSignOutAlt, FaEnvelope, FaBars, FaBell } from 'react-icons/fa';
 import './Navbar.css';
 import { useAuth } from '../contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setIsMenuOpen(false);
-    setIsProfileOpen(false);
   }, [navigate]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMenuOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.hamburger-menu')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMenuOpen]);
 
   const handleLogout = async () => {
     try {
@@ -24,108 +34,78 @@ function Navbar() {
     }
   };
 
-  const toggleMenu = () => {
+  const toggleMenu = (e) => {
+    e.stopPropagation();
     setIsMenuOpen(!isMenuOpen);
-    setIsProfileOpen(false);
-  };
-
-  const toggleProfile = () => {
-    setIsProfileOpen(!isProfileOpen);
-    setIsMenuOpen(false);
   };
 
   const closeMenu = () => {
     setIsMenuOpen(false);
-    setIsProfileOpen(false);
   };
 
   return (
-    <nav className="navbar">
-      <div className="nav-left">
-        <Link to="/" className="logo" onClick={closeMenu}>
-          <div className="logo-text">
-            <span className="logo-letter">L</span>
-            <span>OST</span>
-            <span className="logo-and">&</span>
-            <span>FOUND</span>
+    <>
+      <nav className="navbar">
+        <div className="nav-left">
+          <Link to="/" className="logo" onClick={closeMenu}>
+            <div className="logo-text">
+              <span className="logo-letter">L</span>
+              <span>OST</span>
+              <span className="logo-and">&</span>
+              <span>FOUND</span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Desktop Navigation */}
+        <div className="nav-center desktop-only">
+          <div className="search-container">
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="Search for items..." 
+            />
+            <FaSearch className="search-icon" />
           </div>
-        </Link>
-      </div>
-
-      <div className="nav-center">
-        <div className="search-container">
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder="Search for items..." 
-          />
-          <FaSearch className="search-icon" />
-        </div>
-        
-        <div className="nav-links">
-          <Link to="/" className="nav-link">Home</Link>
-          <Link to="/lost" className="nav-link">Lost</Link>
-          <Link to="/found" className="nav-link">Found</Link>
-          <Link to="/about" className="nav-link">About</Link>
-          <Link to="/contact" className="nav-link">Contact</Link>
-        </div>
-      </div>
-
-      <div className="nav-right">
-        <div className="notification-icons">
-          <Link to="/messages" className="icon-link">
-            <div className="icon-container">
-              <span className="icon">💬</span>
-              <span className="badge">2</span>
-            </div>
-          </Link>
-          <Link to="/notifications" className="icon-link">
-            <div className="icon-container">
-              <span className="icon">🔔</span>
-              <span className="badge">3</span>
-            </div>
-          </Link>
+          
+          <div className="nav-links">
+            <Link to="/" className="nav-link">Home</Link>
+            <Link to="/lost" className="nav-link">Lost</Link>
+            <Link to="/found" className="nav-link">Found</Link>
+            <Link to="/about" className="nav-link">About</Link>
+            <Link to="/contact" className="nav-link">Contact</Link>
+          </div>
         </div>
 
-        {currentUser && (
-          <div className="profile-section">
-            <button className="profile-button" onClick={toggleProfile}>
-              <span className="profile-name">{currentUser.displayName || 'User'}</span>
-              <FaUser className="profile-icon" />
-            </button>
-            
-            {isProfileOpen && (
-              <div className="profile-dropdown">
-                <Link to="/profile" className="dropdown-item" onClick={closeMenu}>
-                  <FaUser className="item-icon" />
-                  <span>Profile</span>
-                </Link>
-                <Link to="/settings" className="dropdown-item" onClick={closeMenu}>
-                  <FaCog className="item-icon" />
-                  <span>Settings</span>
-                </Link>
-                <button className="dropdown-item logout" onClick={handleLogout}>
-                  <FaSignOutAlt className="item-icon" />
-                  <span>Logout</span>
+        {/* Desktop User Menu */}
+        <div className="nav-right desktop-only">
+          {currentUser && (
+            <>
+              <Link to="/messages" className="nav-icon">
+                <FaEnvelope />
+              </Link>
+              <NotificationBell />
+              <div className="profile-section">
+                <button className="profile-button">
+                  <FaUser className="profile-icon" />
+                  <span className="profile-name">{currentUser.displayName || 'User'}</span>
                 </button>
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </>
+          )}
+        </div>
 
-      <button
-        className={`hamburger-menu ${isMenuOpen ? 'active' : ''}`}
-        onClick={toggleMenu}
-        aria-label="Toggle menu"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+        {/* Mobile Menu Button */}
+        <div className="mobile-only">
+          <button className="hamburger-menu" onClick={toggleMenu} aria-label="Toggle menu">
+            <FaBars />
+          </button>
+        </div>
+      </nav>
 
-      <div className={`mobile-menu ${isMenuOpen ? 'active' : ''}`}>
-        <div className="search-container">
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${isMenuOpen ? 'show' : ''}`}>
+        <div className="mobile-search">
           <input 
             type="text" 
             className="search-input" 
@@ -134,38 +114,56 @@ function Navbar() {
           <FaSearch className="search-icon" />
         </div>
 
-        <div className="nav-links">
-          <Link to="/" className="nav-link" onClick={closeMenu}>Home</Link>
-          <Link to="/lost" className="nav-link" onClick={closeMenu}>Lost</Link>
-          <Link to="/found" className="nav-link" onClick={closeMenu}>Found</Link>
-          <Link to="/about" className="nav-link" onClick={closeMenu}>About</Link>
-          <Link to="/contact" className="nav-link" onClick={closeMenu}>Contact</Link>
-        </div>
-
-        <div className="notification-icons">
-          <Link to="/messages" className="icon-link" onClick={closeMenu}>
-            <div className="icon-container">
-              <span className="icon">💬</span>
-              <span className="badge">2</span>
-            </div>
+        <div className="mobile-nav-links">
+          <Link to="/" className="mobile-nav-link" onClick={closeMenu}>
+            <span>Home</span>
           </Link>
-          <Link to="/notifications" className="icon-link" onClick={closeMenu}>
-            <div className="icon-container">
-              <span className="icon">🔔</span>
-              <span className="badge">3</span>
-            </div>
+          <Link to="/lost" className="mobile-nav-link" onClick={closeMenu}>
+            <span>Lost</span>
+          </Link>
+          <Link to="/found" className="mobile-nav-link" onClick={closeMenu}>
+            <span>Found</span>
+          </Link>
+          <Link to="/about" className="mobile-nav-link" onClick={closeMenu}>
+            <span>About</span>
+          </Link>
+          <Link to="/contact" className="mobile-nav-link" onClick={closeMenu}>
+            <span>Contact</span>
           </Link>
         </div>
 
         {currentUser && (
-          <div className="mobile-profile-section">
-            <Link to="/profile" className="nav-link" onClick={closeMenu}>Profile</Link>
-            <Link to="/settings" className="nav-link" onClick={closeMenu}>Settings</Link>
-            <button className="nav-link logout-button" onClick={handleLogout}>Logout</button>
+          <div className="mobile-user-section">
+            <div className="mobile-user-header">
+              <FaUser className="mobile-user-icon" />
+              <span className="mobile-user-name">{currentUser.displayName || 'User'}</span>
+            </div>
+            <div className="mobile-user-links">
+              <Link to="/messages" className="mobile-nav-link" onClick={closeMenu}>
+                <FaEnvelope />
+                <span>Messages</span>
+              </Link>
+              <Link to="/notifications" className="mobile-nav-link" onClick={closeMenu}>
+                <FaBell />
+                <span>Notifications</span>
+              </Link>
+              <Link to="/profile" className="mobile-nav-link" onClick={closeMenu}>
+                <FaUser />
+                <span>Profile</span>
+              </Link>
+              <Link to="/settings" className="mobile-nav-link" onClick={closeMenu}>
+                <FaCog />
+                <span>Settings</span>
+              </Link>
+              <button className="mobile-nav-link logout-button" onClick={handleLogout}>
+                <FaSignOutAlt />
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
-    </nav>
+    </>
   );
 }
 

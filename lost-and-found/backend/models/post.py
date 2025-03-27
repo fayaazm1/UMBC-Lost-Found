@@ -17,3 +17,4 @@ class Post(Base):
     
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="posts")
+    notifications = relationship("Notification", back_populates="related_post")

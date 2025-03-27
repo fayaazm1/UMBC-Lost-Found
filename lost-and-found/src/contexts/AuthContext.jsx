@@ -8,6 +8,7 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '../firebase';
+import { getUserByEmail, createDbUser } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -17,6 +18,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [dbUser, setDbUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   async function signup(email, password, displayName) {
@@ -26,6 +28,14 @@ export function AuthProvider({ children }) {
     // Update display name
     await updateProfile(user, { displayName });
     
+    // Create user in our database
+    const dbUserData = await createDbUser({
+      email: user.email,
+      username: displayName,
+      firebase_uid: user.uid
+    });
+    setDbUser(dbUserData);
+    
     // Send verification email
     await sendEmailVerification(user);
     
@@ -33,10 +43,15 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    return signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    // Fetch database user
+    const dbUserData = await getUserByEmail(email);
+    setDbUser(dbUserData);
+    return userCredential;
   }
 
   async function logout() {
+    setDbUser(null);
     return signOut(auth);
   }
 
@@ -47,7 +62,13 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const dbUserData = await getUserByEmail(user.email);
+        setDbUser(dbUserData);
+      } else {
+        setDbUser(null);
+      }
       setCurrentUser(user);
       setLoading(false);
     });
@@ -57,6 +78,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
+    dbUser,
     signup,
     login,
     logout,

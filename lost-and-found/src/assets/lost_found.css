@@ -361,11 +361,31 @@ html, body {
 }
 
 @media screen and (max-width: 768px) {
+    .lost-heading {
+        text-align: left;
+        padding-left: 1rem;
+        font-size: 2rem;
+        margin: 1rem 0;
+    }
+
+    .post-here-btn {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        margin: 0;
+        padding: 1rem;
+        border-radius: 0;
+        z-index: 1000;
+        background: var(--accent-color);
+    }
+
     .right-sidebar {
         position: static;
         width: 100%;
         min-width: 100%;
-        margin-bottom: 80px; /* Space for fixed Lost Something button */
+        margin-bottom: 80px; /* Space for fixed post button */
         padding: 1rem;
     }
 

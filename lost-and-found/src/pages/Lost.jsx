@@ -17,14 +17,23 @@ const Lost = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/posts/");
+        const response = await fetch("http://localhost:8000/api/posts");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error('Expected array of posts');
+        }
         // Filter for lost posts and ensure report_type is case-insensitive
-        const lostPosts = data.filter(post => post.report_type?.toLowerCase() === "lost");
+        const lostPosts = data.filter(post => 
+          post && post.report_type && post.report_type.toLowerCase() === "lost"
+        );
         console.log("Lost posts:", lostPosts); // Debug log
         setPosts(lostPosts);
       } catch (error) {
         console.error("Error fetching posts:", error);
+        setPosts([]); // Set empty array on error
       }
     };
 
@@ -33,7 +42,7 @@ const Lost = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const priorityPosts = posts.filter((post) => isPriorityPost(post.description));
+  const priorityPosts = posts.filter((post) => post && post.description && isPriorityPost(post.description));
   console.log("Priority posts:", priorityPosts); // Debug log
   
   // Create a seamless infinite scroll by duplicating posts multiple times
@@ -49,29 +58,23 @@ const Lost = () => {
     const scrollAmount = 1;
     
     // If we're near the end, jump back to 1/3 of the way through
-    if (container.scrollLeft >= (container.scrollWidth * 2/3)) {
+    if (container.scrollLeft >= (container.scrollWidth * 2) / 3) {
       container.scrollLeft = container.scrollWidth / 3;
+    } else {
+      container.scrollLeft += scrollAmount;
     }
-    
-    container.scrollLeft += scrollAmount;
+
     animationRef.current = requestAnimationFrame(animateCarousel);
   };
 
   useEffect(() => {
-    if (priorityPosts.length === 0) return;
-    
-    // Set initial scroll position to 1/3 of the way through
-    if (carouselRef.current) {
-      carouselRef.current.scrollLeft = carouselRef.current.scrollWidth / 3;
-    }
-    
     animationRef.current = requestAnimationFrame(animateCarousel);
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [priorityPosts, isPaused]);
+  }, [priorityPosts.length, isPaused]);
 
   const handleMouseDown = () => setIsPaused(true);
   const handleMouseUp = () => setIsPaused(false);

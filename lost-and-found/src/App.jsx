@@ -13,6 +13,7 @@ import Welcome from "./pages/Welcome";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import Profile from "./pages/Profile";
+import NotificationsPage from "./pages/NotificationsPage";
 import { useAuth } from "./contexts/AuthContext";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -65,6 +66,11 @@ function App() {
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <NotificationsPage />
               </ProtectedRoute>
             } />
 

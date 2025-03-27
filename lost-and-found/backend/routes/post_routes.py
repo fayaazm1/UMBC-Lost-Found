@@ -8,7 +8,7 @@ from backend.models.post import Post
 from backend.models.user import User
 from backend.schemas import PostOut
 
-router = APIRouter()
+router = APIRouter(prefix="/api/posts")
 
 UPLOAD_DIR = "backend/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
