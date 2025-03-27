@@ -11,10 +11,11 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # Local development
-        "https://umbc-lost-found.onrender.com",  # Production frontend URL
-        "https://umbc-lost-found.vercel.app",
-        "https://lost-and-found-frontend.onrender.com"  # Alternative production URL
+        "http://localhost:5173",  # Local dev
+        "https://umbc-lost-found.vercel.app",  # Vercel production
+        "https://umbc-lost-found-git-main-fayaazs-projects-2ea58c4f.vercel.app",  # Vercel preview
+        "https://umbc-lost-found.onrender.com",  # Old deploy (optional)
+        "https://lost-and-found-frontend.onrender.com",  # Old deploy (optional)
     ],
     allow_credentials=True,
     allow_methods=["*"],
