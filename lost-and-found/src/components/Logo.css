@@ -1,0 +1,77 @@
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  text-decoration: none;
+}
+
+.logo-l {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.l-vertical {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 40px;
+  background: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+}
+
+.l-horizontal {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 25px;
+  height: 8px;
+  background: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+}
+
+.logo-text-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-text {
+  color: #ffd700;
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.logo-and {
+  color: #ffd700;
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0 0.5rem;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+@media (max-width: 480px) {
+  .logo-text-container {
+    display: none;
+  }
+  
+  .logo-l {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .l-vertical {
+    width: 6px;
+    height: 30px;
+  }
+  
+  .l-horizontal {
+    width: 20px;
+    height: 6px;
+  }
+}
