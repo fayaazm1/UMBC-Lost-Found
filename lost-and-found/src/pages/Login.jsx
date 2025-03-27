@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getUserByEmail } from '../utils/api';
 import '../styles/Auth.css';
 
 function Login() {
@@ -21,6 +22,13 @@ function Login() {
       
       if (!result.user.emailVerified) {
         setError('Please verify your email before logging in.');
+        return;
+      }
+
+      // Get user from database
+      const dbUser = await getUserByEmail(email);
+      if (!dbUser) {
+        setError('User not found in database');
         return;
       }
 
