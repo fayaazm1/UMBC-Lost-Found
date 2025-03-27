@@ -162,8 +162,11 @@ COPY public.posts (id, report_type, item_name, description, location, contact_de
 24	Found	leather wallet	Black leather wallet with student ID and cash found in RAC gym.	RAC	123456678	2025-03-22	19:48	\N	2
 25	Found	iPhone 13 Pro	Silver iPhone with cracked screen found on the Quad.	Main Quad	123456789	2025-03-22	22:48	\N	2
 26	Found	AirPods Pro	Found in bathroom near The Commons.	The Commons	1234545667	2025-03-23	21:49	\N	2
+<<<<<<<< HEAD:lost-and-found/backend/db_dump/lost_and_found_dump.sql
 27	Lost	maxi	kwdjkwusfhsg	rac	0987654321	2025-03-23	22:12	\N	2
 28	Lost	Gold wallet	Gold wallet lost in the college	rac	0987654321	2025-03-22	22:15	\N	3
+========
+>>>>>>>> 8361526 (Updated About and Contact pages, styles, and UMBC logo):lost-and-found/backend/lost_and_found_dump.sql
 \.
 
 
@@ -182,7 +185,11 @@ COPY public.users (id, username, email, password) FROM stdin;
 -- Name: posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: lost_user
 --
 
+<<<<<<<< HEAD:lost-and-found/backend/db_dump/lost_and_found_dump.sql
 SELECT pg_catalog.setval('public.posts_id_seq', 28, true);
+========
+SELECT pg_catalog.setval('public.posts_id_seq', 26, true);
+>>>>>>>> 8361526 (Updated About and Contact pages, styles, and UMBC logo):lost-and-found/backend/lost_and_found_dump.sql
 
 
 --
