@@ -19,7 +19,9 @@ const Lost = () => {
       try {
         const response = await fetch("http://localhost:8000/api/posts/");
         const data = await response.json();
+        // Filter for lost posts and ensure report_type is case-insensitive
         const lostPosts = data.filter(post => post.report_type?.toLowerCase() === "lost");
+        console.log("Lost posts:", lostPosts); // Debug log
         setPosts(lostPosts);
       } catch (error) {
         console.error("Error fetching posts:", error);
@@ -32,26 +34,43 @@ const Lost = () => {
   }, []);
 
   const priorityPosts = posts.filter((post) => isPriorityPost(post.description));
-  const duplicatedPosts = [...priorityPosts, ...priorityPosts];
+  console.log("Priority posts:", priorityPosts); // Debug log
+  
+  // Create a seamless infinite scroll by duplicating posts multiple times
+  const duplicatedPosts = [...priorityPosts, ...priorityPosts, ...priorityPosts];
 
   const animateCarousel = () => {
-    if (!carouselRef.current || isPaused) {
+    if (!carouselRef.current || isPaused || priorityPosts.length === 0) {
       animationRef.current = requestAnimationFrame(animateCarousel);
       return;
     }
+
     const container = carouselRef.current;
     const scrollAmount = 1;
-    container.scrollLeft += scrollAmount;
-    if (container.scrollLeft >= container.scrollWidth / 2) {
-      container.scrollLeft = 0;
+    
+    // If we're near the end, jump back to 1/3 of the way through
+    if (container.scrollLeft >= (container.scrollWidth * 2/3)) {
+      container.scrollLeft = container.scrollWidth / 3;
     }
+    
+    container.scrollLeft += scrollAmount;
     animationRef.current = requestAnimationFrame(animateCarousel);
   };
 
   useEffect(() => {
     if (priorityPosts.length === 0) return;
+    
+    // Set initial scroll position to 1/3 of the way through
+    if (carouselRef.current) {
+      carouselRef.current.scrollLeft = carouselRef.current.scrollWidth / 3;
+    }
+    
     animationRef.current = requestAnimationFrame(animateCarousel);
-    return () => cancelAnimationFrame(animationRef.current);
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [priorityPosts, isPaused]);
 
   const handleMouseDown = () => setIsPaused(true);
@@ -78,7 +97,7 @@ const Lost = () => {
             onTouchEnd={handleMouseUp}
           >
             {duplicatedPosts.map((post, index) => (
-              <div key={index} className={`carousel-post${isPaused ? " paused" : ""}`}>
+              <div key={`${post.id}-${index}`} className={`carousel-post${isPaused ? " paused" : ""}`}>
                 <div className="post-header">
                   <span className="post-date">
                     {new Date(post.date).toLocaleDateString(undefined, {
@@ -108,8 +127,8 @@ const Lost = () => {
           
           <h2 className="recent-title">Recent Posts</h2>
           <div className="recent-posts-list scrollable">
-            {posts.filter((post) => !isPriorityPost(post.description)).slice(0, 5).map((post, index) => (
-              <div key={index} className="recent-post-card">
+            {posts.filter((post) => !isPriorityPost(post.description)).map((post, index) => (
+              <div key={post.id || index} className="recent-post-card">
                 <div className="recent-post-date">
                   {new Date(post.date).toLocaleDateString("en-US", {
                     weekday: "long",

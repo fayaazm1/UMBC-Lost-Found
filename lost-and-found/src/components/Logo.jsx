@@ -1,18 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import '../assets/logo.css';
+import './Logo.css';
 
-const Logo = () => {
+function Logo() {
   return (
-    <Link to="/" className="logo-link">
-      <div className="logo-container">
-        <div className="logo-letter">
-          <div className="logo-l-shape"></div>
-        </div>
-        <div className="logo-text">LOST & FOUND</div>
+    <div className="logo-container">
+      <div className="logo-l">
+        <div className="l-vertical"></div>
+        <div className="l-horizontal"></div>
       </div>
-    </Link>
+      <div className="logo-text-container">
+        <span className="logo-text">OST</span>
+        <span className="logo-and">&</span>
+        <span className="logo-text">FOUND</span>
+      </div>
+    </div>
   );
-};
+}
 
 export default Logo;

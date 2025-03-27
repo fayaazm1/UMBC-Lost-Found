@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend import models
 from backend.models import Post, User
-
 from backend.database import engine
 from backend.routes.post_routes import router as post_router
 
