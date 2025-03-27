@@ -16,6 +16,8 @@ app.add_middleware(
         "https://umbc-lost-found-git-main-fayaazs-projects-2ea58c4f.vercel.app",  # Vercel preview
         "https://umbc-lost-found.onrender.com",  # Old deploy (optional)
         "https://lost-and-found-frontend.onrender.com",  # Old deploy (optional)
+        "http://localhost:3000",  # Local dev alternative port
+        "http://127.0.0.1:5173",  # Local dev alternative host
     ],
     allow_credentials=True,
     allow_methods=["*"],
