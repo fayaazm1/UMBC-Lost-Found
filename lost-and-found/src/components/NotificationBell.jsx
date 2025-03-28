@@ -12,6 +12,8 @@ const NotificationBell = () => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  console.log('NotificationBell rendering, dbUser:', dbUser);
+
   const fetchNotifications = async () => {
     if (!dbUser?.id) {
       console.log('No valid user ID available');
@@ -109,6 +111,7 @@ const NotificationBell = () => {
     navigate('/notifications');
   };
 
+  // Return null if no user is logged in
   if (!dbUser?.id) return null;
 
   return (
@@ -167,17 +170,17 @@ const NotificationBell = () => {
                 </div>
               ))
             )}
-            {notifications.length > 3 && (
-              <div className="notification-footer">
-                <button 
-                  className="view-all-footer"
-                  onClick={handleViewAll}
-                >
-                  View {notifications.length - 3} more notifications
-                </button>
-              </div>
-            )}
           </div>
+          {notifications.length > 3 && (
+            <div className="notification-footer">
+              <button 
+                className="view-all-footer"
+                onClick={handleViewAll}
+              >
+                View {notifications.length - 3} more notifications
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
