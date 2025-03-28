@@ -35,9 +35,13 @@ function Login() {
       // Store user ID in localStorage
       localStorage.setItem('user_id', result.user.uid);
       
-      navigate('/');
+      // Add a small delay to ensure authentication state is updated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      navigate('/', { replace: true });
     } catch (error) {
-      setError('Failed to log in: ' + error.message);
+      console.error('Login error:', error);
+      setError('Failed to log in: ' + (error.message || 'Please try again'));
     } finally {
       setLoading(false);
     }

@@ -43,11 +43,20 @@ export function AuthProvider({ children }) {
   }
 
   async function login(email, password) {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    // Fetch database user
-    const dbUserData = await getUserByEmail(email);
-    setDbUser(dbUserData);
-    return userCredential;
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Fetch database user
+      const dbUserData = await getUserByEmail(email);
+      if (dbUserData) {
+        setDbUser(dbUserData);
+      } else {
+        console.error('User not found in database after login');
+      }
+      return userCredential;
+    } catch (error) {
+      console.error('Login error in AuthContext:', error);
+      throw error;
+    }
   }
 
   async function logout() {
@@ -62,18 +71,34 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    let isMounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const dbUserData = await getUserByEmail(user.email);
-        setDbUser(dbUserData);
-      } else {
-        setDbUser(null);
+      try {
+        if (user && isMounted) {
+          const dbUserData = await getUserByEmail(user.email);
+          if (dbUserData && isMounted) {
+            setDbUser(dbUserData);
+          }
+        } else if (isMounted) {
+          setDbUser(null);
+        }
+        if (isMounted) {
+          setCurrentUser(user);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      setCurrentUser(user);
-      setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const value = {
