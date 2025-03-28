@@ -15,6 +15,16 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# CORS configuration
+allow_origins=[
+    "https://lost-and-found-frontend.onrender.com",  # frontend if hosted here
+    "https://umbc-lost-found.onrender.com",          # if frontend is on render
+    "https://umbc-lost-found.vercel.app",            # if on Vercel
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+
+
 @app.middleware("http")
 async def log_middleware(request: Request, call_next):
     logger.info(f"{'='*50}")
