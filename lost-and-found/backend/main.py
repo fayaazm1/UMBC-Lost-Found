@@ -1,76 +1,66 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routes.post_routes import router as post_router
 from routes.notification_routes import router as notification_router
 from routes.user_routes import router as user_router
 import logging
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class CustomCORSMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: ASGIApp):
-        super().__init__(app)
-
-    async def dispatch(self, request: Request, call_next):
-        # Log the incoming request details
-        origin = request.headers.get('origin')
-        logger.info(f"Incoming request from origin: {origin}")
-        logger.info(f"Request headers: {dict(request.headers)}")
-
-        # Handle preflight requests
-        if request.method == "OPTIONS":
-            return JSONResponse(
-                content={},
-                headers=self._get_cors_headers(),
-            )
-
-        # Get response from endpoint
-        response = await call_next(request)
-
-        # Add CORS headers to response
-        headers = self._get_cors_headers()
-        response.headers.update(headers)
-
-        # Log the response headers
-        logger.info(f"Final response headers: {dict(response.headers)}")
-        return response
-
-    def _get_cors_headers(self):
-        return {
-            "Access-Control-Allow-Origin": "https://umbc-lost-found.vercel.app",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
-            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-            "Access-Control-Max-Age": "3600",
-            "Access-Control-Expose-Headers": "*",
-            "Vary": "Origin",
-            # Ensure Cloudflare doesn't cache the CORS headers
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        }
-
 app = FastAPI()
 
+# CORS configuration
+origins = [
+    "https://umbc-lost-found.vercel.app",
+    "https://umbc-lost-found-git-main-fayaazs-projects-2ea58c4f.vercel.app",
+    "http://localhost:5173"
+]
+
 @app.middleware("http")
-async def log_headers(request: Request, call_next):
+async def cors_middleware(request: Request, call_next):
+    logger.info(f"Request origin: {request.headers.get('origin')}")
     logger.info(f"Request headers: {dict(request.headers)}")
+    
     response = await call_next(request)
+    
+    origin = request.headers.get("origin")
+    if origin in origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    else:
+        response.headers["Access-Control-Allow-Origin"] = "https://umbc-lost-found.vercel.app"
+    
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Max-Age"] = "3600"
+    response.headers["Vary"] = "Origin"
+    
     logger.info(f"Response headers: {dict(response.headers)}")
     return response
 
-# Add custom CORS middleware first
-app.add_middleware(CustomCORSMiddleware)
-
-# Add trusted host middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"]
-)
+@app.options("/{full_path:path}")
+async def options_handler(request: Request, full_path: str):
+    origin = request.headers.get("origin")
+    if origin in origins:
+        headers = {"Access-Control-Allow-Origin": origin}
+    else:
+        headers = {"Access-Control-Allow-Origin": "https://umbc-lost-found.vercel.app"}
+    
+    headers.update({
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Max-Age": "3600",
+        "Vary": "Origin",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    })
+    
+    return Response(status_code=200, headers=headers)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
