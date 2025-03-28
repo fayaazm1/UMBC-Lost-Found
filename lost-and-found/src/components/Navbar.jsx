@@ -7,11 +7,13 @@ import NotificationBell from './NotificationBell';
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsProfileOpen(false);
   }, [navigate]);
 
   useEffect(() => {
@@ -19,11 +21,14 @@ function Navbar() {
       if (isMenuOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.hamburger-menu')) {
         setIsMenuOpen(false);
       }
+      if (isProfileOpen && !event.target.closest('.profile-section')) {
+        setIsProfileOpen(false);
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isProfileOpen]);
 
   const handleLogout = async () => {
     try {
@@ -86,10 +91,26 @@ function Navbar() {
               </Link>
               <NotificationBell />
               <div className="profile-section">
-                <button className="profile-button">
+                <button className="profile-button" onClick={() => setIsProfileOpen(!isProfileOpen)}>
                   <FaUser className="profile-icon" />
                   <span className="profile-name">{currentUser.displayName || 'User'}</span>
                 </button>
+                {isProfileOpen && (
+                  <div className="profile-dropdown">
+                    <Link to="/profile" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
+                      <FaUser className="dropdown-icon" />
+                      <span>Profile</span>
+                    </Link>
+                    <Link to="/settings" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
+                      <FaCog className="dropdown-icon" />
+                      <span>Settings</span>
+                    </Link>
+                    <button className="dropdown-item" onClick={handleLogout}>
+                      <FaSignOutAlt className="dropdown-icon" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
