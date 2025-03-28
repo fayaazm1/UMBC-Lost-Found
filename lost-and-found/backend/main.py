@@ -1,15 +1,58 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine, Base
 from routes.post_routes import router as post_router
 from routes.notification_routes import router as notification_router
 from routes.user_routes import router as user_router
-from routes.cors_routes import router as cors_router
 import logging
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp):
+        super().__init__(app)
+
+    async def dispatch(self, request: Request, call_next):
+        # Log the incoming request details
+        origin = request.headers.get('origin')
+        logger.info(f"Incoming request from origin: {origin}")
+        logger.info(f"Request headers: {dict(request.headers)}")
+
+        # Handle preflight requests
+        if request.method == "OPTIONS":
+            return JSONResponse(
+                content={},
+                headers=self._get_cors_headers(),
+            )
+
+        # Get response from endpoint
+        response = await call_next(request)
+
+        # Add CORS headers to response
+        headers = self._get_cors_headers()
+        response.headers.update(headers)
+
+        # Log the response headers
+        logger.info(f"Final response headers: {dict(response.headers)}")
+        return response
+
+    def _get_cors_headers(self):
+        return {
+            "Access-Control-Allow-Origin": "https://umbc-lost-found.vercel.app",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD",
+            "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+            "Access-Control-Max-Age": "3600",
+            "Access-Control-Expose-Headers": "*",
+            "Vary": "Origin",
+            # Ensure Cloudflare doesn't cache the CORS headers
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
 
 app = FastAPI()
 
@@ -20,38 +63,8 @@ async def log_headers(request: Request, call_next):
     logger.info(f"Response headers: {dict(response.headers)}")
     return response
 
-@app.middleware("http")
-async def custom_cors_middleware(request: Request, call_next):
-    logger.info(f"Incoming request from origin: {request.headers.get('origin')}")
-    
-    # Get the response from the endpoint
-    response = await call_next(request)
-    
-    # Set CORS headers manually
-    headers = {
-        "Access-Control-Allow-Origin": "https://umbc-lost-found.vercel.app",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "*",
-        "Access-Control-Max-Age": "3600",
-    }
-    
-    # Add headers to response
-    response.headers.update(headers)
-    
-    logger.info(f"Response headers: {dict(response.headers)}")
-    return response
-
-@app.options("/{full_path:path}")
-async def options_handler(request: Request):
-    return JSONResponse(
-        content={},
-        headers={
-            "Access-Control-Allow-Origin": "https://umbc-lost-found.vercel.app",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "3600",
-        }
-    )
+# Add custom CORS middleware first
+app.add_middleware(CustomCORSMiddleware)
 
 # Add trusted host middleware
 app.add_middleware(
@@ -63,7 +76,6 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # Include routers
-app.include_router(cors_router)  
 app.include_router(post_router)
 app.include_router(notification_router)
 app.include_router(user_router)
