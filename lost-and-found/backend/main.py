@@ -16,13 +16,21 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # CORS configuration
-allow_origins=[
-    "https://lost-and-found-frontend.onrender.com",  # frontend if hosted here
-    "https://umbc-lost-found.onrender.com",          # if frontend is on render
-    "https://umbc-lost-found.vercel.app",            # if on Vercel
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://umbc-lost-found.vercel.app",
+        "https://umbc-lost-found.onrender.com",
+        "https://umbc-lost-found-1.onrender.com",  # ✅ <-- Add this line
+        "https://lost-and-found-frontend.onrender.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 @app.middleware("http")
