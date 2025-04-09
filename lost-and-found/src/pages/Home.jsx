@@ -1,10 +1,18 @@
 // src/pages/Home.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import '../assets/home.css';
 
 const Home = () => {
     const navigate = useNavigate();
+    const { currentUser, dbUser } = useAuth();
+
+    useEffect(() => {
+        console.log('Home - Component mounted');
+        console.log('Home - currentUser:', currentUser);
+        console.log('Home - dbUser:', dbUser);
+    }, [currentUser, dbUser]);
 
     return (
         <div className="home-container">

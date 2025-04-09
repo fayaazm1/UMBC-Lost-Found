@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/Auth.css';
 
 function Welcome() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, loading } = useAuth();
 
   // Create particles effect
   useEffect(() => {
@@ -35,27 +36,38 @@ function Welcome() {
     return () => document.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Redirect if logged in
+  // Redirect if already logged in and email verified
+  // useEffect(() => {
+  //   if (!loading && currentUser?.emailVerified) {
+  //     navigate('/', { replace: true });
+  //   }
+  // }, [loading, currentUser, navigate]);
+  
+// Redirect if logged in
   if (currentUser && currentUser.emailVerified) {
     return <Navigate to="/" replace />;
   }
-
   async function handleSubmit(e) {
     e.preventDefault();
 
     try {
       setError('');
-      setLoading(true);
+      setFormLoading(true);
       const result = await login(email, password);
-      
+
       if (!result.user.emailVerified) {
         setError('Please verify your email before logging in.');
         return;
       }
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      navigate('/', { replace: true });
     } catch (error) {
-      setError('Failed to log in: ' + error.message);
+      console.error('Login error:', error);
+      setError('Failed to log in: ' + (error.message || 'Please try again'));
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   }
 
@@ -98,7 +110,7 @@ function Welcome() {
                 <div className="alert-line" />
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
                 <label htmlFor="email">E-mail</label>
@@ -115,7 +127,7 @@ function Welcome() {
                   <div className="input-focus-effect" />
                 </div>
               </div>
-              
+
               <div className="form-group">
                 <label htmlFor="password">Password</label>
                 <div className="input-container">
@@ -149,10 +161,10 @@ function Welcome() {
               <button 
                 type="submit" 
                 className="auth-button"
-                disabled={loading}
+                disabled={formLoading}
               >
                 <span className="button-text">
-                  {loading ? 'Signing in...' : 'Sign in now'}
+                  {formLoading ? 'Signing in...' : 'Sign in now'}
                 </span>
                 <div className="button-shine" />
               </button>

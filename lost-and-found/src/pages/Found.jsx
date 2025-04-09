@@ -18,7 +18,7 @@ const Found = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`);
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/posts/`);
         const data = await response.json();
         const foundPosts = data.filter(post => post.report_type?.toLowerCase() === "found");
         setPosts(foundPosts);

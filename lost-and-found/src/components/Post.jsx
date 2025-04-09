@@ -67,7 +67,7 @@ const PostForm = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/posts`, {
         method: "POST",
         body: formDataToSend,
       });

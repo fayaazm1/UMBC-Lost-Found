@@ -5,7 +5,9 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
-  sendEmailVerification
+  sendEmailVerification,
+  deleteUser,
+  reload
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserByEmail, createDbUser } from '../utils/api';
@@ -22,46 +24,74 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   async function signup(email, password, displayName) {
+    console.log("SIGNUP:", email, password, displayName);
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    
-    // Update display name
+
     await updateProfile(user, { displayName });
-    
-    // Create user in our database
+
     const dbUserData = await createDbUser({
-      email: user.email,
+      email: user.email.toLowerCase(),
       username: displayName,
       firebase_uid: user.uid
     });
+
+    if (!dbUserData) {
+      await deleteUser(user);
+      throw new Error("Signup failed. Please try again.");
+    }
+
     setDbUser(dbUserData);
-    
-    // Send verification email
     await sendEmailVerification(user);
-    
     return user;
   }
 
   async function login(email, password) {
+    console.log("LOGIN:", email, password);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Fetch database user
-      const dbUserData = await getUserByEmail(email);
-      if (dbUserData) {
-        setDbUser(dbUserData);
-      } else {
-        console.error('User not found in database after login');
+      const firebaseUser = userCredential.user;
+
+      await reload(firebaseUser);
+
+      if (!firebaseUser.emailVerified) {
+        await signOut(auth);
+        throw new Error('Please verify your email before logging in.');
       }
+
+      let dbUserData = await getUserByEmail(email.toLowerCase());
+
+      if (!dbUserData) {
+        console.warn("⚠️ User not found in database, attempting to create...");
+
+        try {
+          dbUserData = await createDbUser({
+            email: firebaseUser.email.toLowerCase(),
+            username: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+            firebase_uid: firebaseUser.uid
+          });
+        } catch (err) {
+          if (err.message.includes("Email already registered")) {
+            console.warn("✅ Email already exists in DB, fetching existing record...");
+            dbUserData = await getUserByEmail(email.toLowerCase());
+          } else {
+            throw err;
+          }
+        }
+      }
+
+      setDbUser(dbUserData);
       return userCredential;
+
     } catch (error) {
-      console.error('Login error in AuthContext:', error);
+      console.error("❌ Login error in AuthContext:", error);
       throw error;
     }
   }
 
   async function logout() {
     setDbUser(null);
-    return signOut(auth);
+    await signOut(auth);
   }
 
   async function resendVerificationEmail() {
@@ -75,20 +105,34 @@ export function AuthProvider({ children }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
+        console.log("🔥 Firebase onAuthStateChanged:", user);
         if (user && isMounted) {
-          const dbUserData = await getUserByEmail(user.email);
+          await reload(user);
+          if (!user.emailVerified) {
+            setCurrentUser(null);
+            setDbUser(null);
+            return;
+          }
+
+          const dbUserData = await getUserByEmail(user.email.toLowerCase());
           if (dbUserData && isMounted) {
             setDbUser(dbUserData);
+            setCurrentUser(user);
+          } else {
+            setCurrentUser(null);
+            setDbUser(null);
           }
         } else if (isMounted) {
           setDbUser(null);
-        }
-        if (isMounted) {
-          setCurrentUser(user);
-          setLoading(false);
+          setCurrentUser(null);
         }
       } catch (error) {
         console.error('Error in auth state change:', error);
+        if (isMounted) {
+          setCurrentUser(null);
+          setDbUser(null);
+        }
+      } finally {
         if (isMounted) {
           setLoading(false);
         }
@@ -104,6 +148,7 @@ export function AuthProvider({ children }) {
   const value = {
     currentUser,
     dbUser,
+    loading,
     signup,
     login,
     logout,
