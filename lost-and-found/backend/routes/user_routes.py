@@ -14,27 +14,11 @@ router = APIRouter(
 )
 
 # CORS Origins
-origins = [
-    "https://umbc-lost-found.vercel.app",
-    "https://umbc-lost-found-git-main-fayaazs-projects-2ea58c4f.vercel.app",
-    "http://localhost:5173"
-]
+origins = ["*"]  # Allow all origins during testing
 
 def get_cors_headers(request: Request):
-    origin = request.headers.get("origin")
-    if origin in origins:
-        return {
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "3600",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        }
     return {
-        "Access-Control-Allow-Origin": origins[0],
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
         "Access-Control-Allow-Headers": "*",

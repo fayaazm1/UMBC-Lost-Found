@@ -53,16 +53,22 @@ function Welcome() {
     try {
       setError('');
       setFormLoading(true);
+      
+      // Attempt login
       const result = await login(email, password);
+      
+      if (!result.user) {
+        throw new Error('Login failed - no user returned');
+      }
 
       if (!result.user.emailVerified) {
         setError('Please verify your email before logging in.');
         return;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      // Successfully logged in and email verified
       navigate('/', { replace: true });
+      
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to log in: ' + (error.message || 'Please try again'));

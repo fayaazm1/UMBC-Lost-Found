@@ -20,14 +20,7 @@ app = FastAPI()
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://umbc-lost-found.vercel.app",
-        "https://umbc-lost-found.onrender.com",
-        "https://umbc-lost-found-1.onrender.com",  # ✅ <-- Add this line
-        "https://lost-and-found-frontend.onrender.com"
-    ],
+    allow_origins=["*"],  # Allow all origins during testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
