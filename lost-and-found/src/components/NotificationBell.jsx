@@ -21,7 +21,7 @@ const NotificationBell = () => {
     }
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/notifications/${dbUser.id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${dbUser.id}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -68,7 +68,7 @@ const NotificationBell = () => {
     if (!dbUser?.id) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/notifications/${notificationId}/mark-as-read`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/mark-as-read`, {
         method: 'PUT'
       });
       if (!response.ok) {
@@ -84,7 +84,7 @@ const NotificationBell = () => {
     if (!dbUser?.id) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/notifications/${notificationId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE'
       });
       if (!response.ok) {
