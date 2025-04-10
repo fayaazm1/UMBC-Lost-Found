@@ -17,32 +17,21 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Mount all routers under /api prefix
-app.mount("/api", app)
-
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins during testing
+    allow_origins=["*"],  # TODO: Update this with specific origins in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-
+# Logging middleware
 @app.middleware("http")
-async def log_middleware(request: Request, call_next):
-    logger.info(f"{'='*50}")
-    logger.info(f"Incoming request: {request.method} {request.url.path}")
-    logger.info(f"Request origin: {request.headers.get('origin')}")
-    logger.info(f"Request headers: {dict(request.headers)}")
-    
+async def log_requests(request: Request, call_next):
+    logger.info(f"Request: {request.method} {request.url}")
     response = await call_next(request)
-    
-    logger.info(f"Response status: {response.status_code}")
-    logger.info(f"Response headers: {dict(response.headers)}")
-    logger.info(f"{'='*50}")
+    logger.info(f"Response: {response.status_code}")
     return response
 
 # Create database tables
@@ -61,9 +50,10 @@ app.include_router(user_router, prefix="/api")
 
 # Print all registered routes for debugging
 for route in app.routes:
-    logger.info(f"Registered route: {route.path} [{','.join(route.methods)}]")
+    if hasattr(route, 'methods'):  # Only log routes with methods (skip Mount objects)
+        logger.info(f"Registered route: {route.path} [{','.join(route.methods)}]")
 
-@app.get("/api/")
+@app.get("/api")
 async def read_root():
     return {"message": "Welcome to the Lost & Found API"}
 
