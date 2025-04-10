@@ -6,7 +6,7 @@ from database import get_db
 from models.notification import Notification
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/notifications")
 
 class NotificationCreate(BaseModel):
     user_id: int
@@ -28,14 +28,14 @@ class NotificationResponse(BaseModel):
     class Config:
         from_attributes = True
 
-@router.get("/notifications/{user_id}", response_model=List[NotificationResponse])
+@router.get("/{user_id}", response_model=List[NotificationResponse])
 def get_user_notifications(user_id: int, db: Session = Depends(get_db)):
     notifications = db.query(Notification).filter(
         Notification.user_id == user_id
     ).order_by(Notification.created_at.desc()).all()
     return [NotificationResponse(**n.__dict__) for n in notifications]
 
-@router.post("/notifications", response_model=NotificationResponse)
+@router.post("/", response_model=NotificationResponse)
 def create_notification(notification: NotificationCreate, db: Session = Depends(get_db)):
     db_notification = Notification(**notification.dict())
     db.add(db_notification)
@@ -43,7 +43,7 @@ def create_notification(notification: NotificationCreate, db: Session = Depends(
     db.refresh(db_notification)
     return NotificationResponse(**db_notification.__dict__)
 
-@router.put("/notifications/{notification_id}/read")
+@router.put("/{notification_id}/read")
 def mark_as_read(notification_id: int, db: Session = Depends(get_db)):
     notification = db.query(Notification).filter(Notification.id == notification_id).first()
     if not notification:
@@ -53,7 +53,7 @@ def mark_as_read(notification_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
-@router.delete("/notifications/{notification_id}")
+@router.delete("/{notification_id}")
 def delete_notification(notification_id: int, db: Session = Depends(get_db)):
     notification = db.query(Notification).filter(Notification.id == notification_id).first()
     if not notification:

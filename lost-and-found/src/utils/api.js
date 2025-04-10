@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export async function getUserByEmail(email) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/users/email/${email}`);
+    const response = await fetch(`${API_BASE_URL}/users/email/${email}`);
     if (!response.ok) {
       if (response.status === 404) {
         return null;
@@ -20,7 +20,7 @@ export async function getUserByEmail(email) {
 export async function createDbUser(userData) {
   try{
     console.log('Creating database user:', userData);
-    const response = await fetch(`${API_BASE_URL}/api/users`, {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

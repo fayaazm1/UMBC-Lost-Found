@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+# Mount all routers under /api prefix
+app.mount("/api", app)
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
@@ -52,15 +55,15 @@ except Exception as e:
 
 # Include routers with prefix
 logger.info("Registering routes...")
-app.include_router(post_router)
-app.include_router(notification_router)
-app.include_router(user_router)
+app.include_router(post_router, prefix="/api")
+app.include_router(notification_router, prefix="/api")
+app.include_router(user_router, prefix="/api")
 
 # Print all registered routes for debugging
 for route in app.routes:
     logger.info(f"Registered route: {route.path} [{','.join(route.methods)}]")
 
-@app.get("/")
+@app.get("/api/")
 async def read_root():
     return {"message": "Welcome to the Lost & Found API"}
 
