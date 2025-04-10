@@ -53,6 +53,12 @@ for route in app.routes:
     if hasattr(route, 'methods'):  # Only log routes with methods (skip Mount objects)
         logger.info(f"Registered route: {route.path} [{','.join(route.methods)}]")
 
+# Root endpoint
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Lost & Found API. Please use /api endpoint."}
+
+# API root endpoint
 @app.get("/api")
 async def read_root():
     return {"message": "Welcome to the Lost & Found API"}
