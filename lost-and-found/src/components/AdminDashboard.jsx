@@ -1,6 +1,71 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './admin.css';
+
+const styles = {
+    adminDashboard: {
+        padding: '20px',
+        maxWidth: '1200px',
+        margin: '0 auto',
+    },
+    adminHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+    },
+    tabs: {
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '20px',
+    },
+    tab: {
+        padding: '10px 20px',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        backgroundColor: '#e0e0e0',
+    },
+    activeTab: {
+        backgroundColor: '#007bff',
+        color: 'white',
+    },
+    dataTable: {
+        display: 'grid',
+        gap: '20px',
+    },
+    dataRow: {
+        padding: '20px',
+        backgroundColor: 'white',
+        borderRadius: '5px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    },
+    deleteBtn: {
+        backgroundColor: '#dc3545',
+        color: 'white',
+        border: 'none',
+        padding: '5px 10px',
+        borderRadius: '3px',
+        cursor: 'pointer',
+        marginTop: '10px',
+    },
+    logoutBtn: {
+        backgroundColor: '#6c757d',
+        color: 'white',
+        border: 'none',
+        padding: '10px 20px',
+        borderRadius: '5px',
+        cursor: 'pointer',
+    },
+    loading: {
+        textAlign: 'center',
+        padding: '20px',
+    },
+    error: {
+        color: '#dc3545',
+        padding: '20px',
+        textAlign: 'center',
+    }
+};
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('posts');
@@ -64,13 +129,13 @@ const AdminDashboard = () => {
     };
 
     const renderContent = () => {
-        if (loading) return <div className="loading">Loading...</div>;
-        if (error) return <div className="error">{error}</div>;
+        if (loading) return <div style={styles.loading}>Loading...</div>;
+        if (error) return <div style={styles.error}>{error}</div>;
 
         return (
-            <div className="data-table">
+            <div style={styles.dataTable}>
                 {data.map(item => (
-                    <div key={item.id} className="data-row">
+                    <div key={item.id} style={styles.dataRow}>
                         {activeTab === 'posts' && (
                             <>
                                 <h3>{item.title}</h3>
@@ -92,7 +157,7 @@ const AdminDashboard = () => {
                             </>
                         )}
                         <button 
-                            className="delete-btn"
+                            style={styles.deleteBtn}
                             onClick={() => handleDelete(item.id)}
                         >
                             Delete
@@ -104,32 +169,32 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="admin-dashboard">
-            <header className="admin-header">
+        <div style={styles.adminDashboard}>
+            <div style={styles.adminHeader}>
                 <h1>Admin Dashboard</h1>
-                <button onClick={handleLogout} className="logout-btn">Logout</button>
-            </header>
-            <nav className="admin-nav">
+                <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
+            </div>
+            <div style={styles.tabs}>
                 <button 
-                    className={`tab-btn ${activeTab === 'posts' ? 'active' : ''}`}
+                    style={{...styles.tab, ...(activeTab === 'posts' ? styles.activeTab : {})}}
                     onClick={() => setActiveTab('posts')}
                 >
                     Posts
                 </button>
                 <button 
-                    className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+                    style={{...styles.tab, ...(activeTab === 'users' ? styles.activeTab : {})}}
                     onClick={() => setActiveTab('users')}
                 >
                     Users
                 </button>
                 <button 
-                    className={`tab-btn ${activeTab === 'comments' ? 'active' : ''}`}
+                    style={{...styles.tab, ...(activeTab === 'comments' ? styles.activeTab : {})}}
                     onClick={() => setActiveTab('comments')}
                 >
                     Comments
                 </button>
-            </nav>
-            <main className="admin-content">
+            </div>
+            <main style={{padding: '20px'}}>
                 {renderContent()}
             </main>
         </div>
