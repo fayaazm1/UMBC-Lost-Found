@@ -85,7 +85,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const response = await fetch(`/api/admin/${activeTab}`, {
+            const response = await fetch(`https://umbc-lost-found-2-backend.onrender.com/admin/${activeTab}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
                 }
@@ -94,10 +94,16 @@ const AdminDashboard = () => {
                 const result = await response.json();
                 setData(result);
             } else {
-                throw new Error('Failed to fetch data');
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to fetch data');
             }
         } catch (err) {
-            setError('Error loading data');
+            console.error('Error fetching data:', err);
+            setError('Error loading data. Please try again.');
+            if (err.message.includes('unauthorized')) {
+                localStorage.removeItem('adminToken');
+                navigate('/admin/login');
+            }
         } finally {
             setLoading(false);
         }
@@ -107,7 +113,7 @@ const AdminDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this item?')) return;
 
         try {
-            const response = await fetch(`/api/admin/${activeTab}/${id}`, {
+            const response = await fetch(`https://umbc-lost-found-2-backend.onrender.com/admin/${activeTab}/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
@@ -116,10 +122,16 @@ const AdminDashboard = () => {
             if (response.ok) {
                 setData(data.filter(item => item.id !== id));
             } else {
-                throw new Error('Failed to delete');
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to delete');
             }
         } catch (err) {
-            setError('Error deleting item');
+            console.error('Error deleting item:', err);
+            setError('Error deleting item. Please try again.');
+            if (err.message.includes('unauthorized')) {
+                localStorage.removeItem('adminToken');
+                navigate('/admin/login');
+            }
         }
     };
 
@@ -194,9 +206,7 @@ const AdminDashboard = () => {
                     Comments
                 </button>
             </div>
-            <main style={{padding: '20px'}}>
-                {renderContent()}
-            </main>
+            {renderContent()}
         </div>
     );
 };

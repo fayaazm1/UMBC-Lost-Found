@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const styles = {
   container: {
@@ -59,40 +59,41 @@ const styles = {
 };
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { currentUser } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://umbc-lost-found-2-backend.onrender.com';
-      const response = await fetch(`${API_BASE_URL}/admin/login`, {
-        method: 'POST',
+      const url = new URL('https://umbc-lost-found-2-backend.onrender.com/admin/login');
+      url.searchParams.append('username', username);
+      url.searchParams.append('password', password);
+
+      const response = await fetch(url, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
+          "Accept": "application/json",
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to login');
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("adminToken", data.token);
+        navigate("/admin/dashboard");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Invalid credentials");
       }
-
-      // Store admin token
-      localStorage.setItem('adminToken', data.token);
-      navigate('/admin/dashboard');
     } catch (err) {
-      setError('Invalid admin credentials');
-      console.error('Admin login error:', err);
+      console.error("Admin login error:", err);
+      setError("Failed to log in. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -131,7 +132,7 @@ const AdminLogin = () => {
             />
           </div>
           <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>
