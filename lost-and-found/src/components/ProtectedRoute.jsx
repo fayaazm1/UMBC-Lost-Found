@@ -1,15 +1,31 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-function ProtectedRoute({ children }) {
-  const { currentUser } = useAuth();
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
+  const { currentUser, dbUser, loading } = useAuth();
+  const location = useLocation();
 
-  if (!currentUser || !currentUser.emailVerified) {
-    return <Navigate to="/welcome" />;
+  // Check if we're still loading auth state
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // For admin routes
+  if (requireAdmin) {
+    const adminToken = localStorage.getItem('adminToken');
+    if (!adminToken) {
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    return children;
+  }
+  
+  // For regular protected routes
+  if (!currentUser || !dbUser) {
+    return <Navigate to="/welcome" state={{ from: location }} replace />;
   }
 
   return children;
-}
+};
 
 export default ProtectedRoute;
