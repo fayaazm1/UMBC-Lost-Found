@@ -6,6 +6,7 @@ from routes.notification_routes import router as notification_router
 from routes.user_routes import router as user_router
 from app.admin_routes import router as admin_router
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 import logging
 
@@ -35,12 +36,35 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Response: {response.status_code}")
     return response
 
-# Create database tables
+# Create database tables and add is_admin column
 try:
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created successfully")
+    
+    # Add is_admin column if it doesn't exist
+    with engine.connect() as connection:
+        # Check if column exists
+        check_column = text("""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='users' AND column_name='is_admin';
+        """)
+        result = connection.execute(check_column)
+        column_exists = result.fetchone() is not None
+
+        if not column_exists:
+            logger.info("Adding is_admin column to users table...")
+            add_column = text("""
+                ALTER TABLE users 
+                ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
+            """)
+            connection.execute(add_column)
+            connection.commit()
+            logger.info("Added is_admin column successfully")
+        else:
+            logger.info("is_admin column already exists")
 except Exception as e:
-    logger.error(f"Error creating database tables: {str(e)}")
+    logger.error(f"Error setting up database: {str(e)}")
     raise
 
 # Include routers with prefix
