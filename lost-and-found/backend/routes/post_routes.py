@@ -64,7 +64,7 @@ async def create_post(
             image_path = file_location
 
         new_post = Post(
-            report_type=report_type.lower(),  # Ensure lowercase
+            report_type=report_type.lower(),
             item_name=item_name,
             description=description,
             location=location,
@@ -72,7 +72,7 @@ async def create_post(
             date=date,
             time=time,
             image_path=image_path,
-            user_id=user.id,  # Use the database user ID
+            user_id=user.id,
         )
         db.add(new_post)
         db.commit()
