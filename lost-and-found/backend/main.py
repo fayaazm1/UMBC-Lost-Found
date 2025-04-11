@@ -4,6 +4,7 @@ from database import engine, Base
 from routes.post_routes import router as post_router
 from routes.notification_routes import router as notification_router
 from routes.user_routes import router as user_router
+from routes.admin_routes import router as admin_router
 from fastapi.middleware.cors import CORSMiddleware
 
 import logging
@@ -47,6 +48,7 @@ logger.info("Registering routes...")
 app.include_router(post_router, prefix="/api")
 app.include_router(notification_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")  # Add admin routes
 
 # Print all registered routes for debugging
 for route in app.routes:
