@@ -3,14 +3,23 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from database import get_db, SessionLocal
 from models.user import User
+from pydantic import BaseModel
 import os
+
+class AdminSetup(BaseModel):
+    email: str
+    setup_key: str
+
+class AdminLogin(BaseModel):
+    username: str
+    password: str
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.post("/setup-admin")
-async def setup_admin(email: str, setup_key: str):
+async def setup_admin(data: AdminSetup):
     # Verify setup key
-    if setup_key != os.getenv("ADMIN_SETUP_KEY"):
+    if data.setup_key != os.getenv("ADMIN_SETUP_KEY"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid setup key"
@@ -19,7 +28,7 @@ async def setup_admin(email: str, setup_key: str):
     db = SessionLocal()
     try:
         # Find user by email
-        user = db.query(User).filter(User.email == email.lower()).first()
+        user = db.query(User).filter(User.email == data.email.lower()).first()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -43,10 +52,10 @@ async def setup_admin(email: str, setup_key: str):
         db.close()
 
 @router.post("/login")
-async def admin_login(username: str, password: str):
+async def admin_login(data: AdminLogin):
     # Verify against environment variables
-    if username != os.getenv("ADMIN_USERNAME") or \
-       password != os.getenv("ADMIN_PASSWORD"):
+    if data.username != os.getenv("ADMIN_USERNAME") or \
+       data.password != os.getenv("ADMIN_PASSWORD"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
