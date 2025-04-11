@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -10,6 +10,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     password = Column(String, default="firebase_auth")  # Default for Firebase users
     firebase_uid = Column(String, unique=True)
+    is_admin = Column(Boolean, default=False)  # Added is_admin column
 
     # Relationships
     posts = relationship("Post", back_populates="user")
