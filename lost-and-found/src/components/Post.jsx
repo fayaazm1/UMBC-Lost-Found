@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css"; 
 
 const Post = () => {
   const { currentUser } = useAuth();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     reportType: "",
     itemName: "",
@@ -62,7 +60,7 @@ const Post = () => {
     formDataToSend.append("contact_details", formData.contactDetails);
     formDataToSend.append("date", formData.date);
     formDataToSend.append("time", formData.time);
-    formDataToSend.append("user_id", currentUser.uid);
+    formDataToSend.append("user_id", currentUser.email);
 
     if (formData.image) {
       formDataToSend.append("image", formData.image);
@@ -92,12 +90,11 @@ const Post = () => {
         // Reset file input
         const fileInput = document.querySelector('input[type="file"]');
         if (fileInput) fileInput.value = '';
-
-        // Navigate to home page after successful post
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
         
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setSuccess(false);
+        }, 3000);
       } else {
         setError(data.detail || "Failed to create post");
       }

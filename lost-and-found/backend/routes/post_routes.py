@@ -75,24 +75,15 @@ async def create_post(
     contact_details: str = Form(...),
     date: str = Form(...),
     time: str = Form(...),
-    user_id: str = Form(...),  # This will be the Firebase UID
+    user_id: str = Form(...),  # This will be the user's email
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
 ):
     try:
-        # Find user by Firebase UID
-        user = db.query(User).filter(User.firebase_uid == user_id).first()
+        # Find user by email
+        user = db.query(User).filter(User.email == user_id).first()
         if not user:
-            # Create a new user if not found
-            user = User(
-                firebase_uid=user_id,
-                username=f"user_{user_id[:8]}",  # Create a temporary username
-                email="pending@example.com",  # Placeholder email
-                password="firebase_auth"  # Placeholder password since we use Firebase
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
+            raise HTTPException(status_code=404, detail="User not found")
 
         image_path = None
         if image and image.filename:
