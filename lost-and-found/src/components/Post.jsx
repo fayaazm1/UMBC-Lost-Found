@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css"; 
 
-const PostForm = () => {
+const Post = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     reportType: "",
     itemName: "",
@@ -90,6 +92,11 @@ const PostForm = () => {
         // Reset file input
         const fileInput = document.querySelector('input[type="file"]');
         if (fileInput) fileInput.value = '';
+
+        // Navigate to home page after successful post
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
         
       } else {
         setError(data.detail || "Failed to create post");
@@ -99,10 +106,6 @@ const PostForm = () => {
       setError("Failed to create post. Please try again.");
     } finally {
       setLoading(false);
-      // Clear success message after 3 seconds
-      if (success) {
-        setTimeout(() => setSuccess(false), 3000);
-      }
     }
   };
 
@@ -227,4 +230,4 @@ const PostForm = () => {
   );
 };
 
-export default PostForm;
+export default Post;

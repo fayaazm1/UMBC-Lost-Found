@@ -76,6 +76,11 @@ function App() {
               <NotificationsPage />
             </ProtectedRoute>
           } />
+          <Route path="/post" element={
+            <ProtectedRoute>
+              <Post />
+            </ProtectedRoute>
+          } />
           <Route path="/post/:id" element={
             <ProtectedRoute>
               <Post />
