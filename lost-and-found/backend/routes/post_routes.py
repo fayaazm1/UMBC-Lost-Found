@@ -1,14 +1,21 @@
 import os
 import shutil
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session, joinedload
 from database import SessionLocal
 import models
 from models.post import Post
 from models.user import User
 from schemas import PostOut
+from fastapi.responses import JSONResponse
+import logging
 
-router = APIRouter(prefix="/posts")
+logger = logging.getLogger(__name__)
+
+router = APIRouter(
+    prefix="/posts",
+    tags=["posts"]
+)
 
 UPLOAD_DIR = "backend/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -20,10 +27,44 @@ def get_db():
     finally:
         db.close()
 
+def get_cors_headers(request: Request):
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "*",
+        "Access-Control-Allow-Headers": "*"
+    }
+
 @router.get("/", response_model=list[PostOut])
-def get_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).options(joinedload(models.Post.user)).all()
-    return posts
+async def get_posts(request: Request, db: Session = Depends(get_db)):
+    """Get all posts with their associated users"""
+    try:
+        posts = db.query(Post).options(joinedload(Post.user)).all()
+        return JSONResponse(
+            content=[{
+                "id": post.id,
+                "report_type": post.report_type,
+                "item_name": post.item_name,
+                "description": post.description,
+                "location": post.location,
+                "contact_details": post.contact_details,
+                "date": post.date,
+                "time": post.time,
+                "image_path": post.image_path,
+                "user": {
+                    "id": post.user.id,
+                    "username": post.user.username,
+                    "email": post.user.email
+                } if post.user else None
+            } for post in posts],
+            headers=get_cors_headers(request)
+        )
+    except Exception as e:
+        logger.error(f"Error fetching posts: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Database error: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
 
 @router.post("/")
 async def create_post(

@@ -52,7 +52,9 @@ async def list_users(request: Request, db: Session = Depends(get_db)):
             content=[{
                 "id": user.id,
                 "email": user.email,
-                "username": user.username
+                "username": user.username,
+                "firebase_uid": user.firebase_uid,
+                "is_admin": user.is_admin
             } for user in users],
             headers=get_cors_headers(request)
         )
@@ -90,7 +92,8 @@ async def get_user_by_email(request: Request, email: str, db: Session = Depends(
                 "id": user.id,
                 "email": user.email,
                 "username": user.username,
-                "firebase_uid": user.firebase_uid
+                "firebase_uid": user.firebase_uid,
+                "is_admin": user.is_admin
             },
             headers=get_cors_headers(request)
         )
@@ -136,7 +139,13 @@ async def create_user(request: Request, user: UserCreate, db: Session = Depends(
         
         logger.info(f"User created successfully: {user.email}")
         return JSONResponse(
-            content={"id": db_user.id, "email": db_user.email, "username": db_user.username},
+            content={
+                "id": db_user.id,
+                "email": db_user.email,
+                "username": db_user.username,
+                "firebase_uid": db_user.firebase_uid,
+                "is_admin": db_user.is_admin
+            },
             headers=get_cors_headers(request)
         )
     except Exception as e:
@@ -191,7 +200,8 @@ async def search_user_activity(request: Request, email: str, db: Session = Depen
                 "id": user.id,
                 "email": user.email,
                 "username": user.username,
-                "firebase_uid": user.firebase_uid
+                "firebase_uid": user.firebase_uid,
+                "is_admin": user.is_admin
             }
 
         # Find posts by user
@@ -201,8 +211,14 @@ async def search_user_activity(request: Request, email: str, db: Session = Depen
             posts = [
                 {
                     "id": post.id,
-                    "title": post.title,
-                    "content": post.content
+                    "report_type": post.report_type,
+                    "item_name": post.item_name,
+                    "description": post.description,
+                    "location": post.location,
+                    "contact_details": post.contact_details,
+                    "date": post.date,
+                    "time": post.time,
+                    "image_path": post.image_path
                 }
                 for post in user_posts
             ]
