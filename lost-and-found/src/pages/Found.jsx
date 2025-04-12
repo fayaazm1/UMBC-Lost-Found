@@ -19,8 +19,21 @@ const Found = () => {
     const fetchPosts = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
-        const foundPosts = data.filter(post => post.report_type?.toLowerCase() === "found");
+        console.log("All posts:", data); // Debug log
+
+        if (!Array.isArray(data)) {
+          throw new Error('Expected array of posts');
+        }
+
+        // Filter for found posts and ensure report_type is case-insensitive
+        const foundPosts = data.filter(post => 
+          post && post.report_type && post.report_type.toLowerCase() === "found"
+        );
+        console.log("Found posts:", foundPosts); // Debug log
         setPosts(foundPosts);
       } catch (error) {
         console.error("Error fetching posts:", error);
@@ -101,9 +114,9 @@ const Found = () => {
               </div>
             ))}
           </div>
-          <h2 className="recent-title">Recent Posts</h2>
+          <h2 className="recent-title">Found Items</h2>
           <div className="recent-posts-list scrollable">
-            {posts.filter((post) => !isPriorityPost(post.description)).slice(0, 5).map((post, index) => (
+            {posts.map((post, index) => (
               <div key={index} className="recent-post-card">
                 <div className="recent-post-date">
                   {new Date(post.date).toLocaleDateString("en-US", {
@@ -120,7 +133,7 @@ const Found = () => {
                 <div className="recent-post-desc">{post.description}</div>
                 {post.image_path && (
                   <img
-                  src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
+                    src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
                     alt="Found Item"
                     style={{ width: "120px", marginTop: "8px" }}
                   />

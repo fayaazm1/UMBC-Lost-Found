@@ -53,7 +53,11 @@ const Post = () => {
     }
 
     const formDataToSend = new FormData();
-    formDataToSend.append("report_type", formData.reportType.toLowerCase());
+    // Normalize report type to lowercase and trim whitespace
+    const normalizedReportType = formData.reportType.toLowerCase().trim();
+    console.log('Sending report_type:', normalizedReportType); // Debug log
+    
+    formDataToSend.append("report_type", normalizedReportType);
     formDataToSend.append("item_name", formData.itemName);
     formDataToSend.append("description", formData.description);
     formDataToSend.append("location", formData.location);

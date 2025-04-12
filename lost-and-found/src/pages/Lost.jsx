@@ -128,10 +128,10 @@ const Lost = () => {
             ))}
           </div>
           
-          <h2 className="recent-title">Recent Posts</h2>
+          <h2 className="recent-title">Lost Items</h2>
           <div className="recent-posts-list scrollable">
-            {posts.filter((post) => !isPriorityPost(post.description)).map((post, index) => (
-              <div key={post.id || index} className="recent-post-card">
+            {posts.map((post, index) => (
+              <div key={index} className="recent-post-card">
                 <div className="recent-post-date">
                   {new Date(post.date).toLocaleDateString("en-US", {
                     weekday: "long",
@@ -147,7 +147,7 @@ const Lost = () => {
                 <div className="recent-post-desc">{post.description}</div>
                 {post.image_path && (
                   <img
-                  src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
+                    src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
                     alt="Lost Item"
                     style={{ width: "120px", marginTop: "8px" }}
                   />

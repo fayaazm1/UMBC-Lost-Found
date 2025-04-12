@@ -39,10 +39,14 @@ async def get_posts(request: Request, db: Session = Depends(get_db)):
     """Get all posts with their associated users"""
     try:
         posts = db.query(Post).options(joinedload(Post.user)).all()
+        # Log all posts for debugging
+        for post in posts:
+            logger.info(f"Post ID: {post.id}, Report Type: {post.report_type}, Item: {post.item_name}")
+            
         return JSONResponse(
             content=[{
                 "id": post.id,
-                "report_type": post.report_type,
+                "report_type": post.report_type.lower().strip() if post.report_type else None,
                 "item_name": post.item_name,
                 "description": post.description,
                 "location": post.location,
@@ -78,12 +82,21 @@ async def create_post(
     user_id: str = Form(...),  # This will be the user's email
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
     try:
+        # Log the report type for debugging
+        logger.info(f"Received report_type: {report_type}")
+        
         # Find user by email
         user = db.query(User).filter(User.email == user_id).first()
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            logger.error(f"User not found with email: {user_id}")
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "User not found"},
+                headers=get_cors_headers(request)
+            )
 
         image_path = None
         if image and image.filename:
@@ -95,8 +108,12 @@ async def create_post(
 
             image_path = file_location
 
+        # Normalize report type to lowercase and trim whitespace
+        normalized_report_type = report_type.lower().strip()
+        logger.info(f"Normalized report_type: {normalized_report_type}")
+
         new_post = Post(
-            report_type=report_type.lower(),
+            report_type=normalized_report_type,
             item_name=item_name,
             description=description,
             location=location,
@@ -110,8 +127,35 @@ async def create_post(
         db.commit()
         db.refresh(new_post)
 
-        return {"message": "Post created successfully", "post": new_post}
+        logger.info(f"Post created successfully by user {user_id} with report_type: {new_post.report_type}")
+        return JSONResponse(
+            content={
+                "message": "Post created successfully",
+                "post": {
+                    "id": new_post.id,
+                    "report_type": new_post.report_type,
+                    "item_name": new_post.item_name,
+                    "description": new_post.description,
+                    "location": new_post.location,
+                    "contact_details": new_post.contact_details,
+                    "date": new_post.date,
+                    "time": new_post.time,
+                    "image_path": new_post.image_path,
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "email": user.email
+                    }
+                }
+            },
+            headers=get_cors_headers(request)
+        )
 
     except Exception as e:
+        logger.error(f"Error creating post: {str(e)}")
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error creating post: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
