@@ -49,7 +49,11 @@ async def list_users(request: Request, db: Session = Depends(get_db)):
     try:
         users = db.query(User).all()
         return JSONResponse(
-            content=[{"id": user.id, "email": user.email, "username": user.username} for user in users],
+            content=[{
+                "id": user.id,
+                "email": user.email,
+                "username": user.username
+            } for user in users],
             headers=get_cors_headers(request)
         )
     except Exception as e:
@@ -198,8 +202,7 @@ async def search_user_activity(request: Request, email: str, db: Session = Depen
                 {
                     "id": post.id,
                     "title": post.title,
-                    "content": post.content,
-                    "created_at": post.created_at
+                    "content": post.content
                 }
                 for post in user_posts
             ]
@@ -212,7 +215,6 @@ async def search_user_activity(request: Request, email: str, db: Session = Depen
                 {
                     "id": comment.id,
                     "content": comment.content,
-                    "created_at": comment.created_at,
                     "post_id": comment.post_id
                 }
                 for comment in user_comments
