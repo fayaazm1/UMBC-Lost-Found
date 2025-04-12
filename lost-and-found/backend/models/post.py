@@ -15,7 +15,6 @@ class Post(Base):
     date = Column(String)
     time = Column(String)
     image_path = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Foreign key to link to user
     user_id = Column(Integer, ForeignKey("users.id"))
