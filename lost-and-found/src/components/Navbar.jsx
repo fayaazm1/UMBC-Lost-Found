@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaUser, FaCog, FaSignOutAlt, FaEnvelope, FaBars, FaBell } from 'react-icons/fa';
+import { FaSearch, FaUser, FaCog, FaSignOutAlt, FaEnvelope, FaBars, FaBell, FaShieldAlt } from 'react-icons/fa';
 import './Navbar.css';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -99,15 +99,15 @@ function Navbar() {
                   <div className="profile-dropdown">
                     <Link to="/profile" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
                       <FaUser className="dropdown-icon" />
-                      <span>Profile</span>
+                      Profile
                     </Link>
-                    <Link to="/settings" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                      <FaCog className="dropdown-icon" />
-                      <span>Settings</span>
+                    <Link to="/admin/login" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
+                      <FaShieldAlt className="dropdown-icon" />
+                      Admin Panel
                     </Link>
                     <button className="dropdown-item" onClick={handleLogout}>
                       <FaSignOutAlt className="dropdown-icon" />
-                      <span>Logout</span>
+                      Logout
                     </button>
                   </div>
                 )}
@@ -172,9 +172,9 @@ function Navbar() {
                 <FaUser />
                 <span>Profile</span>
               </Link>
-              <Link to="/settings" className="mobile-nav-link" onClick={closeMenu}>
-                <FaCog />
-                <span>Settings</span>
+              <Link to="/admin/login" className="mobile-nav-link" onClick={closeMenu}>
+                <FaShieldAlt />
+                <span>Admin Panel</span>
               </Link>
               <button className="mobile-nav-link logout-button" onClick={handleLogout}>
                 <FaSignOutAlt />

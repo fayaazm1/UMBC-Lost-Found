@@ -1,13 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routes.post_routes import router as post_router
 from routes.notification_routes import router as notification_router
 from routes.user_routes import router as user_router
 from app.admin_routes import router as admin_router
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
-
+from sqlalchemy import inspect, text
 import logging
 
 # Configure logging
@@ -19,10 +18,15 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# CORS configuration
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Update this with specific origins in production
+    allow_origins=[
+        "http://localhost:5173",
+        "https://umbc-lost-found.vercel.app",
+        "https://umbc-lost-found-1.onrender.com",
+        "http://umbc-lost-found-1.onrender.com"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,28 +45,18 @@ try:
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created successfully")
     
-    # Add is_admin column if it doesn't exist
-    with engine.connect() as connection:
-        # Check if column exists
-        check_column = text("""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name='users' AND column_name='is_admin';
-        """)
-        result = connection.execute(check_column)
-        column_exists = result.fetchone() is not None
-
-        if not column_exists:
-            logger.info("Adding is_admin column to users table...")
-            add_column = text("""
-                ALTER TABLE users 
-                ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
-            """)
-            connection.execute(add_column)
+    # Check if is_admin column exists using SQLAlchemy inspect
+    inspector = inspect(engine)
+    columns = [col['name'] for col in inspector.get_columns('users')]
+    if 'is_admin' not in columns:
+        logger.info("Adding is_admin column to users table...")
+        with engine.connect() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE"))
             connection.commit()
             logger.info("Added is_admin column successfully")
-        else:
-            logger.info("is_admin column already exists")
+    else:
+        logger.info("is_admin column already exists")
+
 except Exception as e:
     logger.error(f"Error setting up database: {str(e)}")
     raise
@@ -72,7 +66,7 @@ logger.info("Registering routes...")
 app.include_router(post_router, prefix="/api")
 app.include_router(notification_router, prefix="/api")
 app.include_router(user_router, prefix="/api")
-app.include_router(admin_router, prefix="/api")  # Add admin routes
+app.include_router(admin_router, prefix="/api", tags=["admin"])  
 
 # Print all registered routes for debugging
 for route in app.routes:

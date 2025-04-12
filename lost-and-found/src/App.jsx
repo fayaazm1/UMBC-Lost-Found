@@ -16,10 +16,9 @@ import Profile from "./pages/Profile";
 import NotificationsPage from "./pages/NotificationsPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { useAuth } from "./contexts/AuthContext";
 
-// Move your inner App here
-function AppContent() {
+function App() {
   const { currentUser } = useAuth();
 
   return (
@@ -28,26 +27,33 @@ function AppContent() {
       <div className="content">
         <Routes>
           {/* Admin Routes */}
-          <Route path="/admin">
-            <Route path="login" element={<AdminLogin />} />
-            <Route path="dashboard" element={
-              <ProtectedRoute requireAdmin={true}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-          </Route>
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
 
           {/* Public Routes */}
           <Route path="/welcome" element={<Welcome />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Protected Routes */}
           <Route path="/" element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          } />
+          <Route path="/about" element={
+            <ProtectedRoute>
+              <About />
+            </ProtectedRoute>
+          } />
+          <Route path="/contact" element={
+            <ProtectedRoute>
+              <Contact />
             </ProtectedRoute>
           } />
           <Route path="/lost" element={
@@ -60,21 +66,6 @@ function AppContent() {
               <Found />
             </ProtectedRoute>
           } />
-          <Route path="/contact" element={
-            <ProtectedRoute>
-              <Contact />
-            </ProtectedRoute>
-          } />
-          <Route path="/about" element={
-            <ProtectedRoute>
-              <About />
-            </ProtectedRoute>
-          } />
-          <Route path="/post" element={
-            <ProtectedRoute>
-              <Post />
-            </ProtectedRoute>
-          } />
           <Route path="/profile" element={
             <ProtectedRoute>
               <Profile />
@@ -85,26 +76,17 @@ function AppContent() {
               <NotificationsPage />
             </ProtectedRoute>
           } />
-          <Route path="/admin/dashboard" element={
+          <Route path="/post/:id" element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <Post />
             </ProtectedRoute>
           } />
 
-          {/* Redirect unmatched routes */}
-          <Route path="*" element={<Navigate to="/welcome" replace />} />
+          {/* Default Route */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     </div>
-  );
-}
-
-// Main App component
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
   );
 }
 

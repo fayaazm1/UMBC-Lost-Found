@@ -25,25 +25,51 @@ export function AuthProvider({ children }) {
 
   async function signup(email, password, displayName) {
     console.log("SIGNUP:", email, password, displayName);
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    let firebaseUser = null;
+    try {
+      // Create Firebase user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      firebaseUser = userCredential.user;
 
-    await updateProfile(user, { displayName });
+      // Update profile with display name
+      await updateProfile(firebaseUser, { displayName });
 
-    const dbUserData = await createDbUser({
-      email: user.email.toLowerCase(),
-      username: displayName,
-      firebase_uid: user.uid
-    });
+      try {
+        // Try to create database user
+        const dbUserData = await createDbUser({
+          email: firebaseUser.email.toLowerCase(),
+          username: displayName,
+          firebase_uid: firebaseUser.uid
+        });
 
-    if (!dbUserData) {
-      await deleteUser(user);
-      throw new Error("Signup failed. Please try again.");
+        if (!dbUserData) {
+          throw new Error("Failed to create database user");
+        }
+
+        setDbUser(dbUserData);
+        await sendEmailVerification(firebaseUser);
+        return firebaseUser;
+
+      } catch (dbError) {
+        // If database creation fails, delete the Firebase user
+        console.error("Database error during signup:", dbError);
+        if (firebaseUser) {
+          await deleteUser(firebaseUser);
+        }
+        throw new Error(dbError.message || "Failed to create user in database. Please try again with a different username.");
+      }
+    } catch (error) {
+      // If Firebase user creation fails or we caught a database error
+      console.error("Error during signup:", error);
+      if (firebaseUser) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch (deleteError) {
+          console.error("Error deleting Firebase user after failed signup:", deleteError);
+        }
+      }
+      throw error;
     }
-
-    setDbUser(dbUserData);
-    await sendEmailVerification(user);
-    return user;
   }
 
   async function login(email, password) {
@@ -81,22 +107,23 @@ export function AuthProvider({ children }) {
       }
 
       setDbUser(dbUserData);
-      return userCredential;
-
+      return firebaseUser;
     } catch (error) {
-      console.error("❌ Login error in AuthContext:", error);
+      console.error("Error during login:", error);
       throw error;
     }
   }
 
   async function logout() {
     setDbUser(null);
-    await signOut(auth);
+    return signOut(auth);
   }
 
   async function resendVerificationEmail() {
-    if (currentUser && !currentUser.emailVerified) {
+    if (currentUser) {
       await sendEmailVerification(currentUser);
+    } else {
+      throw new Error('No user is currently signed in');
     }
   }
 
@@ -104,23 +131,13 @@ export function AuthProvider({ children }) {
     let isMounted = true;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("🔥 Firebase onAuthStateChanged:", user);
       try {
-        console.log("🔥 Firebase onAuthStateChanged:", user);
-        if (user && isMounted) {
-          await reload(user);
-          if (!user.emailVerified) {
-            setCurrentUser(null);
-            setDbUser(null);
-            return;
-          }
-
-          const dbUserData = await getUserByEmail(user.email.toLowerCase());
-          if (dbUserData && isMounted) {
-            setDbUser(dbUserData);
+        if (user) {
+          if (isMounted) {
             setCurrentUser(user);
-          } else {
-            setCurrentUser(null);
-            setDbUser(null);
+            const dbUserData = await getUserByEmail(user.email.toLowerCase());
+            setDbUser(dbUserData);
           }
         } else if (isMounted) {
           setDbUser(null);

@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
+from models.post import Post
+from models.comment import Comment
 from pydantic import BaseModel
 import logging
 
@@ -33,6 +35,31 @@ class UserCreate(BaseModel):
     username: str
     firebase_uid: str
 
+@router.options("/")
+async def options_list_users(request: Request):
+    return JSONResponse(
+        content={},
+        headers=get_cors_headers(request)
+    )
+
+@router.get("/")
+async def list_users(request: Request, db: Session = Depends(get_db)):
+    """Get all users"""
+    logger.info("Fetching all users")
+    try:
+        users = db.query(User).all()
+        return JSONResponse(
+            content=[{"id": user.id, "email": user.email, "username": user.username} for user in users],
+            headers=get_cors_headers(request)
+        )
+    except Exception as e:
+        logger.error(f"Error fetching users: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Database error: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
+
 @router.options("/email/{email}")
 async def options_user_by_email(request: Request, email: str):
     return JSONResponse(
@@ -42,17 +69,18 @@ async def options_user_by_email(request: Request, email: str):
 
 @router.get("/email/{email}")
 async def get_user_by_email(request: Request, email: str, db: Session = Depends(get_db)):
-    logger.info(f"Attempting to fetch user with email: {email}")
+    """Get user by email"""
+    logger.info(f"Fetching user with email: {email}")
     try:
         user = db.query(User).filter(User.email == email).first()
-        logger.info(f"Query result: {user}")
         if not user:
-            logger.warning(f"User not found for email: {email}")
+            logger.warning(f"User not found: {email}")
             return JSONResponse(
                 status_code=404,
                 content={"detail": "User not found"},
                 headers=get_cors_headers(request)
             )
+        
         return JSONResponse(
             content={
                 "id": user.id,
@@ -79,52 +107,127 @@ async def options_create_user(request: Request):
 
 @router.post("/")
 async def create_user(request: Request, user: UserCreate, db: Session = Depends(get_db)):
-    logger.info(f"Attempting to create user with email: {user.email}")
+    """Create a new user"""
+    logger.info(f"Creating user with email: {user.email}")
     try:
-        # Check if user already exists
-        existing_user = db.query(User).filter(
-            (User.email == user.email) | (User.firebase_uid == user.firebase_uid)
-        ).first()
-        
+        # Check if user with email already exists
+        existing_user = db.query(User).filter(User.email == user.email).first()
         if existing_user:
-            if existing_user.email == user.email:
-                logger.warning(f"Email already registered: {user.email}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"detail": "Email already registered"},
-                    headers=get_cors_headers(request)
-                )
-            else:
-                logger.warning(f"User already exists with firebase_uid: {user.firebase_uid}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"detail": "User already exists"},
-                    headers=get_cors_headers(request)
-                )
+            logger.warning(f"User with email already exists: {user.email}")
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Email already registered"},
+                headers=get_cors_headers(request)
+            )
 
         # Create new user
         db_user = User(
-            email=user.email,
+            email=user.email.lower(),
             username=user.username,
             firebase_uid=user.firebase_uid
         )
-        
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        logger.info(f"Successfully created user with email: {user.email}")
+        
+        logger.info(f"User created successfully: {user.email}")
+        return JSONResponse(
+            content={"id": db_user.id, "email": db_user.email, "username": db_user.username},
+            headers=get_cors_headers(request)
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating user: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Database error: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
+
+@router.delete("/by-email/{email}")
+async def delete_user_by_email(request: Request, email: str, db: Session = Depends(get_db)):
+    """Delete user by email"""
+    logger.info(f"Attempting to delete user with email: {email}")
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            logger.warning(f"User not found for deletion: {email}")
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "User not found"},
+                headers=get_cors_headers(request)
+            )
+        
+        db.delete(user)
+        db.commit()
+        logger.info(f"User deleted successfully: {email}")
+        return JSONResponse(
+            content={"message": "User deleted successfully"},
+            headers=get_cors_headers(request)
+        )
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting user: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Database error: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
+
+@router.get("/search/{email}")
+async def search_user_activity(request: Request, email: str, db: Session = Depends(get_db)):
+    """Search for all activity related to a user's email"""
+    logger.info(f"Searching for all activity for email: {email}")
+    try:
+        # Find user
+        user = db.query(User).filter(User.email == email).first()
+        user_data = None
+        if user:
+            user_data = {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "firebase_uid": user.firebase_uid
+            }
+
+        # Find posts by user
+        posts = []
+        if user:
+            user_posts = db.query(Post).filter(Post.user_id == user.id).all()
+            posts = [
+                {
+                    "id": post.id,
+                    "title": post.title,
+                    "content": post.content,
+                    "created_at": post.created_at
+                }
+                for post in user_posts
+            ]
+
+        # Find comments by user
+        comments = []
+        if user:
+            user_comments = db.query(Comment).filter(Comment.user_id == user.id).all()
+            comments = [
+                {
+                    "id": comment.id,
+                    "content": comment.content,
+                    "created_at": comment.created_at,
+                    "post_id": comment.post_id
+                }
+                for comment in user_comments
+            ]
+
         return JSONResponse(
             content={
-                "id": db_user.id,
-                "email": db_user.email,
-                "username": db_user.username,
-                "firebase_uid": db_user.firebase_uid
+                "user": user_data,
+                "posts": posts,
+                "comments": comments
             },
             headers=get_cors_headers(request)
         )
     except Exception as e:
-        logger.error(f"Error creating user: {str(e)}")
-        db.rollback()
+        logger.error(f"Error searching user activity: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"detail": f"Database error: {str(e)}"},

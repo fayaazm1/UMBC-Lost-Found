@@ -11,18 +11,16 @@ function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const { signup, currentUser } = useAuth();
+  const [showResendButton, setShowResendButton] = useState(false);
+  const { signup, currentUser, resendVerificationEmail } = useAuth();
   const navigate = useNavigate();
 
   // Clear form when success state changes to true
   useEffect(() => {
     if (success) {
-      const timer = setTimeout(() => {
-        navigate('/welcome');
-      }, 3000); // Navigate after 3 seconds
-      return () => clearTimeout(timer);
+      setShowResendButton(true);
     }
-  }, [success, navigate]);
+  }, [success]);
 
   if (currentUser && currentUser.emailVerified) {
     return <Navigate to="/" replace />;
@@ -52,6 +50,19 @@ function Signup() {
     }
   }
 
+  async function handleResendVerification() {
+    try {
+      setLoading(true);
+      await resendVerificationEmail();
+      setError('');
+      setSuccess(true);
+    } catch (error) {
+      setError('Failed to resend verification email: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -64,7 +75,26 @@ function Signup() {
             {success && (
               <div className="alert alert-success">
                 Registration successful! Please check your email for verification.
-                Redirecting to login page in 3 seconds...
+                {showResendButton && (
+                  <div style={{ marginTop: '10px' }}>
+                    <button
+                      onClick={handleResendVerification}
+                      className="auth-button secondary"
+                      disabled={loading}
+                      style={{
+                        backgroundColor: 'transparent',
+                        border: '1px solid #007bff',
+                        color: '#007bff',
+                        padding: '8px 16px',
+                        fontSize: '0.9em',
+                        width: 'auto',
+                        display: 'inline-block'
+                      }}
+                    >
+                      {loading ? 'Sending...' : 'Resend Verification Email'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             

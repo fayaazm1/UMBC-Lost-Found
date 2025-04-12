@@ -2,31 +2,23 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Get the database URL from environment variable or use SQLite as default
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db")
 
-DATABASE_URL = os.environ["DATABASE_URL"]
-print(f"Using DATABASE_URL: {DATABASE_URL}")  # Debug line
-
-# Handle special case for Heroku-style DATABASE_URLs
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    print(f"Converted DATABASE_URL: {DATABASE_URL}")  # Debug line
-
+# Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
-print(f"Engine created with DATABASE_URL: {DATABASE_URL}")  # Debug line
 
+# Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-print("Session maker bound to engine")  # Debug line
 
+# Create Base class
 Base = declarative_base()
 
+# Dependency to get DB session
 def get_db():
     db = SessionLocal()
     try:
-        print("Database session started")  # Debug line
         yield db
     finally:
         db.close()
-        print("Database session closed")  # Debug line

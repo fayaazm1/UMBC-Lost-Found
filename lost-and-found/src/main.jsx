@@ -7,10 +7,10 @@ import App from './App';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <HashRouter>
+    <HashRouter>
+      <AuthProvider>
         <App />
-      </HashRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </HashRouter>
   </React.StrictMode>
 );

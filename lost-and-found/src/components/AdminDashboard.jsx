@@ -1,137 +1,85 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const styles = {
-    adminDashboard: {
-        padding: '20px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-    },
-    adminHeader: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-    },
-    tabs: {
-        display: 'flex',
-        gap: '10px',
-        marginBottom: '20px',
-    },
-    tab: {
-        padding: '10px 20px',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        backgroundColor: '#e0e0e0',
-    },
-    activeTab: {
-        backgroundColor: '#007bff',
-        color: 'white',
-    },
-    dataTable: {
-        display: 'grid',
-        gap: '20px',
-    },
-    dataRow: {
-        padding: '20px',
-        backgroundColor: 'white',
-        borderRadius: '5px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    },
-    deleteBtn: {
-        backgroundColor: '#dc3545',
-        color: 'white',
-        border: 'none',
-        padding: '5px 10px',
-        borderRadius: '3px',
-        cursor: 'pointer',
-        marginTop: '10px',
-    },
-    logoutBtn: {
-        backgroundColor: '#6c757d',
-        color: 'white',
-        border: 'none',
-        padding: '10px 20px',
-        borderRadius: '5px',
-        cursor: 'pointer',
-    },
-    loading: {
-        textAlign: 'center',
-        padding: '20px',
-    },
-    error: {
-        color: '#dc3545',
-        padding: '20px',
-        textAlign: 'center',
-    }
-};
+import { getBaseURL } from '../config/api';
+import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('posts');
-    const [data, setData] = useState([]);
+    const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
-        const adminToken = localStorage.getItem('adminToken');
-        if (!adminToken) {
-            navigate('/admin/login');
-            return;
-        }
-        fetchData();
-    }, [activeTab]);
+        fetchPosts();
+    }, []);
 
-    const fetchData = async () => {
+    const fetchPosts = async () => {
         try {
-            const response = await fetch(`https://umbc-lost-found-2-backend.onrender.com/admin/${activeTab}`, {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                navigate('/admin/login');
+                return;
+            }
+
+            const response = await fetch(`${getBaseURL()}/admin/posts`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
-            if (response.ok) {
-                const result = await response.json();
-                setData(result);
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to fetch data');
+
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('adminToken');
+                    navigate('/admin/login');
+                    return;
+                }
+                throw new Error('Failed to fetch posts');
             }
+
+            const data = await response.json();
+            setPosts(data);
+            setError('');
         } catch (err) {
-            console.error('Error fetching data:', err);
-            setError('Error loading data. Please try again.');
-            if (err.message.includes('unauthorized')) {
-                localStorage.removeItem('adminToken');
-                navigate('/admin/login');
-            }
+            console.error('Error fetching posts:', err);
+            setError('Error loading posts. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this item?')) return;
+    const handleDelete = async (postId) => {
+        if (!window.confirm('Are you sure you want to delete this post?')) return;
 
         try {
-            const response = await fetch(`https://umbc-lost-found-2-backend.onrender.com/admin/${activeTab}/${id}`, {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                navigate('/admin/login');
+                return;
+            }
+
+            const response = await fetch(`${getBaseURL()}/admin/posts/${postId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
-            if (response.ok) {
-                setData(data.filter(item => item.id !== id));
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to delete');
+
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('adminToken');
+                    navigate('/admin/login');
+                    return;
+                }
+                throw new Error('Failed to delete post');
             }
+
+            setPosts(posts.filter(post => post.id !== postId));
+            setError('');
         } catch (err) {
-            console.error('Error deleting item:', err);
-            setError('Error deleting item. Please try again.');
-            if (err.message.includes('unauthorized')) {
-                localStorage.removeItem('adminToken');
-                navigate('/admin/login');
-            }
+            console.error('Error deleting post:', err);
+            setError('Error deleting post. Please try again.');
         }
     };
 
@@ -140,73 +88,46 @@ const AdminDashboard = () => {
         navigate('/admin/login');
     };
 
-    const renderContent = () => {
-        if (loading) return <div style={styles.loading}>Loading...</div>;
-        if (error) return <div style={styles.error}>{error}</div>;
-
-        return (
-            <div style={styles.dataTable}>
-                {data.map(item => (
-                    <div key={item.id} style={styles.dataRow}>
-                        {activeTab === 'posts' && (
-                            <>
-                                <h3>{item.title}</h3>
-                                <p>{item.content}</p>
-                                <span>Posted by: {item.author}</span>
-                            </>
-                        )}
-                        {activeTab === 'users' && (
-                            <>
-                                <h3>{item.username}</h3>
-                                <p>Email: {item.email}</p>
-                                <span>Joined: {new Date(item.createdAt).toLocaleDateString()}</span>
-                            </>
-                        )}
-                        {activeTab === 'comments' && (
-                            <>
-                                <p>{item.content}</p>
-                                <span>By: {item.author} on Post: {item.postTitle}</span>
-                            </>
-                        )}
-                        <button 
-                            style={styles.deleteBtn}
-                            onClick={() => handleDelete(item.id)}
-                        >
-                            Delete
-                        </button>
-                    </div>
-                ))}
-            </div>
-        );
-    };
+    if (loading) return <div className="loading">Loading...</div>;
+    if (error) return <div className="error">{error}</div>;
 
     return (
-        <div style={styles.adminDashboard}>
-            <div style={styles.adminHeader}>
+        <div className="admin-dashboard">
+            <div className="header">
                 <h1>Admin Dashboard</h1>
-                <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
+                <button onClick={handleLogout} className="logout-button">Logout</button>
             </div>
-            <div style={styles.tabs}>
-                <button 
-                    style={{...styles.tab, ...(activeTab === 'posts' ? styles.activeTab : {})}}
-                    onClick={() => setActiveTab('posts')}
-                >
-                    Posts
-                </button>
-                <button 
-                    style={{...styles.tab, ...(activeTab === 'users' ? styles.activeTab : {})}}
-                    onClick={() => setActiveTab('users')}
-                >
-                    Users
-                </button>
-                <button 
-                    style={{...styles.tab, ...(activeTab === 'comments' ? styles.activeTab : {})}}
-                    onClick={() => setActiveTab('comments')}
-                >
-                    Comments
-                </button>
+
+            <div className="posts-grid">
+                {posts.length === 0 ? (
+                    <div className="no-posts">No posts found</div>
+                ) : (
+                    posts.map(post => (
+                        <div key={post.id} className="post-card">
+                            <h3>{post.item_name || 'Untitled Post'}</h3>
+                            <p><strong>Type:</strong> {post.report_type}</p>
+                            <p><strong>Description:</strong> {post.description}</p>
+                            <p><strong>Location:</strong> {post.location}</p>
+                            <p><strong>Date:</strong> {post.date}</p>
+                            <p><strong>Time:</strong> {post.time || 'N/A'}</p>
+                            {post.image_path && (
+                                <img 
+                                    src={post.image_path} 
+                                    alt="Post" 
+                                    className="post-image"
+                                    onError={(e) => e.target.style.display = 'none'}
+                                />
+                            )}
+                            <button 
+                                onClick={() => handleDelete(post.id)}
+                                className="delete-button"
+                            >
+                                Delete Post
+                            </button>
+                        </div>
+                    ))
+                )}
             </div>
-            {renderContent()}
         </div>
     );
 };

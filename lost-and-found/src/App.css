@@ -11,9 +11,10 @@
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background: var(--background-dark);
   overflow-x: hidden;
+  position: relative;
 }
 
 * {
@@ -22,13 +23,20 @@
   padding: 0;
 }
 
-html, body {
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
   overflow-x: hidden;
+  overflow-y: auto;
   background: var(--background-dark);
+  position: fixed;
 }
 
 .card {
