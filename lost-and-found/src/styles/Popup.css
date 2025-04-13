@@ -1,0 +1,135 @@
+/* Popup Styles */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.popup-container {
+  background: var(--background-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 90%;
+  width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: var(--shadow-strong);
+  z-index: 10000;
+}
+
+.popup-container .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.3s ease;
+  z-index: 10001;
+}
+
+.popup-container .close-btn:hover {
+  color: var(--accent-color);
+}
+
+.popup-container .post-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.popup-container .user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.popup-container .post-header-info h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.popup-container .post-meta {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.popup-container .post-content {
+  margin-bottom: 1.5rem;
+}
+
+.popup-container .post-content p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.popup-container .post-content strong {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.popup-container .post-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.popup-container .action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.popup-container .message-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.popup-container .message-btn:hover {
+  background: var(--secondary-color);
+  transform: translateY(-2px);
+}
+
+@media screen and (max-width: 480px) {
+  .popup-container {
+    padding: 1.5rem;
+    width: 95%;
+  }
+
+  .popup-container .post-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .popup-container .post-header-info h3 {
+    font-size: 1.25rem;
+  }
+
+  .popup-container .message-btn {
+    width: 100%;
+  }
+}

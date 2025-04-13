@@ -6,7 +6,6 @@ from database import SessionLocal
 import models
 from models.post import Post
 from models.user import User
-from schemas import PostOut
 from fastapi.responses import JSONResponse
 import logging
 
@@ -34,32 +33,43 @@ def get_cors_headers(request: Request):
         "Access-Control-Allow-Headers": "*"
     }
 
-@router.get("/", response_model=list[PostOut])
+@router.get("/")
 async def get_posts(request: Request, db: Session = Depends(get_db)):
     """Get all posts with their associated users"""
     try:
+        # Add logging for debugging
+        logger.info("Fetching posts with user information...")
+        
+        # Query posts with user information
         posts = db.query(Post).options(joinedload(Post.user)).all()
-        # Log all posts for debugging
+        
+        # Log post information for debugging
         for post in posts:
-            logger.info(f"Post ID: {post.id}, Report Type: {post.report_type}, Item: {post.item_name}")
+            logger.info(f"Post ID: {post.id}, User ID: {post.user_id if post.user_id else 'None'}")
+            logger.info(f"User info: {post.user.username if post.user else 'No user'}")
             
+        # Convert to response format
+        response_data = [{
+            "id": post.id,
+            "report_type": post.report_type.lower().strip() if post.report_type else None,
+            "item_name": post.item_name,
+            "description": post.description,
+            "location": post.location,
+            "contact_details": post.contact_details,
+            "date": post.date,
+            "time": post.time,
+            "image_path": post.image_path,
+            "user": {
+                "id": post.user.id,
+                "_id": post.user.id,  # Add _id for frontend compatibility
+                "username": post.user.username,
+                "email": post.user.email
+            } if post.user else None
+        } for post in posts]
+        
+        logger.info(f"Successfully fetched {len(posts)} posts")
         return JSONResponse(
-            content=[{
-                "id": post.id,
-                "report_type": post.report_type.lower().strip() if post.report_type else None,
-                "item_name": post.item_name,
-                "description": post.description,
-                "location": post.location,
-                "contact_details": post.contact_details,
-                "date": post.date,
-                "time": post.time,
-                "image_path": post.image_path,
-                "user": {
-                    "id": post.user.id,
-                    "username": post.user.username,
-                    "email": post.user.email
-                } if post.user else None
-            } for post in posts],
+            content=response_data,
             headers=get_cors_headers(request)
         )
     except Exception as e:

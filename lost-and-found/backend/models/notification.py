@@ -11,7 +11,7 @@ class Notification(Base):
     title = Column(String)
     message = Column(String)
     type = Column(String)  # 'match', 'system', 'found', 'lost'
-    read = Column(Boolean, default=False)
+    is_read = Column(Boolean, default=False)  # Changed from 'read' to 'is_read'
     created_at = Column(DateTime, default=datetime.utcnow)
     related_post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
 

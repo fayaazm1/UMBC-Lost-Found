@@ -3,12 +3,14 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from database import get_db
 from models import User
-from schemas import UserResponse
-from config import Settings
 from utils import get_password_hash
 import os
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+def get_current_admin(db: Session = Depends(get_db)):
+    """Placeholder for admin authentication - can be enhanced later"""
+    return None
 
 @router.post("/setup-admin")
 async def setup_admin(
@@ -67,9 +69,15 @@ async def admin_login(
             detail="No admin user found"
         )
 
-    # Create admin token
-    token = create_admin_token(admin.id)
-    return {"token": token, "user": UserResponse.from_orm(admin)}
+    # Return admin info
+    return {
+        "user": {
+            "id": admin.id,
+            "username": admin.username,
+            "email": admin.email,
+            "is_admin": admin.is_admin
+        }
+    }
 
 # Admin operations
 @router.get("/users")
@@ -78,7 +86,12 @@ async def get_users(
     current_admin: User = Depends(get_current_admin)
 ):
     users = db.query(User).all()
-    return [UserResponse.from_orm(user) for user in users]
+    return [{
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_admin": user.is_admin
+    } for user in users]
 
 @router.delete("/users/{user_id}")
 async def delete_user(

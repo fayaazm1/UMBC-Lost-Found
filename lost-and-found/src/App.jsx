@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import NotificationsPage from "./pages/NotificationsPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
+import Messages from "./pages/Messages";
 import { useAuth } from "./contexts/AuthContext";
 
 function App() {
@@ -74,6 +75,11 @@ function App() {
           <Route path="/notifications" element={
             <ProtectedRoute>
               <NotificationsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/messages" element={
+            <ProtectedRoute>
+              <Messages />
             </ProtectedRoute>
           } />
           <Route path="/post" element={

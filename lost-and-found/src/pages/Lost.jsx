@@ -29,6 +29,11 @@ const Lost = () => {
         const lostPosts = data.filter(post => 
           post && post.report_type && post.report_type.toLowerCase() === "lost"
         );
+        // Debug log to check user information
+        lostPosts.forEach(post => {
+          console.log("Post user info:", post.user);
+          console.log("Post ID:", post.id);
+        });
         console.log("Lost posts:", lostPosts); // Debug log
         setPosts(lostPosts);
       } catch (error) {

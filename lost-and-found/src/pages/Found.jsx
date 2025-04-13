@@ -33,6 +33,11 @@ const Found = () => {
         const foundPosts = data.filter(post => 
           post && post.report_type && post.report_type.toLowerCase() === "found"
         );
+        // Debug log to check user information
+        foundPosts.forEach(post => {
+          console.log("Post user info:", post.user);
+          console.log("Post ID:", post.id);
+        });
         console.log("Found posts:", foundPosts); // Debug log
         setPosts(foundPosts);
       } catch (error) {
