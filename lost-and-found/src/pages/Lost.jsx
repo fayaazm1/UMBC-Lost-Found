@@ -100,7 +100,7 @@ const Lost = () => {
             onTouchEnd={handleMouseUp}
           >
             {duplicatedPosts.map((post, index) => (
-              <div key={`${post.id}-${index}`} className={`carousel-post${isPaused ? " paused" : ""}`}>
+              <div key={`${post.id}-${index}`} className={`carousel-post${isPaused ? " paused" : ""}`} onClick={() => setPopupData(post)}>
                 <div className="post-header">
                   <span className="post-date">
                     {new Date(post.date).toLocaleDateString(undefined, {
@@ -120,9 +120,6 @@ const Lost = () => {
                     {post.description.substring(0, 100)}
                     {post.description.length > 100 ? "..." : ""}
                   </p>
-                  <span className="read-more" onClick={() => setPopupData(post)}>
-                    Continue...
-                  </span>
                 </div>
               </div>
             ))}
@@ -131,7 +128,7 @@ const Lost = () => {
           <h2 className="recent-title">Lost Items</h2>
           <div className="recent-posts-list scrollable">
             {posts.map((post, index) => (
-              <div key={index} className="recent-post-card">
+              <div key={index} className="recent-post-card" onClick={() => setPopupData(post)}>
                 <div className="recent-post-date">
                   {new Date(post.date).toLocaleDateString("en-US", {
                     weekday: "long",
@@ -152,9 +149,6 @@ const Lost = () => {
                     style={{ width: "120px", marginTop: "8px" }}
                   />
                 )}
-                <span className="read-more" onClick={() => setPopupData(post)}>
-                  Continue...
-                </span>
               </div>
             ))}
           </div>
