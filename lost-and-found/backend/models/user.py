@@ -15,4 +15,4 @@ class User(Base):
     # Relationships
     posts = relationship("Post", back_populates="user")
     notifications = relationship("Notification", back_populates="user")
-    comments = relationship("Comment", back_populates="user")
+   

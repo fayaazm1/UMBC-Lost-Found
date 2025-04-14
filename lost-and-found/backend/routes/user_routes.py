@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User
 from models.post import Post
-from models.comment import Comment
+
 from pydantic import BaseModel
 import logging
 
