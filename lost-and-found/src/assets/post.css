@@ -161,7 +161,7 @@
 
 /* Submit Button */
 button[type="submit"] {
-  width: 100%;
+  width: 15%;
   padding: 1rem;
   border: none;
   border-radius: 10px;
@@ -171,7 +171,7 @@ button[type="submit"] {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 2rem;
+  margin-top: 0rem;
   position: relative;
   overflow: hidden;
 }
