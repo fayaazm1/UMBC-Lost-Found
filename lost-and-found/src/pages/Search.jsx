@@ -3,12 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import './Search.css';
 import Navbar from '../components/Navbar';
+import Popup from '../components/Popup';
 
 function Search() {
   const [searchParams] = useSearchParams();
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [popupData, setPopupData] = useState(null);
 
   const query = searchParams.get('q');
 
@@ -22,10 +24,17 @@ function Search() {
 
       try {
         setLoading(true);
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/posts/search?q=${encodeURIComponent(query)}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts/search?q=${encodeURIComponent(query)}`, {
           withCredentials: true
         });
-        setResults(response.data);
+
+        const data = response.data;
+        if (Array.isArray(data)) {
+          setResults(data);
+        } else {
+          console.warn("Expected array but got:", data);
+          setResults([]);
+        }
         setError(null);
       } catch (err) {
         console.error('Search error:', err);
@@ -56,11 +65,16 @@ function Search() {
             ) : (
               <div className="search-results">
                 {results.map((item) => (
-                  <div key={item.id} className="search-result-item" data-type={item.type}>
+                  <div 
+                    key={item.id} 
+                    className="search-result-item" 
+                    data-type={item.type}
+                    onClick={() => setPopupData(item)}
+                  >
                     <div className="item-type-badge">{item.type}</div>
                     {item.image && (
                       <img 
-                        src={`${import.meta.env.VITE_API_URL}${item.image}`} 
+                        src={`${import.meta.env.VITE_API_BASE_URL}${item.image}`} 
                         alt={item.title} 
                         className="item-image" 
                       />
@@ -87,6 +101,12 @@ function Search() {
           </>
         )}
       </div>
+      {popupData && (
+        <Popup 
+          post={popupData} 
+          onClose={() => setPopupData(null)}
+        />
+      )}
     </div>
   );
 }
