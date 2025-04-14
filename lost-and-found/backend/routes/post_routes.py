@@ -2,6 +2,7 @@ import os
 import shutil
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 from database import SessionLocal
 import models
 from models.post import Post
@@ -77,6 +78,50 @@ async def get_posts(request: Request, db: Session = Depends(get_db)):
         return JSONResponse(
             status_code=500,
             content={"detail": f"Database error: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
+
+@router.get("/search")
+async def search_posts(q: str, db: Session = Depends(get_db), request: Request = None):
+    """Search posts by keyword in title, description, or location"""
+    try:
+        # Convert query to lowercase for case-insensitive search
+        search_term = f"%{q.lower()}%"
+        
+        # Search in item_name, description, and location
+        posts = db.query(Post).options(joinedload(Post.user)).filter(
+            or_(
+                Post.item_name.ilike(search_term),
+                Post.description.ilike(search_term),
+                Post.location.ilike(search_term)
+            )
+        ).all()
+        
+        # Convert to response format
+        response_data = [{
+            "id": post.id,
+            "type": post.report_type.lower().strip() if post.report_type else None,
+            "title": post.item_name,
+            "description": post.description,
+            "location": post.location,
+            "image": post.image_path,
+            "createdAt": str(post.date) + " " + str(post.time),
+            "user": {
+                "id": post.user.id,
+                "username": post.user.username
+            } if post.user else None
+        } for post in posts]
+        
+        logger.info(f"Search for '{q}' found {len(posts)} results")
+        return JSONResponse(
+            content=response_data,
+            headers=get_cors_headers(request)
+        )
+    except Exception as e:
+        logger.error(f"Error searching posts: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Search error: {str(e)}"},
             headers=get_cors_headers(request)
         )
 
