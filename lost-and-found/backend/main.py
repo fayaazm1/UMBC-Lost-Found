@@ -1,109 +1,40 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
-from routes.post_routes import router as post_router
-from routes.notification_routes import router as notification_router
-from routes.user_routes import router as user_router
-from app.admin_routes import router as admin_router
-from sqlalchemy import inspect, text
-import logging
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from routes import user_routes, post_routes, message_routes, notification_routes, admin_routes
+from config.db import engine, Base
+from models.user import User
+from models.post import Post
+from config.mongodb import client
 
 app = FastAPI()
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://umbc-lost-found.vercel.app",
-        "https://umbc-lost-found-1.onrender.com",
-        "http://umbc-lost-found-1.onrender.com"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Logging middleware
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Request: {request.method} {request.url}")
-    response = await call_next(request)
-    logger.info(f"Response: {response.status_code}")
-    return response
+# Include routers
+app.include_router(user_routes.router, prefix="/api")
+app.include_router(post_routes.router, prefix="/api")
+app.include_router(message_routes.router, prefix="/api")
+app.include_router(notification_routes.router, prefix="/api")
+app.include_router(admin_routes.router, prefix="/api")
 
-# Create database tables and add is_admin column
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
-    
-    # Check if is_admin column exists using SQLAlchemy inspect
-    inspector = inspect(engine)
-    columns = [col['name'] for col in inspector.get_columns('users')]
-    if 'is_admin' not in columns:
-        logger.info("Adding is_admin column to users table...")
-        with engine.connect() as connection:
-            connection.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE"))
-            connection.commit()
-            logger.info("Added is_admin column successfully")
-    else:
-        logger.info("is_admin column already exists")
+@app.on_event("startup")
+async def startup_event():
+    try:
+        await client.admin.command('ping')
+        print("Successfully connected to MongoDB")
+    except Exception as e:
+        print(f"Could not connect to MongoDB: {e}")
+        raise e
 
-except Exception as e:
-    logger.error(f"Error setting up database: {str(e)}")
-    raise
-
-# Include routers with prefix
-logger.info("Registering routes...")
-app.include_router(post_router, prefix="/api")
-app.include_router(notification_router, prefix="/api")
-app.include_router(user_router, prefix="/api")
-app.include_router(admin_router, prefix="/api", tags=["admin"])  
-
-# Print all registered routes for debugging
-for route in app.routes:
-    if hasattr(route, 'methods'):  # Only log routes with methods (skip Mount objects)
-        logger.info(f"Registered route: {route.path} [{','.join(route.methods)}]")
-
-# Root endpoint
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Lost & Found API. Please use /api endpoint."}
-
-# API root endpoint
-@app.get("/api")
-async def read_root():
-    return {"message": "Welcome to the Lost & Found API"}
-
-@app.exception_handler(404)
-async def not_found_handler(request: Request, exc):
-    logger.warning(f"404 Not Found: {request.url.path}")
-    origin = request.headers.get("origin")
-    allowed_origins = [
-        "https://umbc-lost-found.vercel.app",
-        "https://umbc-lost-found-git-main-fayaazs-projects-2ea58c4f.vercel.app",
-        "http://localhost:5173"
-    ]
-    allowed_origin = origin if origin in allowed_origins else allowed_origins[0]
-    
-    return JSONResponse(
-        status_code=404,
-        content={"detail": f"Path {request.url.path} not found"},
-        headers={
-            "Access-Control-Allow-Origin": allowed_origin,
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        }
-    )
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

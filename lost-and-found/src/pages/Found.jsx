@@ -33,6 +33,11 @@ const Found = () => {
         const foundPosts = data.filter(post => 
           post && post.report_type && post.report_type.toLowerCase() === "found"
         );
+        // Debug log to check user information
+        foundPosts.forEach(post => {
+          console.log("Post user info:", post.user);
+          console.log("Post ID:", post.id);
+        });
         console.log("Found posts:", foundPosts); // Debug log
         setPosts(foundPosts);
       } catch (error) {
@@ -87,7 +92,7 @@ const Found = () => {
             onTouchEnd={handleMouseUp}
           >
             {duplicatedPosts.map((post, index) => (
-              <div key={index} className={`carousel-post${isPaused ? " paused" : ""}`}>
+              <div key={index} className={`carousel-post${isPaused ? " paused" : ""}`} onClick={() => setPopupData(post)}>
                 <div className="post-header">
                   <span className="post-date">
                     {new Date(post.date).toLocaleDateString(undefined, {
@@ -107,9 +112,6 @@ const Found = () => {
                     {post.description.substring(0, 100)}
                     {post.description.length > 100 ? "..." : ""}
                   </p>
-                  <span className="read-more" onClick={() => setPopupData(post)}>
-                    Continue...
-                  </span>
                 </div>
               </div>
             ))}
@@ -117,7 +119,7 @@ const Found = () => {
           <h2 className="recent-title">Found Items</h2>
           <div className="recent-posts-list scrollable">
             {posts.map((post, index) => (
-              <div key={index} className="recent-post-card">
+              <div key={index} className="recent-post-card" onClick={() => setPopupData(post)}>
                 <div className="recent-post-date">
                   {new Date(post.date).toLocaleDateString("en-US", {
                     weekday: "long",
@@ -138,9 +140,6 @@ const Found = () => {
                     style={{ width: "120px", marginTop: "8px" }}
                   />
                 )}
-                <span className="read-more" onClick={() => setPopupData(post)}>
-                  Continue...
-                </span>
               </div>
             ))}
           </div>

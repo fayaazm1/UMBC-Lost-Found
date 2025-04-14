@@ -192,8 +192,7 @@ html, body {
 
 .recent-post-card:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .recent-post-card .post-date {
@@ -226,48 +225,6 @@ html, body {
     text-decoration: underline;
 }
 
-/* Headings */
-.lost-heading {
-    text-align: center;
-    font-size: 2.5rem;
-    color: var(--text-primary);
-    margin: 2rem 0;
-    padding-bottom: 0.5rem;
-    position: relative;
-    transition: color 0.3s ease;
-}
-
-.lost-heading:hover {
-    color: var(--primary-color);
-}
-
-.lost-heading::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 2px;
-    background-color: var(--primary-color);
-    transition: width 0.3s ease;
-}
-
-.lost-heading:hover::after {
-    width: 100px;
-}
-
-.priority-title,
-.recent-title {
-    font-size: 1.5rem;
-    color: var(--text-primary);
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Cards */
-.priority-post,
 .carousel-post {
     background-color: var(--background-card);
     padding: 15px;
@@ -279,14 +236,13 @@ html, body {
     flex-direction: column;
     flex-shrink: 0;
     box-shadow: var(--shadow-soft);
-    transition: all 0.3s ease-in-out;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     cursor: pointer;
 }
 
-.priority-post:hover,
 .carousel-post:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .carousel-container {
@@ -554,4 +510,67 @@ html, body {
 
 .read-more:hover {
     text-decoration: underline;
+}
+
+/* Headings */
+.lost-heading {
+    text-align: center;
+    font-size: 2.5rem;
+    color: var(--text-primary);
+    margin: 2rem 0;
+    padding-bottom: 0.5rem;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.lost-heading:hover {
+    color: var(--primary-color);
+}
+
+.lost-heading::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background-color: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.lost-heading:hover::after {
+    width: 100px;
+}
+
+.priority-title,
+.recent-title {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Cards */
+.priority-post,
+.carousel-post {
+    background-color: var(--background-card);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    height: 160px;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.priority-post:hover,
+.carousel-post:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }

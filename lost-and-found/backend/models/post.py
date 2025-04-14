@@ -22,4 +22,4 @@ class Post(Base):
     # Relationship to get user details
     user = relationship("User", back_populates="posts")
     notifications = relationship("Notification", back_populates="related_post")
-    comments = relationship("Comment", back_populates="post")
+    
