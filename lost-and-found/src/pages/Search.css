@@ -47,16 +47,12 @@
   font-weight: 500;
   text-transform: capitalize;
   z-index: 1;
-}
-
-.search-result-item[type="lost"] .item-type-badge {
   background-color: #ff6b6b;
   color: white;
 }
 
-.search-result-item[type="found"] .item-type-badge {
+.search-result-item[data-type="found"] .item-type-badge {
   background-color: #51cf66;
-  color: white;
 }
 
 .item-image {

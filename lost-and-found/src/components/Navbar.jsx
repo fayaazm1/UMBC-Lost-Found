@@ -33,9 +33,10 @@ function Navbar() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(''); // Clear the search input after search
+    const trimmedQuery = searchQuery.trim();
+    if (trimmedQuery) {
+      navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+      setSearchQuery('');
     }
   };
 
@@ -80,7 +81,7 @@ function Navbar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="search-button">
+            <button type="submit" className="search-button" aria-label="Search">
               <FaSearch className="search-icon" />
             </button>
           </form>
@@ -144,7 +145,7 @@ function Navbar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button type="submit" className="search-button">
+            <button type="submit" className="search-button" aria-label="Search">
               <FaSearch className="search-icon" />
             </button>
           </form>

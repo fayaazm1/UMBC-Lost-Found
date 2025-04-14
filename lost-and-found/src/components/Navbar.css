@@ -214,12 +214,13 @@
 
 .search-input {
   width: 300px;
-  padding: 8px 40px 8px 16px;
+  padding: 8px 16px;
   border: none;
   border-radius: 20px;
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
   font-size: 0.9rem;
+  transition: background-color 0.2s ease;
 }
 
 .search-input::placeholder {
@@ -241,11 +242,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.search-container:has(.search-input:not(:placeholder-shown)) .search-button {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .search-icon {
   color: rgba(255, 255, 255, 0.5);
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: color 0.2s ease;
 }
 

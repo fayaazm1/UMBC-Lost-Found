@@ -22,12 +22,14 @@ function Search() {
 
       try {
         setLoading(true);
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/posts/search?q=${encodeURIComponent(query)}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/posts/search?q=${encodeURIComponent(query)}`, {
+          withCredentials: true
+        });
         setResults(response.data);
         setError(null);
       } catch (err) {
-        setError('Failed to fetch search results. Please try again.');
         console.error('Search error:', err);
+        setError('Failed to fetch search results. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -54,7 +56,7 @@ function Search() {
             ) : (
               <div className="search-results">
                 {results.map((item) => (
-                  <div key={item.id} className="search-result-item">
+                  <div key={item.id} className="search-result-item" data-type={item.type}>
                     <div className="item-type-badge">{item.type}</div>
                     {item.image && (
                       <img 
