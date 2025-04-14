@@ -36,7 +36,32 @@ function Signup() {
     try {
       setError('');
       setLoading(true);
-      await signup(email, password, displayName);
+      const userCredential = await signup(email, password, displayName);
+      
+      // Create welcome notification
+      if (userCredential?.user?.uid) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/create`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: userCredential.user.uid,
+              title: 'Welcome to UMBC Lost & Found!',
+              message: `Welcome ${displayName}! Thank you for joining our community. Start by exploring lost items or reporting a found item.`,
+              type: 'welcome'
+            })
+          });
+
+          if (!response.ok) {
+            console.error('Failed to create welcome notification:', await response.text());
+          }
+        } catch (error) {
+          console.error('Error creating welcome notification:', error);
+        }
+      }
+      
       setSuccess(true);
       // Clear form data
       setDisplayName('');

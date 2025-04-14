@@ -1,10 +1,44 @@
 // src/pages/Home.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import '../assets/home.css';
 
 const Home = () => {
     const navigate = useNavigate();
+    const { currentUser, dbUser } = useAuth();
+
+    useEffect(() => {
+        const createWelcomeNotification = async () => {
+            if (!currentUser?.uid || !dbUser?.display_name) return;
+
+            try {
+                // Check if user already has a welcome notification
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${currentUser.uid}/welcome-exists`);
+                const { exists } = await response.json();
+
+                if (!exists) {
+                    // Create welcome notification if it doesn't exist
+                    await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/create`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: currentUser.uid,
+                            title: 'Welcome to UMBC Lost & Found!',
+                            message: `Welcome ${dbUser.display_name}! Thank you for being part of our community. Start by exploring lost items or reporting a found item.`,
+                            type: 'welcome'
+                        })
+                    });
+                }
+            } catch (error) {
+                console.error('Error creating welcome notification:', error);
+            }
+        };
+
+        createWelcomeNotification();
+    }, [currentUser?.uid, dbUser?.display_name]);
 
     return (
         <div className="home-container">

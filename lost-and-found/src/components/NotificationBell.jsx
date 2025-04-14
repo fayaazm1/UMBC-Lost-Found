@@ -8,20 +8,18 @@ const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { dbUser } = useAuth();
+  const { currentUser } = useAuth();
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  console.log('NotificationBell rendering, dbUser:', dbUser);
-
   const fetchNotifications = async () => {
-    if (!dbUser?.id) {
+    if (!currentUser?.uid) {
       console.log('No valid user ID available');
       return;
     }
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${dbUser.id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/user/${currentUser.uid}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -29,7 +27,7 @@ const NotificationBell = () => {
       
       if (Array.isArray(data)) {
         setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+        setUnreadCount(data.filter(n => !n.is_read).length);
       } else {
         console.error('Expected array of notifications but got:', data);
         setNotifications([]);
@@ -43,7 +41,7 @@ const NotificationBell = () => {
   };
 
   useEffect(() => {
-    if (dbUser?.id) {
+    if (currentUser?.uid) {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 30000);
       return () => clearInterval(interval);
@@ -51,7 +49,7 @@ const NotificationBell = () => {
       setNotifications([]);
       setUnreadCount(0);
     }
-  }, [dbUser?.id]);
+  }, [currentUser?.uid]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -65,11 +63,14 @@ const NotificationBell = () => {
   }, []);
 
   const markAsRead = async (notificationId) => {
-    if (!dbUser?.id) return;
+    if (!currentUser?.uid) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/mark-as-read`, {
-        method: 'PUT'
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -81,7 +82,7 @@ const NotificationBell = () => {
   };
 
   const deleteNotification = async (notificationId) => {
-    if (!dbUser?.id) return;
+    if (!currentUser?.uid) return;
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}`, {
@@ -101,26 +102,15 @@ const NotificationBell = () => {
     setShowNotifications(!showNotifications);
   };
 
-  const handleNotificationClick = (notification) => {
-    markAsRead(notification.id);
-    setShowNotifications(false);
-  };
-
-  const handleViewAll = () => {
-    setShowNotifications(false);
+  const handleViewAll = (e) => {
+    e.preventDefault();
     navigate('/notifications');
+    setShowNotifications(false);
   };
-
-  // Return null if no user is logged in
-  if (!dbUser?.id) return null;
 
   return (
     <div className="notification-container" ref={dropdownRef}>
-      <button 
-        className="nav-icon notification-bell"
-        onClick={handleBellClick}
-        aria-label="Toggle notifications"
-      >
+      <button className="nav-icon notification-bell" onClick={handleBellClick}>
         <FaBell />
         {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
       </button>
@@ -129,30 +119,21 @@ const NotificationBell = () => {
         <div className="notification-dropdown">
           <div className="notification-header">
             <h3>Notifications</h3>
-            {notifications.length > 3 && (
-              <button 
-                className="view-all"
-                onClick={handleViewAll}
-              >
-                View All ({notifications.length})
-              </button>
-            )}
+            <button className="view-all" onClick={handleViewAll}>
+              View All
+            </button>
           </div>
           <div className="notification-list">
             {notifications.length === 0 ? (
               <div className="no-notifications">No notifications</div>
             ) : (
-              notifications.slice(0, 3).map((notification) => (
-                <div 
-                  key={notification.id} 
-                  className={`notification-item ${!notification.read ? 'unread' : ''}`}
+              notifications.slice(0, 5).map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                  onClick={() => markAsRead(notification.id)}
                 >
-                  <div 
-                    className="notification-content"
-                    onClick={() => handleNotificationClick(notification)}
-                    role="button"
-                    tabIndex={0}
-                  >
+                  <div className="notification-content">
                     <h4>{notification.title}</h4>
                     <p>{notification.message}</p>
                     <small>{new Date(notification.created_at).toLocaleString()}</small>
@@ -171,16 +152,6 @@ const NotificationBell = () => {
               ))
             )}
           </div>
-          {notifications.length > 3 && (
-            <div className="notification-footer">
-              <button 
-                className="view-all-footer"
-                onClick={handleViewAll}
-              >
-                View {notifications.length - 3} more notifications
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>
