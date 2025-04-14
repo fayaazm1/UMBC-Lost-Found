@@ -6,14 +6,15 @@ load_dotenv()
 
 MONGODB_URL = os.getenv("MONGODB_URL")
 
-# Fix for MongoDB Atlas connection
-client = AsyncIOMotorClient(
-    MONGODB_URL,
-    tls=True,
-    tlsAllowInvalidCertificates=True  # Set to False in production if you use valid certs
-)
+if not MONGODB_URL:
+    raise ValueError("Missing MONGODB_URL environment variable")
 
-db = client.lostfound  # Match this with your actual database name
+try:
+    client = AsyncIOMotorClient(MONGODB_URL)
+    db = client.get_default_database() or client.lostfound
+except Exception as e:
+    print(f"MongoDB connection failed: {e}")
+    raise
 
 # Collections
 messages = db.messages
