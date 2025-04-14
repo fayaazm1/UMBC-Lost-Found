@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from datetime import datetime
+from pytz import timezone  # ✅ Added for timezone fix
 from config.mongodb import messages
 from typing import List
 import logging
@@ -35,6 +36,7 @@ async def create_message(payload: CreateMessageRequest, db: Session = Depends(ge
         sender = get_user_info(db, sender_id)
         receiver = get_user_info(db, receiver_id)
 
+        eastern = timezone("America/New_York")  # ✅ US Eastern Time
         message_data = {
             "content": payload.message,
             "sender_id": sender["id"],
@@ -42,7 +44,7 @@ async def create_message(payload: CreateMessageRequest, db: Session = Depends(ge
             "receiver_id": receiver["id"],
             "receiver_name": receiver["username"],
             "post_id": payload.postId,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(eastern).isoformat(),  # ✅ Localized timestamp
             "read_status": False
         }
 
@@ -109,7 +111,7 @@ async def get_conversations(user_id: int, db: Session = Depends(get_db)):
                     "$receiver_id",
                     "$sender_id"
                 ]}},
-                "postId": {"$first": "$post_id"},  # ✅ Include postId
+                "postId": {"$first": "$post_id"},
                 "unread": {"$sum": {"$cond": [
                     {"$and": [
                         {"$eq": ["$receiver_id", user_id]},

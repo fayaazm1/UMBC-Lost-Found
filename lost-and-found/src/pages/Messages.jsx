@@ -144,8 +144,18 @@ const Messages = () => {
                   <div className="username">{conv.username}</div>
                   <div className="last-message">{conv.last_message}</div>
                   <div className="timestamp">
-                    {new Date(conv.timestamp).toLocaleString()}
+                      {new Date(conv.timestamp).toLocaleString("en-US", {
+                        timeZone: "America/New_York",
+                        hour: 'numeric',
+                        minute: 'numeric',
+                        second: 'numeric',
+                        hour12: true,
+                        month: 'numeric',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
                   </div>
+
                 </div>
                 {conv.unread > 0 && (
                   <div className="unread-badge">{conv.unread}</div>
@@ -176,7 +186,16 @@ const Messages = () => {
                       <div className="message-content">
                         <p>{msg.content}</p>
                         <span className="timestamp">
-                          {new Date(msg.timestamp).toLocaleString()}
+                          {new Date(msg.timestamp).toLocaleString("en-US", {
+                                timeZone: "America/New_York",
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                                hour12: true,
+                                month: 'numeric',
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
                         </span>
                       </div>
                     </div>
