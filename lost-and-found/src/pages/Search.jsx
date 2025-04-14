@@ -22,7 +22,7 @@ function Search() {
 
       try {
         setLoading(true);
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/posts/search?q=${encodeURIComponent(query)}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/posts/search?q=${encodeURIComponent(query)}`);
         setResults(response.data);
         setError(null);
       } catch (err) {
