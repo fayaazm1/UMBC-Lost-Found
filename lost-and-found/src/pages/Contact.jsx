@@ -38,14 +38,14 @@ const Contact = () => {
         topic: formData.topic,
         message: formData.message,
         to_name: "UMBC Lost & Found",
-        title: formData.topic // For backward compatibility with your template
+        title: formData.topic
       };
 
       await emailjs.send(
-        'service_483bu2i', // Your service ID
-        'template_5aanyi3', // Correct template ID
+        import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_483bu2i',
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_5aanyi3',
         templateParams,
-        'IeLpp7S3HoyNwXsmE' // Your public key
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'IeLpp7S3HoyNwXsmE'
       );
 
       setShowPopup(true);
@@ -61,8 +61,8 @@ const Contact = () => {
         setShowPopup(false);
       }, 3000);
     } catch (err) {
-      setError("Failed to send message. Please try again.");
-      console.error('Error:', err);
+      console.error('EmailJS Error:', err);
+      setError(err.text || "Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }
