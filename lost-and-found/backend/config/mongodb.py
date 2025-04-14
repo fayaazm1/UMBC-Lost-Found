@@ -4,11 +4,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+MONGODB_URL = os.getenv("MONGODB_URL")
 
-# Initialize MongoDB client
-client = AsyncIOMotorClient(MONGODB_URL)
-db = client.lost_found
+# Fix for MongoDB Atlas connection
+client = AsyncIOMotorClient(
+    MONGODB_URL,
+    tls=True,
+    tlsAllowInvalidCertificates=True  # Set to False in production if you use valid certs
+)
+
+db = client.lostfound  # Match this with your actual database name
 
 # Collections
 messages = db.messages
