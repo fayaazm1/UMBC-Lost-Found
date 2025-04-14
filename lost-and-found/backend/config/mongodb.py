@@ -11,7 +11,9 @@ if not MONGODB_URL:
 
 try:
     client = AsyncIOMotorClient(MONGODB_URL)
-    db = client.get_default_database() or client.lostfound
+    db = client.get_default_database()
+    if db is None:
+        db = client["lostfound"]
 except Exception as e:
     print(f"MongoDB connection failed: {e}")
     raise
