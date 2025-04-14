@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from datetime import datetime
-from pytz import timezone  # ✅ Added for timezone fix
+from pytz import timezone
 from config.mongodb import messages
 from typing import List
 import logging
@@ -8,10 +8,9 @@ from models.user import User
 from sqlalchemy.orm import Session
 from config.db import get_db
 from bson import ObjectId
-from schemas import CreateMessageRequest  # ✅ Pydantic model for validation
+from schemas import CreateMessageRequest
 
 router = APIRouter(prefix="/messages", tags=["messages"])
-
 
 def get_user_info(db: Session, user_id: int):
     try:
@@ -22,7 +21,6 @@ def get_user_info(db: Session, user_id: int):
     except Exception as e:
         logging.error(f"Error getting user info for ID {user_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving user information: {str(e)}")
-
 
 @router.post("/create")
 async def create_message(payload: CreateMessageRequest, db: Session = Depends(get_db)):
@@ -36,7 +34,7 @@ async def create_message(payload: CreateMessageRequest, db: Session = Depends(ge
         sender = get_user_info(db, sender_id)
         receiver = get_user_info(db, receiver_id)
 
-        eastern = timezone("America/New_York")  # ✅ US Eastern Time
+        eastern = timezone("America/New_York")
         message_data = {
             "content": payload.message,
             "sender_id": sender["id"],
@@ -44,7 +42,7 @@ async def create_message(payload: CreateMessageRequest, db: Session = Depends(ge
             "receiver_id": receiver["id"],
             "receiver_name": receiver["username"],
             "post_id": payload.postId,
-            "timestamp": datetime.now(eastern).isoformat(),  # ✅ Localized timestamp
+            "timestamp": datetime.now(eastern).isoformat(),
             "read_status": False
         }
 
@@ -59,7 +57,6 @@ async def create_message(payload: CreateMessageRequest, db: Session = Depends(ge
     except Exception as e:
         logging.error(f"Error creating message: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/chat/{user_id}/{other_user_id}")
 async def get_chat_messages(user_id: int, other_user_id: int, db: Session = Depends(get_db)):
@@ -80,7 +77,6 @@ async def get_chat_messages(user_id: int, other_user_id: int, db: Session = Depe
     except Exception as e:
         logging.error(f"Error getting chat messages: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/conversations/{user_id}")
 async def get_conversations(user_id: int, db: Session = Depends(get_db)):
@@ -129,4 +125,56 @@ async def get_conversations(user_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         logging.error(f"Error getting conversations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/recent")
+async def get_recent_messages(userId: int):
+    try:
+        recent_msgs = []
+        cursor = messages.find({
+            "receiver_id": userId,
+            "read_status": False
+        }).sort("timestamp", -1).limit(10)
+
+        async for msg in cursor:
+            msg["_id"] = str(msg["_id"])
+            recent_msgs.append(msg)
+
+        return {
+            "messages": recent_msgs,
+            "typing": []
+        }
+
+    except Exception as e:
+        logging.error(f"Error fetching recent messages: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/mark-read")
+async def mark_messages_as_read(payload: dict, db: Session = Depends(get_db)):
+    try:
+        user_id = payload.get("userId")
+        conversation_id = payload.get("conversationId")
+
+        if not user_id or not conversation_id:
+            raise HTTPException(status_code=400, detail="Missing userId or conversationId")
+
+        # Mark all messages in the conversation as read
+        result = await messages.update_many(
+            {
+                "receiver_id": user_id,
+                "$or": [
+                    {"sender_id": int(conversation_id)},
+                    {"receiver_id": int(conversation_id)}
+                ]
+            },
+            {"$set": {"read_status": True}}
+        )
+
+        return {
+            "success": True,
+            "updated_count": result.modified_count
+        }
+
+    except Exception as e:
+        logging.error(f"Error marking messages as read: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

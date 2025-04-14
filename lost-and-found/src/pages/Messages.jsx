@@ -1,23 +1,50 @@
+// Final updated Messages.jsx matching the Trixie-style CSS design
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import '../styles/Messages.css';
+import { formatMessageTime } from '../utils/dateUtils';
+import { playMessageSound, playNotificationSound } from '../utils/soundEffects';
+import '../assets/messages.css';
+import Navbar from '../components/Navbar';
 
-const Messages = () => {
-  const { dbUser: currentUser } = useAuth();
+const MessageIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    width="200"
+    height="500"
+    style={{ opacity: 0.4 }}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+    />
+  </svg>
+);
+
+
+const EMOJI_LIST = ["👋", "😊", "👍", "❤️", "🙌", "🎉", "😂", "🤔", "👀", "✨"];
+
+function Messages() {
   const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [showEmojis, setShowEmojis] = useState(false);
+  const { dbUser: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [typingUsers, setTypingUsers] = useState(new Set());
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
   const messagesEndRef = useRef(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const emojiButtonRef = useRef(null);
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages]);
 
   useEffect(() => {
@@ -25,15 +52,13 @@ const Messages = () => {
 
     const fetchConversations = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/conversations/${currentUser.id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch conversations');
-        }
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/conversations/${currentUser.id}`, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
         const data = await response.json();
         setConversations(data);
         setLoading(false);
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
+      } catch (err) {
         setError('Failed to load conversations');
         setLoading(false);
       }
@@ -49,14 +74,12 @@ const Messages = () => {
 
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/chat/${currentUser.id}/${selectedChat.userId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch messages');
-        }
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/chat/${currentUser.id}/${selectedChat.userId}`, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        });
         const data = await response.json();
         setMessages(data);
-      } catch (error) {
-        console.error('Error fetching messages:', error);
+      } catch {
         setError('Failed to load messages');
       }
     };
@@ -66,165 +89,150 @@ const Messages = () => {
     return () => clearInterval(interval);
   }, [currentUser, selectedChat]);
 
+  const handleChatSelect = (conv) => {
+    setSelectedChat(conv);
+  };
+
+  const handleEmojiClick = (emoji) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojis(false);
+  };
+
   const handleSendMessage = async (e) => {
-    e?.preventDefault();
-    if (!newMessage.trim() || !selectedChat?.userId) return;
+    if (e.key === 'Enter' || e.type === 'click') {
+      if (!newMessage.trim()) return;
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: newMessage.trim(),
-          from: currentUser.id,
-          to: selectedChat.userId,
-          postId: selectedChat.postId
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to send message');
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify({
+            message: newMessage,
+            from: currentUser.id,
+            to: selectedChat.userId,
+            postId: selectedChat.postId
+          })
+        });
+        setNewMessage("");
+      } catch {
+        setError('Failed to send message');
       }
-      setNewMessage("");
-    } catch (error) {
-      console.error("Error sending message:", error);
-      setError(error.message || 'Failed to send message');
     }
   };
 
+  const handleCloseChat = () => {
+    setSelectedChat(null);
+    setMessages([]);
+    setNewMessage('');
+    setShowEmojis(false);
+  };
+
   if (!currentUser?.id) {
-    return (
-      <div className="messages-container">
-        <div className="login-prompt">
-          <p>Please log in to view your messages</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="messages-container">
-        <div className="loading">Loading conversations...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="messages-container">
-        <div className="error-message">{error}</div>
-      </div>
-    );
+    return <div className="messages-page">Please sign in to view messages.</div>;
   }
 
   return (
-    <div className="messages-container">
-      <div className="messages-content">
-        <div className="conversations-list">
-          <h2>Conversations</h2>
-          {conversations.length === 0 ? (
-            <div className="no-conversations">
-              <div>
-                <p>No conversations yet</p>
-                <small>Start a conversation by messaging someone from their post</small>
-              </div>
-            </div>
-          ) : (
-            conversations.map((conv) => (
-              <div
-                key={conv._id}
-                className={`conversation-item ${selectedChat?._id === conv._id ? 'selected' : ''}`}
-                onClick={() => setSelectedChat(conv)}
-              >
-                <div className="conversation-info">
-                  <div className="username">{conv.username}</div>
-                  <div className="last-message">{conv.last_message}</div>
-                  <div className="timestamp">
-                      {new Date(conv.timestamp).toLocaleString("en-US", {
-                        timeZone: "America/New_York",
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        second: 'numeric',
-                        hour12: true,
-                        month: 'numeric',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
+    <div className="messages-page">
+      <Navbar />
+      <div className="messages-container">
+        <div className="app-container">
+          <div className="conversations-list">
+            <div className="conversations-header">Messages</div>
+            <div className="conversation-items">
+              {conversations.map(conv => (
+                <div
+                  key={conv._id}
+                  className={`conversation-item ${selectedChat?._id === conv._id ? 'active' : ''}`}
+                  onClick={() => handleChatSelect(conv)}
+                >
+                  <div className="conversation-avatar">
+                    <div className="chat-avatar">{conv.username.charAt(0).toUpperCase()}</div>
                   </div>
-
+                  <div className="conversation-info">
+                    <div className="conversation-name">{conv.username}</div>
+                    <div className="conversation-preview">{conv.last_message}</div>
+                  </div>
+                  {conv.unread > 0 && <div className="unread-badge">{conv.unread}</div>}
                 </div>
-                {conv.unread > 0 && (
-                  <div className="unread-badge">{conv.unread}</div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+              ))}
+            </div>
+          </div>
 
-        <div className="chat-area">
-          {selectedChat ? (
-            <div className="chat-container">
-              <div className="chat-header">
-                <h3>{selectedChat.username}</h3>
-              </div>
-              <div className="messages-list">
-                {messages.length === 0 ? (
-                  <div className="no-messages">
-                    <p>No messages yet</p>
-                    <small>Start the conversation by sending a message</small>
-                  </div>
-                ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg._id}
-                      className={`message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}`}
-                    >
-                      <div className="message-content">
-                        <p>{msg.content}</p>
-                        <span className="timestamp">
-                          {new Date(msg.timestamp).toLocaleString("en-US", {
-                                timeZone: "America/New_York",
-                                hour: 'numeric',
-                                minute: 'numeric',
-                                second: 'numeric',
-                                hour12: true,
-                                month: 'numeric',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}
-                        </span>
-                      </div>
+          <div className="chat-section">
+            {selectedChat ? (
+              <>
+                <div className="chat-header">
+                  <div className="chat-header-left">
+                    <div className="chat-avatar">{selectedChat.username.charAt(0).toUpperCase()}</div>
+                    <div className="chat-user-info">
+                      <span className="chat-username">{selectedChat.username}</span>
                     </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
+                  </div>
+                  <button className="close-chat-button" onClick={handleCloseChat}>
+                    ✕
+                  </button>
+                </div>
+                <div className="chat-messages">
+                  <div className="messages-scroll-container">
+                    {messages.map(msg => (
+                      <div key={msg._id} className={`message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}`}>
+                        <div className="message-content">
+                          <div className="message-bubble">
+                            {msg.content}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+                <div className="message-input-container">
+                  <button 
+                    className="emoji-button"
+                    onClick={() => setShowEmojis(!showEmojis)}
+                    ref={emojiButtonRef}
+                  >
+                    😊
+                  </button>
+                  {showEmojis && (
+                    <div className="emoji-picker">
+                      {EMOJI_LIST.map((emoji, index) => (
+                        <button
+                          key={index}
+                          className="emoji-item"
+                          onClick={() => handleEmojiClick(emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    className="message-input"
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    onKeyPress={(e) => handleSendMessage(e)}
+                  />
+                  <button className="send-button" onClick={(e) => handleSendMessage(e)}>➤</button>
+                </div>
+              </>
+            ) : (
+              <div className="chat-empty-state">
+                <MessageIcon />
+                <h4>Select a conversation</h4>
+                <p>Choose a chat from the list to start messaging</p>
               </div>
-              <form className="message-input" onSubmit={handleSendMessage}>
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                />
-                <button type="submit">Send</button>
-              </form>
-            </div>
-          ) : (
-            <div className="no-chat-selected">
-              <div>
-                <p>Select a conversation to start chatting</p>
-                <small>Your messages will appear here</small>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default Messages;

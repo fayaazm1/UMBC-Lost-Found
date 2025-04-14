@@ -8,6 +8,7 @@ import NotificationBell from './NotificationBell';
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -29,6 +30,13 @@ function Navbar() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isMenuOpen, isProfileOpen]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -62,15 +70,17 @@ function Navbar() {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
         <div className="nav-center desktop-only">
           <div className="search-container">
             <input 
               type="text" 
               className="search-input" 
               placeholder="Search for items..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
             />
-            <FaSearch className="search-icon" />
+            <FaSearch className="search-icon" onClick={handleSearch} />
           </div>
           
           <div className="nav-links">
@@ -82,7 +92,6 @@ function Navbar() {
           </div>
         </div>
 
-        {/* Desktop User Menu */}
         <div className="nav-right desktop-only">
           {currentUser && (
             <>
@@ -116,7 +125,6 @@ function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
         <div className="mobile-only">
           <button className="hamburger-menu" onClick={toggleMenu} aria-label="Toggle menu">
             <FaBars />
@@ -124,15 +132,17 @@ function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
       <div className={`mobile-menu ${isMenuOpen ? 'show' : ''}`}>
         <div className="mobile-search">
           <input 
             type="text" 
             className="search-input" 
             placeholder="Search for items..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
           />
-          <FaSearch className="search-icon" />
+          <FaSearch className="search-icon" onClick={handleSearch} />
         </div>
 
         <div className="mobile-nav-links">
