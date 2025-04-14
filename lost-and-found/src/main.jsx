@@ -6,8 +6,8 @@ import './index.css';
 import App from './App';
 import emailjs from '@emailjs/browser';
 
-// Initialize EmailJS
-emailjs.init("IeLpp7S3HoyNwXsmE");
+// Initialize EmailJS with public key
+emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY || "IeLpp7S3HoyNwXsmE");
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
