@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import emailjs from '@emailjs/browser';
 import Navbar from "../components/Navbar";
 import "../assets/about-contact.css";
 
 const Contact = () => {
+  const form = useRef();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -12,6 +14,8 @@ const Contact = () => {
   });
 
   const [showPopup, setShowPopup] = useState(false);
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,23 +25,47 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add form submission logic here
-    setShowPopup(true);
-    // Reset form
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      topic: "lost",
-      message: ""
-    });
-    // Hide popup after 3 seconds
-    setTimeout(() => {
-      setShowPopup(false);
-    }, 3000);
+    setError("");
+    setSending(true);
+
+    try {
+      // Prepare template parameters
+      const templateParams = {
+        from_name: `${formData.firstName} ${formData.lastName}`,
+        from_email: formData.email,
+        topic: formData.topic,
+        message: formData.message,
+        to_name: "UMBC Lost & Found",
+        title: formData.topic // For backward compatibility with your template
+      };
+
+      await emailjs.send(
+        'service_483bu2i', // Your service ID
+        'template_5aanyi3', // Correct template ID
+        templateParams,
+        'IeLpp7S3HoyNwXsmE' // Your public key
+      );
+
+      setShowPopup(true);
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        topic: "lost",
+        message: ""
+      });
+
+      setTimeout(() => {
+        setShowPopup(false);
+      }, 3000);
+    } catch (err) {
+      setError("Failed to send message. Please try again.");
+      console.error('Error:', err);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -52,7 +80,8 @@ const Contact = () => {
             </div>
             
             <div className="contact-form-wrapper">
-              <form onSubmit={handleSubmit} className="contact-form">
+              <form onSubmit={handleSubmit} className="contact-form" ref={form}>
+                {error && <div className="error-message">{error}</div>}
                 <div className="form-row">
                   <div className="form-group">
                     <input
@@ -62,6 +91,7 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="First name"
                       required
+                      disabled={sending}
                     />
                   </div>
                   <div className="form-group">
@@ -72,6 +102,7 @@ const Contact = () => {
                       onChange={handleChange}
                       placeholder="Last name"
                       required
+                      disabled={sending}
                     />
                   </div>
                 </div>
@@ -84,6 +115,7 @@ const Contact = () => {
                     onChange={handleChange}
                     placeholder="Email"
                     required
+                    disabled={sending}
                   />
                 </div>
 
@@ -93,6 +125,7 @@ const Contact = () => {
                     value={formData.topic}
                     onChange={handleChange}
                     required
+                    disabled={sending}
                   >
                     <option value="lost">Lost</option>
                     <option value="found">Found</option>
@@ -105,32 +138,26 @@ const Contact = () => {
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="How can we help?"
-                    rows="4"
+                    placeholder="Your message"
                     required
+                    disabled={sending}
                   ></textarea>
                 </div>
 
-                <button type="submit" className="submit-btn">
-                  Submit
+                <button type="submit" className="submit-button" disabled={sending}>
+                  {sending ? "Sending..." : "Submit"}
                 </button>
               </form>
             </div>
           </div>
         </div>
-      </div>
 
-      {showPopup && (
-        <div className="popup-overlay">
+        {showPopup && (
           <div className="popup">
-            <div className="popup-content">
-              <div className="popup-icon">✓</div>
-              <h3>Submitted Successfully!</h3>
-              <p>Thank you for contacting us. We'll get back to you soon.</p>
-            </div>
+            <p>Message sent successfully!</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
