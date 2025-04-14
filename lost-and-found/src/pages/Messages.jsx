@@ -79,7 +79,8 @@ const Messages = () => {
         body: JSON.stringify({
           message: newMessage.trim(),
           from: currentUser.id,
-          to: selectedChat.userId
+          to: selectedChat.userId,
+          postId: selectedChat.postId
         })
       });
 

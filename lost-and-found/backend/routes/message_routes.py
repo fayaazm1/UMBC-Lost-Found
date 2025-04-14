@@ -109,6 +109,7 @@ async def get_conversations(user_id: int, db: Session = Depends(get_db)):
                     "$receiver_id",
                     "$sender_id"
                 ]}},
+                "postId": {"$first": "$post_id"},  # ✅ Include postId
                 "unread": {"$sum": {"$cond": [
                     {"$and": [
                         {"$eq": ["$receiver_id", user_id]},
