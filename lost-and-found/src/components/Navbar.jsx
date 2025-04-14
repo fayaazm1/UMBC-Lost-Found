@@ -35,6 +35,7 @@ function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(''); // Clear the search input after search
     }
   };
 
@@ -71,17 +72,18 @@ function Navbar() {
         </div>
 
         <div className="nav-center desktop-only">
-          <div className="search-container">
+          <form onSubmit={handleSearch} className="search-container">
             <input 
               type="text" 
               className="search-input" 
               placeholder="Search for items..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
             />
-            <FaSearch className="search-icon" onClick={handleSearch} />
-          </div>
+            <button type="submit" className="search-button">
+              <FaSearch className="search-icon" />
+            </button>
+          </form>
           
           <div className="nav-links">
             <Link to="/" className="nav-link">Home</Link>
@@ -134,15 +136,18 @@ function Navbar() {
 
       <div className={`mobile-menu ${isMenuOpen ? 'show' : ''}`}>
         <div className="mobile-search">
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder="Search for items..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-          />
-          <FaSearch className="search-icon" onClick={handleSearch} />
+          <form onSubmit={handleSearch} className="mobile-search-form">
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="Search for items..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="search-button">
+              <FaSearch className="search-icon" />
+            </button>
+          </form>
         </div>
 
         <div className="mobile-nav-links">
