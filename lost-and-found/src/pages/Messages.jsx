@@ -25,7 +25,6 @@ const MessageIcon = () => (
   </svg>
 );
 
-
 const EMOJI_LIST = ["👋", "😊", "👍", "❤️", "🙌", "🎉", "😂", "🤔", "👀", "✨"];
 
 function Messages() {
@@ -34,6 +33,7 @@ function Messages() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
+  const [isMobileListVisible, setIsMobileListVisible] = useState(true);
   const { dbUser: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -91,6 +91,11 @@ function Messages() {
 
   const handleChatSelect = (conv) => {
     setSelectedChat(conv);
+    setIsMobileListVisible(false);
+  };
+
+  const handleBackToList = () => {
+    setIsMobileListVisible(true);
   };
 
   const handleEmojiClick = (emoji) => {
@@ -125,6 +130,7 @@ function Messages() {
 
   const handleCloseChat = () => {
     setSelectedChat(null);
+    setIsMobileListVisible(true);
     setMessages([]);
     setNewMessage('');
     setShowEmojis(false);
@@ -137,98 +143,101 @@ function Messages() {
   return (
     <div className="messages-page">
       <Navbar />
-      <div className="messages-container">
-        <div className="app-container">
-          <div className="conversations-list">
-            <div className="conversations-header">Messages</div>
-            <div className="conversation-items">
-              {conversations.map(conv => (
-                <div
-                  key={conv._id}
-                  className={`conversation-item ${selectedChat?._id === conv._id ? 'active' : ''}`}
-                  onClick={() => handleChatSelect(conv)}
-                >
-                  <div className="conversation-avatar">
-                    <div className="chat-avatar">{conv.username.charAt(0).toUpperCase()}</div>
-                  </div>
-                  <div className="conversation-info">
-                    <div className="conversation-name">{conv.username}</div>
-                    <div className="conversation-preview">{conv.last_message}</div>
-                  </div>
-                  {conv.unread > 0 && <div className="unread-badge">{conv.unread}</div>}
+      <div className="app-container">
+        <div className={`conversations-list ${!isMobileListVisible ? 'hidden' : ''}`}>
+          <div className="conversations-header">Messages</div>
+          <div className="conversation-items">
+            {conversations.map(conv => (
+              <div
+                key={conv._id}
+                className={`conversation-item ${selectedChat?._id === conv._id ? 'active' : ''}`}
+                onClick={() => handleChatSelect(conv)}
+              >
+                <div className="conversation-avatar">
+                  <div className="chat-avatar">{conv.username.charAt(0).toUpperCase()}</div>
                 </div>
-              ))}
-            </div>
+                <div className="conversation-info">
+                  <div className="conversation-name">{conv.username}</div>
+                  <div className="conversation-preview">{conv.last_message}</div>
+                </div>
+                {conv.unread > 0 && <div className="unread-badge">{conv.unread}</div>}
+              </div>
+            ))}
           </div>
+        </div>
 
-          <div className="chat-section">
-            {selectedChat ? (
-              <>
-                <div className="chat-header">
-                  <div className="chat-header-left">
-                    <div className="chat-avatar">{selectedChat.username.charAt(0).toUpperCase()}</div>
-                    <div className="chat-user-info">
-                      <span className="chat-username">{selectedChat.username}</span>
-                    </div>
-                  </div>
-                  <button className="close-chat-button" onClick={handleCloseChat}>
-                    ✕
+        <div className="chat-section">
+          {selectedChat ? (
+            <>
+              <div className="chat-header">
+                <div className="chat-header-left">
+                  <button className="back-to-list" onClick={handleBackToList}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
                   </button>
+                  <div className="chat-avatar">{selectedChat.username.charAt(0).toUpperCase()}</div>
+                  <div className="chat-user-info">
+                    <div className="chat-username">{selectedChat.username}</div>
+                  </div>
                 </div>
-                <div className="chat-messages">
-                  <div className="messages-scroll-container">
-                    {messages.map(msg => (
-                      <div key={msg._id} className={`message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}`}>
-                        <div className="message-content">
-                          <div className="message-bubble">
-                            {msg.content}
-                          </div>
+                <button className="close-chat-button" onClick={handleCloseChat}>
+                  ✕
+                </button>
+              </div>
+              <div className="chat-messages">
+                <div className="messages-scroll-container">
+                  {messages.map(msg => (
+                    <div key={msg._id} className={`message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}`}>
+                      <div className="message-content">
+                        <div className="message-bubble">
+                          {msg.content}
                         </div>
                       </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
-                </div>
-                <div className="message-input-container">
-                  <button 
-                    className="emoji-button"
-                    onClick={() => setShowEmojis(!showEmojis)}
-                    ref={emojiButtonRef}
-                  >
-                    😊
-                  </button>
-                  {showEmojis && (
-                    <div className="emoji-picker">
-                      {EMOJI_LIST.map((emoji, index) => (
-                        <button
-                          key={index}
-                          className="emoji-item"
-                          onClick={() => handleEmojiClick(emoji)}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
                     </div>
-                  )}
-                  <input
-                    className="message-input"
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
-                    onKeyPress={(e) => handleSendMessage(e)}
-                  />
-                  <button className="send-button" onClick={(e) => handleSendMessage(e)}>➤</button>
+                  ))}
+                  <div ref={messagesEndRef} />
                 </div>
-              </>
-            ) : (
-              <div className="chat-empty-state">
-                <MessageIcon />
-                <h4>Select a conversation</h4>
-                <p>Choose a chat from the list to start messaging</p>
               </div>
-            )}
-          </div>
+              <div className="message-input-container">
+                <button 
+                  className="emoji-button"
+                  onClick={() => setShowEmojis(!showEmojis)}
+                  ref={emojiButtonRef}
+                >
+                  😊
+                </button>
+                {showEmojis && (
+                  <div className="emoji-picker">
+                    {EMOJI_LIST.map((emoji, index) => (
+                      <button
+                        key={index}
+                        className="emoji-item"
+                        onClick={() => handleEmojiClick(emoji)}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <input
+                  className="message-input"
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="Type a message..."
+                  onKeyPress={(e) => handleSendMessage(e)}
+                />
+                <button className="send-button" onClick={(e) => handleSendMessage(e)}>➤</button>
+              </div>
+            </>
+          ) : (
+            <div className="chat-empty-state">
+              <MessageIcon />
+              <h4>Select a conversation</h4>
+              <p>Choose a chat from the list to start messaging</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
