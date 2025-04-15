@@ -1,8 +1,9 @@
 import os
 import shutil
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from database import SessionLocal
 import models
 from models.post import Post
@@ -212,5 +213,79 @@ async def create_post(
         return JSONResponse(
             status_code=500,
             content={"detail": f"Error creating post: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
+
+@router.get("/filter")
+async def filter_posts(
+    keyword: str = None,
+    date: str = None,
+    location: str = None,
+    type: str = None,
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    try:
+        query = db.query(Post).options(joinedload(Post.user))
+        if type:
+            query = query.filter(Post.report_type.ilike(type))
+        if keyword:
+            keyword_like = f"%{keyword.lower()}%"
+            query = query.filter(or_(
+                Post.item_name.ilike(keyword_like),
+                Post.description.ilike(keyword_like)
+            ))
+        if location:
+            query = query.filter(Post.location.ilike(f"%{location.lower()}%"))
+        if date:
+            try:
+                # Convert input date to datetime object
+                search_date = datetime.strptime(date, "%Y-%m-%d")
+                # Format the date as it's stored in the database
+                formatted_date = search_date.strftime("%-m/%-d/%Y")
+                query = query.filter(Post.date == formatted_date)
+            except ValueError as e:
+                logger.error(f"Date parsing error: {e}")
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Invalid date format"},
+                    headers=get_cors_headers(request)
+                )
+
+        posts = query.all()
+        
+        # Debug logging
+        logger.info(f"Filter params - keyword: {keyword}, date: {date}, location: {location}, type: {type}")
+        logger.info(f"Found {len(posts)} posts")
+        if date:
+            logger.info(f"Date search: Input={date}, Formatted={formatted_date}")
+            for post in posts:
+                logger.info(f"Post date: {post.date}")
+
+        return JSONResponse(
+            content=[{
+                "id": post.id,
+                "report_type": post.report_type,
+                "item_name": post.item_name,
+                "description": post.description,
+                "location": post.location,
+                "contact_details": post.contact_details,
+                "date": post.date,
+                "time": post.time,
+                "image_path": post.image_path,
+                "user": {
+                    "id": post.user.id,
+                    "username": post.user.username,
+                    "email": post.user.email
+                } if post.user else None
+            } for post in posts],
+            headers=get_cors_headers(request)
+        )
+
+    except Exception as e:
+        logger.error(f"Error filtering posts: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error filtering posts: {str(e)}"},
             headers=get_cors_headers(request)
         )

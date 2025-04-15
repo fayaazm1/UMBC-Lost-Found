@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import Navbar from "../components/Navbar";
 import Popup from "../components/Popup";
 import "../assets/lost_found.css";
@@ -13,44 +14,80 @@ const Lost = () => {
   const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);
   const animationRef = useRef(null);
+  const [filters, setFilters] = useState({
+    keyword: "",
+    date: "",
+    location: "",
+  });
+
+  const fetchPosts = async (filterParams = null) => {
+    try {
+      let url = `${import.meta.env.VITE_API_BASE_URL}/api/posts`;
+      if (filterParams) {
+        url = `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter`;
+        const params = new URLSearchParams();
+        if (filterParams.keyword) params.append("keyword", filterParams.keyword);
+        if (filterParams.date) params.append("date", filterParams.date);
+        if (filterParams.location) params.append("location", filterParams.location);
+        params.append("type", "lost"); // Always filter for lost items
+        url += `?${params.toString()}`;
+      }
+
+      const response = await axios.get(url, { withCredentials: true });
+      const data = response.data;
+      if (!Array.isArray(data)) {
+        throw new Error('Expected array of posts');
+      }
+      // Filter for lost posts and ensure report_type is case-insensitive
+      const lostPosts = filterParams ? data : data.filter(post => 
+        post && post.report_type && post.report_type.toLowerCase() === "lost"
+      );
+      setPosts(lostPosts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      setPosts([]); // Set empty array on error
+    }
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error('Expected array of posts');
-        }
-        // Filter for lost posts and ensure report_type is case-insensitive
-        const lostPosts = data.filter(post => 
-          post && post.report_type && post.report_type.toLowerCase() === "lost"
-        );
-        // Debug log to check user information
-        lostPosts.forEach(post => {
-          console.log("Post user info:", post.user);
-          console.log("Post ID:", post.id);
-        });
-        console.log("Lost posts:", lostPosts); // Debug log
-        setPosts(lostPosts);
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-        setPosts([]); // Set empty array on error
-      }
-    };
-
     fetchPosts();
-    const interval = setInterval(fetchPosts, 5000);
+    const interval = setInterval(() => fetchPosts(), 5000);
     return () => clearInterval(interval);
   }, []);
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const applyFilters = () => {
+    // Build query string from non-empty filters
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value !== "")
+    );
+    if (Object.keys(activeFilters).length > 0) {
+      const queryString = new URLSearchParams({
+        ...activeFilters,
+        type: "lost" // Always include type=lost
+      }).toString();
+      // Use the navigate function with replace: true to prevent back button issues
+      navigate(`/filter-results?${queryString}`, { replace: true });
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      keyword: "",
+      date: "",
+      location: "",
+    });
+    fetchPosts(); // Fetch all posts without filters
+  };
+
   const priorityPosts = posts.filter((post) => post && post.description && isPriorityPost(post.description));
-  console.log("Priority posts:", priorityPosts); // Debug log
-  
-  // Create a seamless infinite scroll by duplicating posts multiple times
   const duplicatedPosts = [...priorityPosts, ...priorityPosts, ...priorityPosts];
 
   const animateCarousel = () => {
@@ -62,7 +99,6 @@ const Lost = () => {
     const container = carouselRef.current;
     const scrollAmount = 1;
     
-    // If we're near the end, jump back to 1/3 of the way through
     if (container.scrollLeft >= (container.scrollWidth * 2) / 3) {
       container.scrollLeft = container.scrollWidth / 3;
     } else {
@@ -87,7 +123,6 @@ const Lost = () => {
   return (
     <div className="container">
       <Navbar />
-      {/* Decorative elements */}
       <div className="decorative-circle circle-1"></div>
       <div className="decorative-circle circle-2"></div>
       
@@ -162,11 +197,29 @@ const Lost = () => {
         <aside className="right-sidebar">
           <div className="filter-section">
             <h3>Filter Posts</h3>
-            <input type="text" placeholder="Search by keyword..." />
-            <input type="date" placeholder="Date Lost" />
-            <input type="text" placeholder="Location" />
-            <button className="filter-btn">Apply Filters</button>
-            <button className="clear-btn">Clear Filters</button>
+            <input 
+              type="text" 
+              name="keyword"
+              value={filters.keyword}
+              onChange={handleFilterChange}
+              placeholder="Search by keyword..." 
+            />
+            <input 
+              type="date" 
+              name="date"
+              value={filters.date}
+              onChange={handleFilterChange}
+              placeholder="Date Lost" 
+            />
+            <input 
+              type="text" 
+              name="location"
+              value={filters.location}
+              onChange={handleFilterChange}
+              placeholder="Location" 
+            />
+            <button className="filter-btn" onClick={applyFilters}>Apply Filters</button>
+            <button className="clear-btn" onClick={clearFilters}>Clear Filters</button>
           </div>
           
           <div className="lost-something">
