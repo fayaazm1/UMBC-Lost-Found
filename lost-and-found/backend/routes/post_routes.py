@@ -214,3 +214,56 @@ async def create_post(
             content={"detail": f"Error creating post: {str(e)}"},
             headers=get_cors_headers(request)
         )
+
+@router.get("/filter")
+async def filter_posts(
+    keyword: str = None,
+    date: str = None,
+    location: str = None,
+    type: str = None,
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    try:
+        query = db.query(Post).options(joinedload(Post.user))
+        if type:
+            query = query.filter(Post.report_type.ilike(type))
+        if keyword:
+            keyword_like = f"%{keyword.lower()}%"
+            query = query.filter(or_(
+                Post.item_name.ilike(keyword_like),
+                Post.description.ilike(keyword_like)
+            ))
+        if location:
+            query = query.filter(Post.location.ilike(f"%{location.lower()}%"))
+        if date:
+            query = query.filter(Post.date == date)
+
+        posts = query.all()
+
+        return JSONResponse(
+            content=[{
+                "id": post.id,
+                "report_type": post.report_type,
+                "item_name": post.item_name,
+                "description": post.description,
+                "location": post.location,
+                "contact_details": post.contact_details,
+                "date": post.date,
+                "time": post.time,
+                "image_path": post.image_path,
+                "user": {
+                    "id": post.user.id,
+                    "username": post.user.username,
+                    "email": post.user.email
+                } if post.user else None
+            } for post in posts],
+            headers=get_cors_headers(request)
+        )
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error filtering posts: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
