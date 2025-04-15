@@ -238,29 +238,32 @@ async def filter_posts(
         if location:
             query = query.filter(Post.location.ilike(f"%{location.lower()}%"))
         if date:
-            try:
-                # Convert input date to datetime object
-                search_date = datetime.strptime(date, "%Y-%m-%d")
-                # Format the date as it's stored in the database
-                formatted_date = search_date.strftime("%-m/%-d/%Y")
-                query = query.filter(Post.date == formatted_date)
-            except ValueError as e:
-                logger.error(f"Date parsing error: {e}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"detail": "Invalid date format"},
-                    headers=get_cors_headers(request)
-                )
-
+            # Accept both 'M/D/YYYY', 'MM/DD/YYYY', and 'YYYY-MM-DD' formats
+            from datetime import datetime
+            import re
+            parsed_date_strs = set()
+            for fmt in ("%m/%d/%Y", "%Y-%m-%d", "%m/%-d/%Y", "%m/%#d/%Y"):
+                try:
+                    date_obj = datetime.strptime(date, fmt)
+                    parsed_date_strs.add(date_obj.strftime("%m/%d/%Y"))
+                    parsed_date_strs.add(date_obj.strftime("%Y-%m-%d"))
+                    parsed_date_strs.add(date_obj.strftime("%m/%-d/%Y"))
+                    parsed_date_strs.add(date_obj.strftime("%m/%#d/%Y"))
+                except Exception:
+                    continue
+            if not parsed_date_strs:
+                parsed_date_strs.add(date)
+            from sqlalchemy import or_
+            logger.info(f"Filtering by date (any of): {parsed_date_strs}")
+            query = query.filter(or_(*(Post.date == ds for ds in parsed_date_strs)))
+        
         posts = query.all()
         
         # Debug logging
         logger.info(f"Filter params - keyword: {keyword}, date: {date}, location: {location}, type: {type}")
         logger.info(f"Found {len(posts)} posts")
         if date:
-            logger.info(f"Date search: Input={date}, Formatted={formatted_date}")
-            for post in posts:
-                logger.info(f"Post date: {post.date}")
+            logger.info(f"Date search: Input={date}")
 
         return JSONResponse(
             content=[{
