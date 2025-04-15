@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
-import "../assets/search.css";
+import "./Search.css";
 import "../assets/post_user.css";
 
 const FilterResults = () => {
