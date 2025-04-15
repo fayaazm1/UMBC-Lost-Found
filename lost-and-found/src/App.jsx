@@ -18,7 +18,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
 import Messages from "./pages/Messages";
 import Search from "./pages/Search";
-import FilterResults from "./pages/FilterResults"; // added FilterResults import
+import FilterResults from "./pages/FilterResults"; 
 import { useAuth } from "./contexts/AuthContext";
 
 function App() {
