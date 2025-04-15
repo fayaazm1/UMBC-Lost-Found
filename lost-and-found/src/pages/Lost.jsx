@@ -64,12 +64,16 @@ const Lost = () => {
   };
 
   const applyFilters = () => {
-    // Only include non-empty filters
+    // Build query string from non-empty filters
     const activeFilters = Object.fromEntries(
       Object.entries(filters).filter(([_, value]) => value !== "")
     );
     if (Object.keys(activeFilters).length > 0) {
-      fetchPosts(activeFilters);
+      const queryString = new URLSearchParams({
+        ...activeFilters,
+        type: "lost" // Always include type=lost
+      }).toString();
+      navigate(`/filter-results?${queryString}`);
     }
   };
 

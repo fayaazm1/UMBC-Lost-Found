@@ -17,7 +17,8 @@ import NotificationsPage from "./pages/NotificationsPage";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
 import Messages from "./pages/Messages";
-import Search from "./pages/Search"; // added search page import
+import Search from "./pages/Search";
+import FilterResults from "./pages/FilterResults"; // added FilterResults import
 import { useAuth } from "./contexts/AuthContext";
 
 function App() {
@@ -96,6 +97,11 @@ function App() {
           <Route path="/search" element={
             <ProtectedRoute>
               <Search />
+            </ProtectedRoute>
+          } />
+          <Route path="/filter-results" element={
+            <ProtectedRoute>
+              <FilterResults />
             </ProtectedRoute>
           } />
 
