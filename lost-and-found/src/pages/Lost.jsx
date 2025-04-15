@@ -73,7 +73,8 @@ const Lost = () => {
         ...activeFilters,
         type: "lost" // Always include type=lost
       }).toString();
-      navigate(`/filter-results?${queryString}`);
+      // Use the navigate function with replace: true to prevent back button issues
+      navigate(`/filter-results?${queryString}`, { replace: true });
     }
   };
 

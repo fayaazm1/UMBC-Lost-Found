@@ -18,7 +18,13 @@ const FilterResults = () => {
         setLoading(true);
         const url = `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter${location.search}`;
         console.log("Fetching from URL:", url); // Debug log
-        const response = await axios.get(url, { withCredentials: true });
+        const response = await axios.get(url, { 
+          withCredentials: true,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
         console.log("Response data:", response.data); // Debug log
         setResults(response.data);
         setLoading(false);
@@ -29,7 +35,11 @@ const FilterResults = () => {
       }
     };
 
-    fetchFilteredResults();
+    if (location.search) { // Only fetch if there are search params
+      fetchFilteredResults();
+    } else {
+      setLoading(false);
+    }
   }, [location.search]);
 
   const handlePostClick = (post) => {
