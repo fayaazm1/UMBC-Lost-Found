@@ -12,81 +12,41 @@ function Welcome() {
   const [rememberMe, setRememberMe] = useState(false);
   const { login, currentUser, loading } = useAuth();
 
-  // Create particles effect with safe DOM manipulation
+  // Create particles effect
   useEffect(() => {
-    // Function to safely create particles with null checks
     const createParticle = (x, y) => {
-      // Safely get the element
-      const authPageElement = document.querySelector('.auth-page');
-      
-      // Only proceed if the element exists
-      if (!authPageElement) return;
-      
-      try {
-        // Create particle with safety checks
-        const particle = document.createElement('div');
-        if (!particle) return;
-        
-        particle.className = 'particle';
-        particle.style.left = `${x}px`;
-        particle.style.top = `${y}px`;
-        
-        // Safe append
-        authPageElement.appendChild(particle);
-        
-        // Safe removal
-        setTimeout(() => {
-          // Check if particle still exists before removing
-          if (particle && particle.parentNode) {
-            particle.parentNode.removeChild(particle);
-          }
-        }, 1000);
-      } catch (error) {
-        // Silently handle any DOM errors
-        console.log("Suppressed particle effect error:", error);
-      }
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+      document.querySelector('.auth-page').appendChild(particle);
+
+      setTimeout(() => {
+        particle.remove();
+      }, 1000);
     };
-    
-    // Add event with safety
+
     const handleMouseMove = (e) => {
       if (Math.random() > 0.9) {
         createParticle(e.clientX, e.clientY);
       }
     };
-    
-    // Add listener with safety delay to ensure DOM is ready
-    const timerRef = setTimeout(() => {
-      document.addEventListener('mousemove', handleMouseMove);
-    }, 500);
-    
-    // Clean up
-    return () => {
-      clearTimeout(timerRef);
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => document.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   // Redirect if already logged in and email verified
+  // useEffect(() => {
+  //   if (!loading && currentUser?.emailVerified) {
+  //     navigate('/', { replace: true });
+  //   }
+  // }, [loading, currentUser, navigate]);
+  
+// Redirect if logged in
   if (currentUser && currentUser.emailVerified) {
     return <Navigate to="/" replace />;
   }
-
-  // Effect to handle navigation when user state changes
-  useEffect(() => {
-    if (currentUser) {
-      // User is authenticated, store ID
-      localStorage.setItem('user_id', currentUser.uid);
-      
-      // Give time for Firebase to fully stabilize the auth state
-      const timer = setTimeout(() => {
-        // Use navigate instead of direct href for better UX
-        navigate('/', { replace: true });
-      }, 800);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentUser, navigate]);
-
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -94,17 +54,26 @@ function Welcome() {
       setError('');
       setFormLoading(true);
       
-      // Call login which now includes user.reload() for force-refreshing
-      const userCredential = await login(email, password);
-      console.log("Login successful:", userCredential.user.email);
+      // Attempt login
+      const result = await login(email, password);
       
-      // We'll keep form loading active until navigation completes
-      // The useEffect above will handle the navigation
+      if (!result.user) {
+        throw new Error('Login failed - no user returned');
+      }
+
+      if (!result.user.emailVerified) {
+        setError('Please verify your email before logging in.');
+        return;
+      }
+
+      // Successfully logged in and email verified
+      navigate('/', { replace: true });
       
     } catch (error) {
       console.error('Login error:', error);
+      setError('Failed to log in: ' + (error.message || 'Please try again'));
+    } finally {
       setFormLoading(false);
-      setError(error.message || 'Failed to log in. Please try again.');
     }
   }
 
@@ -131,103 +100,88 @@ function Welcome() {
               }} />
             ))}
           </div>
-          <div className="logo">UMBC Lost & Found</div>
-          <div className="welcome-text">
-            <h1>Welcome To UMBC</h1>
-            <div className="divider"></div>
-            <p>Lost & Found Platform</p>
-            <div className="subtext">
-              See the items and connect with people who found your belongings, from anywhere on campus!
-            </div>
-          </div>
-        </div>
-        <div className="auth-right-side">
           <div className="auth-form-container">
-            <div className="auth-form-header">
-              <h2>Get Started</h2>
+            <div className="title-container">
+              <h1 className="auth-title">Welcome To UMBC</h1>
+              <div className="title-decoration" />
             </div>
-            
+            <p className="auth-subtitle">Lost & Found Platform</p>
+            <p className="auth-description">
+              See the items and connect with people who found your belongings, from anywhere on campus!
+            </p>
+
             {error && (
-              <div className="auth-error">
-                {error}
+              <div className="alert alert-error">
+                <div className="alert-content">{error}</div>
+                <div className="alert-line" />
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
-                <label htmlFor="email">E-MAIL</label>
-                <div className="input-field">
-                  <span className="input-icon">✉️</span>
+                <label htmlFor="email">E-mail</label>
+                <div className="input-container">
                   <input
-                    type="email"
                     id="email"
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="username@umbc.edu"
+                    placeholder="yourname@umbc.edu"
                     required
                   />
+                  <span className="input-icon">📧</span>
+                  <div className="input-focus-effect" />
                 </div>
               </div>
-              
+
               <div className="form-group">
-                <label htmlFor="password">PASSWORD</label>
-                <div className="input-field">
-                  <span className="input-icon">🔒</span>
+                <label htmlFor="password">Password</label>
+                <div className="input-container">
                   <input
-                    type="password"
                     id="password"
+                    type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="strong characters"
+                    placeholder="6+ strong characters"
                     required
                   />
+                  <span className="input-icon">🔒</span>
+                  <div className="input-focus-effect" />
                 </div>
               </div>
-              
+
               <div className="form-options">
-                <div className="checkbox-container">
+                <label className="checkbox-container">
                   <input
                     type="checkbox"
-                    id="rememberMe"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <label htmlFor="rememberMe">Remember for 30 days</label>
-                </div>
-                <Link to="/forgot-password" className="forgot-password">
+                  <span className="checkbox-text">Remember for 30 days</span>
+                </label>
+                <Link to="/forgot-password" className="auth-link">
                   Forgot password?
                 </Link>
               </div>
 
-              <button
-                type="submit"
+              <button 
+                type="submit" 
                 className="auth-button"
                 disabled={formLoading}
               >
-                {formLoading ? (
-                  <span className="loading-text">Signing in...</span>
-                ) : (
-                  <span>Sign in now</span>
-                )}
+                <span className="button-text">
+                  {formLoading ? 'Signing in...' : 'Sign in now'}
+                </span>
+                <div className="button-shine" />
               </button>
 
               <div className="auth-footer">
-                <p>Don't have an account? <Link to="/signup">Sign Up</Link></p>
+                <p>Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link></p>
               </div>
             </form>
           </div>
         </div>
       </div>
-      {/* Login loading overlay */}
-      {formLoading && (
-        <div className="login-success-overlay">
-          <div className="login-success-content">
-            <div className="loader-spinner"></div>
-            <h3>Authenticating...</h3>
-            <p>Preparing your dashboard...</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
