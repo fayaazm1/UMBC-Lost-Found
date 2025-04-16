@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { uploadProfilePicture } from '../utils/storage';
 import './Profile.css';
 import Navbar from "../components/Navbar";
 
 const Profile = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
     displayName: currentUser?.displayName || '',
@@ -20,7 +21,7 @@ const Profile = () => {
   const handleSave = async () => {
     setIsEditing(false);
     try {
-      await updateProfile({
+      await updateUserProfile({
         displayName: profile.displayName,
         phoneNumber: profile.phoneNumber,
         bio: profile.bio
@@ -40,9 +41,14 @@ const Profile = () => {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     try {
-      const photoURL = await uploadImage(file);
+      const photoURL = await uploadProfilePicture(file, currentUser.uid);
       setProfile(prev => ({ ...prev, photoURL }));
+      
+      // Update Firebase profile with the new photo URL
+      await updateUserProfile({ photoURL });
     } catch (error) {
       console.error('Failed to upload image:', error);
     }
