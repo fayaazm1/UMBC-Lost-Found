@@ -37,9 +37,6 @@ function Messages() {
   const { dbUser: currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [typingUsers, setTypingUsers] = useState(new Set());
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
   const messagesEndRef = useRef(null);
   const emojiButtonRef = useRef(null);
 
@@ -52,9 +49,7 @@ function Messages() {
 
     const fetchConversations = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/conversations/${currentUser.id}`, {
-          headers: { 'Authorization': `Bearer ${currentUser.token}` }
-        });
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/conversations/${currentUser.id}`);
         const data = await response.json();
         setConversations(data);
         setLoading(false);
@@ -74,11 +69,16 @@ function Messages() {
 
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/chat/${currentUser.id}/${selectedChat.userId}`, {
-          headers: { 'Authorization': `Bearer ${currentUser.token}` }
-        });
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/chat/${currentUser.id}/${selectedChat.userId}`);
         const data = await response.json();
         setMessages(data);
+
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/mark-read`, {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, conversationId: selectedChat.userId })
+        });
+
       } catch {
         setError('Failed to load messages');
       }
@@ -110,10 +110,7 @@ function Messages() {
       try {
         await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/messages/create`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUser.token}`
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: newMessage,
             from: currentUser.id,
@@ -181,18 +178,14 @@ function Messages() {
                     <div className="chat-username">{selectedChat.username}</div>
                   </div>
                 </div>
-                <button className="close-chat-button" onClick={handleCloseChat}>
-                  ✕
-                </button>
+                <button className="close-chat-button" onClick={handleCloseChat}>✕</button>
               </div>
               <div className="chat-messages">
                 <div className="messages-scroll-container">
                   {messages.map(msg => (
                     <div key={msg._id} className={`message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}`}>
                       <div className="message-content">
-                        <div className="message-bubble">
-                          {msg.content}
-                        </div>
+                        <div className="message-bubble">{msg.content}</div>
                       </div>
                     </div>
                   ))}
@@ -200,23 +193,11 @@ function Messages() {
                 </div>
               </div>
               <div className="message-input-container">
-                <button 
-                  className="emoji-button"
-                  onClick={() => setShowEmojis(!showEmojis)}
-                  ref={emojiButtonRef}
-                >
-                  😊
-                </button>
+                <button className="emoji-button" onClick={() => setShowEmojis(!showEmojis)} ref={emojiButtonRef}>😊</button>
                 {showEmojis && (
                   <div className="emoji-picker">
                     {EMOJI_LIST.map((emoji, index) => (
-                      <button
-                        key={index}
-                        className="emoji-item"
-                        onClick={() => handleEmojiClick(emoji)}
-                      >
-                        {emoji}
-                      </button>
+                      <button key={index} className="emoji-item" onClick={() => handleEmojiClick(emoji)}>{emoji}</button>
                     ))}
                   </div>
                 )}

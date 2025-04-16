@@ -158,14 +158,11 @@ async def mark_messages_as_read(payload: dict, db: Session = Depends(get_db)):
         if not user_id or not conversation_id:
             raise HTTPException(status_code=400, detail="Missing userId or conversationId")
 
-        # Mark all messages in the conversation as read
         result = await messages.update_many(
             {
                 "receiver_id": user_id,
-                "$or": [
-                    {"sender_id": int(conversation_id)},
-                    {"receiver_id": int(conversation_id)}
-                ]
+                "sender_id": int(conversation_id),
+                "read_status": False
             },
             {"$set": {"read_status": True}}
         )
