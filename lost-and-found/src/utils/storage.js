@@ -1,9 +1,8 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// IMPORTANT: Force placeholder mode in production to avoid CORS issues completely
-// Production detection doesn't seem to be working reliably, so we're forcing it on
-const DEVELOPMENT_MODE = true; // Force placeholders in ALL environments until CORS is fixed
+// Use Firebase Storage for all image uploads
+const DEVELOPMENT_MODE = false;
 
 // Helper function to generate placeholder image URLs as a fallback only
 const getPlaceholderImage = (type, userId) => {
@@ -76,9 +75,10 @@ export const uploadPostImage = async (file, userId, postId) => {
     return downloadURL;
   } catch (storageError) {
     console.error('Firebase Storage error for post image:', storageError);
-    console.log('Falling back to placeholder due to CORS or other issues');
+    console.log('Error details:', JSON.stringify(storageError, null, 2));
+    console.log('Falling back to placeholder due to storage issues');
     
-    // If there's a CORS error or any other storage issue, fall back to placeholder
+    // If there's a storage error, fall back to placeholder
     return getPlaceholderImage('post', postId);
   }
 };

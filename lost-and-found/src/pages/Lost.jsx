@@ -6,9 +6,11 @@ import Popup from "../components/Popup";
 import "../assets/lost_found.css";
 import "../assets/post_user.css";
 import { isPriorityPost } from "../utils/priorityClassifier";
+import { useNavigate } from "react-router-dom";
 
 const Lost = () => {
   const [posts, setPosts] = useState([]);
+  const navigate = useNavigate();
   const [popupData, setPopupData] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);

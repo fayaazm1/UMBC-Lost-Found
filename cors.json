@@ -3,8 +3,9 @@
     "origin": [
       "http://localhost:5173",
       "https://umbc-lost-found.web.app",
-      "https://umbc-lost-found.firebaseapp.com",
-      "https://umbc-lost-found-1.onrender.com"
+      "https://umbc-lost-found.firebaseapp.com", 
+      "https://umbc-lost-found-1.onrender.com",
+      "http://localhost:3000"
     ],
     "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "maxAgeSeconds": 3600,
@@ -12,7 +13,9 @@
       "Content-Type",
       "Authorization",
       "Content-Length",
-      "x-goog-resumable"
+      "User-Agent",
+      "x-goog-resumable",
+      "x-goog-*"
     ]
   }
 ]
