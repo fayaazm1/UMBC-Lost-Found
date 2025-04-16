@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/Auth.css';
+import './Login.css'; // For the loading animation styles
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -25,10 +27,17 @@ function Login() {
         localStorage.setItem('user_id', user.uid);
         setSuccess(true);
         
-        // Delay redirect to ensure DOM is ready and state is updated
+        // Delay redirect to ensure authentication state is fully ready
         setTimeout(() => {
-          // Use window.location for full page refresh
-          window.location.href = '/';
+          // Try to use React Router first for a smoother experience
+          navigate('/', { replace: true });
+          
+          // Fallback to window.location if navigation fails
+          setTimeout(() => {
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            }
+          }, 1000);
         }, 1500);
       } else {
         setError('Login failed - please try again');
@@ -50,7 +59,17 @@ function Login() {
             <p className="auth-subtitle">Sign in to your account</p>
 
             {error && <div className="alert alert-error">{error}</div>}
-            {success && <div className="alert alert-success">Login successful! Redirecting...</div>}
+            {success && (
+              <div className="alert alert-success">
+                <div className="login-success-container">
+                  <div className="login-success-message">Login successful!</div>
+                  <div className="login-loader">
+                    <div className="login-loader-spinner"></div>
+                  </div>
+                  <div className="login-redirect-message">Redirecting you to dashboard...</div>
+                </div>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -94,7 +113,12 @@ function Login() {
                 className="auth-button"
                 disabled={loading || success}
               >
-                {loading ? 'Signing in...' : success ? 'Signed in!' : 'Sign in'}
+                {loading ? (
+                  <span className="button-loader-container">
+                    <span className="button-loader"></span>
+                    <span>Signing in...</span>
+                  </span>
+                ) : success ? 'Signed in!' : 'Sign in'}
               </button>
 
               <div className="auth-footer">
