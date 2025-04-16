@@ -1,8 +1,11 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Use actual Firebase Storage now that CORS is fixed
-const DEVELOPMENT_MODE = false;
+// Force development mode based on the current domain
+// This prevents CORS errors on production by skipping Firebase Storage entirely
+const isProduction = typeof window !== 'undefined' && 
+                     window.location.hostname.includes('render.com');
+const DEVELOPMENT_MODE = isProduction;
 
 // Helper function to generate placeholder image URLs
 const getPlaceholderImage = (type, userId) => {
@@ -25,25 +28,34 @@ const getPlaceholderImage = (type, userId) => {
  */
 export const uploadProfilePicture = async (file, userId) => {
   try {
-    // Skip actual upload in dev mode
+    // Skip actual upload in dev mode or on production due to CORS
     if (DEVELOPMENT_MODE) {
-      console.log('Using placeholder image for profile picture');
+      console.log('Using placeholder image for profile picture - skipping Firebase Storage upload');
       return getPlaceholderImage('profile', userId);
     }
     
-    // Create a reference to the storage location
-    const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
-    
-    // Upload the file
-    const snapshot = await uploadBytes(storageRef, file);
-    
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    return downloadURL;
+    try {
+      // Only attempt Firebase Storage on local development or when not on Render
+      // Create a reference to the storage location
+      const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
+      
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      return downloadURL;
+    } catch (storageError) {
+      console.error('Firebase Storage error:', storageError);
+      console.log('Falling back to placeholder due to CORS or other issues');
+      
+      // If there's a CORS error or any other storage issue, fall back to placeholder
+      return getPlaceholderImage('profile', userId);
+    }
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
-    // Fall back to placeholder image
+    console.error('Error in uploadProfilePicture:', error);
+    // Fall back to placeholder image for any error
     return getPlaceholderImage('profile', userId);
   }
 };
@@ -57,22 +69,31 @@ export const uploadProfilePicture = async (file, userId) => {
  */
 export const uploadPostImage = async (file, userId, postId) => {
   try {
-    // Skip actual upload in dev mode
+    // Skip actual upload in dev mode or on production due to CORS
     if (DEVELOPMENT_MODE) {
-      console.log('Using placeholder image for post');
+      console.log('Using placeholder image for post - skipping Firebase Storage upload');
       return getPlaceholderImage('post', postId);
     }
     
-    // Create a storage reference with a unique path
-    const storageRef = ref(storage, `posts/${userId}/${postId}/${Date.now()}.${getFileExtension(file.name)}`);
-    
-    // Upload the file
-    const snapshot = await uploadBytes(storageRef, file);
-    
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    return downloadURL;
+    try {
+      // First attempt - try normal Firebase Storage upload
+      // Create a storage reference with a unique path
+      const storageRef = ref(storage, `posts/${userId}/${postId}/${Date.now()}.${getFileExtension(file.name)}`);
+      
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      return downloadURL;
+    } catch (storageError) {
+      console.error('Firebase Storage error for post image:', storageError);
+      console.log('Falling back to placeholder due to CORS or other issues');
+      
+      // If there's a CORS error or any other storage issue, fall back to placeholder
+      return getPlaceholderImage('post', postId);
+    }
   } catch (error) {
     console.error('Error uploading post image:', error);
     // Fall back to placeholder image
@@ -89,9 +110,9 @@ export const uploadPostImage = async (file, userId, postId) => {
  */
 export const uploadMultiplePostImages = async (files, userId, postId) => {
   try {
-    // Skip actual upload in dev mode
+    // Skip actual upload in dev mode or on production due to CORS
     if (DEVELOPMENT_MODE) {
-      console.log('Using placeholder images for multiple post images');
+      console.log('Using placeholder images for multiple post images - skipping Firebase Storage upload');
       return Array.from(files).map((_, index) => 
         getPlaceholderImage('post', `${postId}-${index}`)
       );
@@ -124,9 +145,9 @@ export const uploadMultiplePostImages = async (files, userId, postId) => {
  */
 export const deleteImage = async (imageUrl) => {
   try {
-    // Skip deletion for dev mode or placeholder images
+    // Skip deletion for dev mode, production mode, or placeholder images
     if (DEVELOPMENT_MODE || imageUrl.includes('picsum.photos')) {
-      console.log('Skipping deletion of placeholder image');
+      console.log('Skipping deletion of placeholder image or on production');
       return;
     }
     
