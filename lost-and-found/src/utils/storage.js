@@ -1,8 +1,8 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Set to production mode but with fallback for CORS issues
-const DEVELOPMENT_MODE = false; // Using real Firebase Storage in production
+// Set to development mode to force using placeholders instead of Firebase Storage
+const DEVELOPMENT_MODE = true; // Forced to true to bypass CORS issues
 const MAX_RETRY_ATTEMPTS = 2;
 
 // Helper function to generate placeholder image URLs
