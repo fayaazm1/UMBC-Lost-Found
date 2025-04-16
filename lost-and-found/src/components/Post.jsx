@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { uploadPostImage } from "../utils/storage";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css";
 
@@ -14,9 +13,7 @@ const Post = () => {
     contactDetails: "",
     date: "",
     time: "",
-    image: null,
   });
-  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -26,23 +23,6 @@ const Post = () => {
     const today = new Date().toISOString().split('T')[0];
     setFormData(prev => ({ ...prev, date: today }));
   }, []);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("File size should be less than 5MB");
-        return;
-      }
-      setFormData({ ...formData, image: file });
-      setError("");
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,16 +37,7 @@ const Post = () => {
       return;
     }
 
-    let imageUrl = null;
-
     try {
-      if (formData.image) {
-        setUploadProgress(10);
-        const tempPostId = new Date().getTime().toString();
-        imageUrl = await uploadPostImage(formData.image, currentUser.uid, tempPostId);
-        setUploadProgress(50);
-      }
-
       const formDataToSend = new FormData();
       formDataToSend.append('report_type', formData.reportType.toLowerCase().trim());
       formDataToSend.append('item_name', formData.itemName);
@@ -76,10 +47,8 @@ const Post = () => {
       formDataToSend.append('date', formData.date);
       formDataToSend.append('time', formData.time);
       formDataToSend.append('user_id', currentUser.email);
-      if (formData.image) {
-        formDataToSend.append('image', formData.image);
-      }
 
+      setUploadProgress(50);
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`, {
         method: "POST",
         body: formDataToSend
@@ -98,11 +67,7 @@ const Post = () => {
           contactDetails: "",
           date: new Date().toISOString().split('T')[0],
           time: "",
-          image: null,
         });
-        setImagePreview(null);
-        const fileInput = document.querySelector('input[type="file"]');
-        if (fileInput) fileInput.value = '';
         setTimeout(() => {
           setSuccess(false);
         }, 3000);
@@ -184,19 +149,6 @@ const Post = () => {
           <div className="form-group">
             <label>Time</label>
             <input type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} required />
-          </div>
-
-          <div className="form-group">
-            <label>Image (Optional)</label>
-            <div className="image-upload-container">
-              <input type="file" onChange={handleFileChange} accept="image/*" className="file-input" />
-              {imagePreview && (
-                <div className="image-preview">
-                  <img src={imagePreview} alt="Preview" className="preview-thumbnail" />
-                </div>
-              )}
-              <small className="file-hint">Maximum file size: 5MB</small>
-            </div>
           </div>
 
           {uploadProgress > 0 && uploadProgress < 100 && (
