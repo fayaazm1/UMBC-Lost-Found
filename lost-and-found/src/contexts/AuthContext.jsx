@@ -72,19 +72,30 @@ export function AuthProvider({ children }) {
     }
   }
 
+  /**
+   * Log in a user with email and password
+   * @param {string} email - User's email address
+   * @param {string} password - User's password
+   * @returns {Promise<UserCredential>} Firebase user credential
+   */
   async function login(email, password) {
-    console.log("LOGIN:", email, password);
+    setLoading(true);
     try {
+      // First authenticate with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
-
-      await reload(firebaseUser);
-
+      
+      // Force-refresh the user object to ensure we have the latest data
+      await firebaseUser.reload();
+      
+      // Email verification check
       if (!firebaseUser.emailVerified) {
         await signOut(auth);
+        setLoading(false);
         throw new Error('Please verify your email before logging in.');
       }
 
+      // Get or create database user
       let dbUserData = await getUserByEmail(email.toLowerCase());
 
       if (!dbUserData) {
@@ -107,9 +118,11 @@ export function AuthProvider({ children }) {
       }
 
       setDbUser(dbUserData);
-      return firebaseUser;
+      setLoading(false);
+      return userCredential;
     } catch (error) {
       console.error("Error during login:", error);
+      setLoading(false);
       throw error;
     }
   }

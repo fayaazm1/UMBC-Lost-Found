@@ -77,10 +77,15 @@ function Welcome() {
       // User is authenticated, store ID
       localStorage.setItem('user_id', currentUser.uid);
       
-      // Force a page refresh for clean state
-      window.location.href = '/';
+      // Give time for Firebase to fully stabilize the auth state
+      const timer = setTimeout(() => {
+        // Use navigate instead of direct href for better UX
+        navigate('/', { replace: true });
+      }, 800);
+      
+      return () => clearTimeout(timer);
     }
-  }, [currentUser]);
+  }, [currentUser, navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -89,8 +94,12 @@ function Welcome() {
       setError('');
       setFormLoading(true);
       
-      // Just call login and let the effect handle the redirect
-      await login(email, password);
+      // Call login which now includes user.reload() for force-refreshing
+      const userCredential = await login(email, password);
+      console.log("Login successful:", userCredential.user.email);
+      
+      // We'll keep form loading active until navigation completes
+      // The useEffect above will handle the navigation
       
     } catch (error) {
       console.error('Login error:', error);
