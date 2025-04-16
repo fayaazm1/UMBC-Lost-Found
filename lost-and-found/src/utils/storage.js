@@ -1,13 +1,9 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Check if we're in production (Render.com) to avoid CORS issues
-const isProduction = typeof window !== 'undefined' && 
-                    (window.location.hostname.includes('render.com') ||
-                     window.location.hostname.includes('firebaseapp.com'));
-
-// Force development mode in production to avoid CORS issues
-const DEVELOPMENT_MODE = isProduction;
+// IMPORTANT: Force placeholder mode in production to avoid CORS issues completely
+// Production detection doesn't seem to be working reliably, so we're forcing it on
+const DEVELOPMENT_MODE = true; // Force placeholders in ALL environments until CORS is fixed
 
 // Helper function to generate placeholder image URLs as a fallback only
 const getPlaceholderImage = (type, userId) => {
