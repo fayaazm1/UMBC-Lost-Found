@@ -1,8 +1,11 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Use actual Firebase Storage now that CORS is fixed
-const DEVELOPMENT_MODE = false;
+// Force development mode based on the current domain
+// This prevents CORS errors on production by skipping Firebase Storage entirely
+const isProduction = typeof window !== 'undefined' && 
+                     window.location.hostname.includes('render.com');
+const DEVELOPMENT_MODE = isProduction;
 
 // Helper function to generate placeholder image URLs
 const getPlaceholderImage = (type, userId) => {
@@ -25,14 +28,14 @@ const getPlaceholderImage = (type, userId) => {
  */
 export const uploadProfilePicture = async (file, userId) => {
   try {
-    // Skip actual upload in dev mode
+    // Skip actual upload in dev mode or on production due to CORS
     if (DEVELOPMENT_MODE) {
-      console.log('Using placeholder image for profile picture');
+      console.log('Using placeholder image for profile picture - skipping Firebase Storage upload');
       return getPlaceholderImage('profile', userId);
     }
     
     try {
-      // First attempt - try normal Firebase Storage upload
+      // Only attempt Firebase Storage on local development or when not on Render
       // Create a reference to the storage location
       const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
       
@@ -66,9 +69,9 @@ export const uploadProfilePicture = async (file, userId) => {
  */
 export const uploadPostImage = async (file, userId, postId) => {
   try {
-    // Skip actual upload in dev mode
+    // Skip actual upload in dev mode or on production due to CORS
     if (DEVELOPMENT_MODE) {
-      console.log('Using placeholder image for post');
+      console.log('Using placeholder image for post - skipping Firebase Storage upload');
       return getPlaceholderImage('post', postId);
     }
     
@@ -107,9 +110,9 @@ export const uploadPostImage = async (file, userId, postId) => {
  */
 export const uploadMultiplePostImages = async (files, userId, postId) => {
   try {
-    // Skip actual upload in dev mode
+    // Skip actual upload in dev mode or on production due to CORS
     if (DEVELOPMENT_MODE) {
-      console.log('Using placeholder images for multiple post images');
+      console.log('Using placeholder images for multiple post images - skipping Firebase Storage upload');
       return Array.from(files).map((_, index) => 
         getPlaceholderImage('post', `${postId}-${index}`)
       );
@@ -142,9 +145,9 @@ export const uploadMultiplePostImages = async (files, userId, postId) => {
  */
 export const deleteImage = async (imageUrl) => {
   try {
-    // Skip deletion for dev mode or placeholder images
+    // Skip deletion for dev mode, production mode, or placeholder images
     if (DEVELOPMENT_MODE || imageUrl.includes('picsum.photos')) {
-      console.log('Skipping deletion of placeholder image');
+      console.log('Skipping deletion of placeholder image or on production');
       return;
     }
     
