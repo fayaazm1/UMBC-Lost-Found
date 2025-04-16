@@ -13,9 +13,11 @@ const FilterResults = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchFilteredResults = async () => {
       try {
-        setLoading(true);
+        if (isMounted) setLoading(true);
         const url = `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter${location.search}`;
         console.log("Fetching from URL:", url); // Debug log
         const response = await axios.get(url, { 
@@ -26,20 +28,33 @@ const FilterResults = () => {
           }
         });
         console.log("Response data:", response.data); // Debug log
-        setResults(response.data);
-        setLoading(false);
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setResults(response.data);
+          setLoading(false);
+        }
       } catch (err) {
         console.error("Error fetching filtered results:", err);
-        setError("Failed to fetch results. Please try again.");
-        setLoading(false);
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setError("Failed to fetch results. Please try again.");
+          setLoading(false);
+        }
       }
     };
 
     if (location.search) { // Only fetch if there are search params
       fetchFilteredResults();
     } else {
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     }
+    
+    // Cleanup function to set mounted flag to false
+    return () => {
+      isMounted = false;
+    };
   }, [location.search]);
 
   const handlePostClick = (post) => {

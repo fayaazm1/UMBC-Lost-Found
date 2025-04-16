@@ -23,7 +23,66 @@ const Lost = () => {
   const [filterLoading, setFilterLoading] = useState(false);
   const [filterError, setFilterError] = useState(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadPosts = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, { withCredentials: true });
+        const data = response.data;
+        
+        if (isMounted) {
+          console.log("All posts:", data);
+          const lostPosts = data.filter(post => 
+            post && post.report_type && post.report_type.toLowerCase() === "lost"
+          );
+          setPosts(lostPosts);
+          console.log("Lost posts:", lostPosts);
+        }
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        if (isMounted) {
+          setPosts([]); // Set empty array on error
+        }
+      }
+    };
+
+    loadPosts();
+    
+    const interval = setInterval(() => {
+      const isActive = true;
+      const fetchPosts = async () => {
+        try {
+          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, { withCredentials: true });
+          const data = response.data;
+          if (!Array.isArray(data)) {
+            throw new Error('Expected array of posts');
+          }
+          const lostPosts = data.filter(post => 
+            post && post.report_type && post.report_type.toLowerCase() === "lost"
+          );
+          if (isActive) {
+            setPosts(lostPosts);
+          }
+        } catch (error) {
+          console.error("Error fetching posts:", error);
+          if (isActive) {
+            setPosts([]); // Set empty array on error
+          }
+        }
+      };
+      fetchPosts();
+    }, 5000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const fetchPosts = async (filterParams = null) => {
+    let isActive = true;
+    
     try {
       let url = `${import.meta.env.VITE_API_BASE_URL}/api/posts`;
       if (filterParams) {
@@ -41,22 +100,24 @@ const Lost = () => {
       if (!Array.isArray(data)) {
         throw new Error('Expected array of posts');
       }
-      // Filter for lost posts and ensure report_type is case-insensitive
       const lostPosts = filterParams ? data : data.filter(post => 
         post && post.report_type && post.report_type.toLowerCase() === "lost"
       );
-      setPosts(lostPosts);
+      
+      if (isActive) {
+        setPosts(lostPosts);
+      }
     } catch (error) {
       console.error("Error fetching posts:", error);
-      setPosts([]); // Set empty array on error
+      if (isActive) {
+        setPosts([]); // Set empty array on error
+      }
     }
+    
+    return () => {
+      isActive = false;
+    };
   };
-
-  useEffect(() => {
-    fetchPosts();
-    const interval = setInterval(() => fetchPosts(), 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -67,43 +128,45 @@ const Lost = () => {
   };
 
   const applyFilters = async () => {
-    // Build query string from non-empty filters
-    const activeFilters = Object.fromEntries(
-      Object.entries(filters).filter(([_, value]) => value !== "")
-    );
-    if (Object.keys(activeFilters).length > 0) {
-      setFilterLoading(true);
-      setFilterError(null);
-      setShowFilterResults(true);
+    let isActive = true;
+    
+    setFilterLoading(true);
+    setFilterError(null);
+    
+    try {
+      const queryParams = {
+        ...filters,
+        type: "lost" // Always filter for LOST items only from this page
+      };
       
-      try {
-        // Add the type parameter
-        const queryParams = {
-          ...activeFilters,
-          type: "lost" // Always filter for LOST items only from this page
-        };
-        
-        const queryString = new URLSearchParams(queryParams).toString();
-        console.log("Filtering for LOST items:", queryString);
-        
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter?${queryString}`,
-          { withCredentials: true }
-        );
-        
-        // Double-check that we only have LOST items in the results
-        const lostItemsOnly = response.data.filter(item => 
-          item.report_type && item.report_type.toLowerCase() === "lost"
-        );
-        
+      const queryString = new URLSearchParams(queryParams).toString();
+      console.log("Filtering for LOST items:", queryString);
+      
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter?${queryString}`,
+        { withCredentials: true }
+      );
+      
+      const lostItemsOnly = response.data.filter(item => 
+        item.report_type && item.report_type.toLowerCase() === "lost"
+      );
+      
+      if (isActive) {
         setFilterResults(lostItemsOnly);
+        setShowFilterResults(true);
         setFilterLoading(false);
-      } catch (error) {
-        console.error("Filter error:", error);
+      }
+    } catch (error) {
+      console.error("Filter error:", error);
+      if (isActive) {
         setFilterError("Failed to fetch results. Please try again.");
         setFilterLoading(false);
       }
     }
+    
+    return () => {
+      isActive = false;
+    };
   };
 
   const clearFilters = () => {

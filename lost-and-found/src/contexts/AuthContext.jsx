@@ -205,33 +205,41 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let isMounted = true;
-
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("🔥 Firebase onAuthStateChanged:", user);
-      try {
-        if (user) {
+    setLoading(true);
+    
+    const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+      console.log("🔥 Firebase onAuthStateChanged:", userAuth);
+      
+      // Only update state if component is still mounted
+      if (!isMounted) return;
+      
+      if (userAuth) {
+        try {
+          // Get or create database user if authenticated
           if (isMounted) {
-            setCurrentUser(user);
-            const dbUserData = await getUserByEmail(user.email.toLowerCase());
-            setDbUser(dbUserData);
+            let dbUserData = await getUserByEmail(userAuth.email?.toLowerCase());
+            if (dbUserData && isMounted) {
+              setDbUser(dbUserData);
+            }
           }
-        } else if (isMounted) {
-          setDbUser(null);
-          setCurrentUser(null);
+        } catch (error) {
+          console.error("Error fetching database user:", error);
         }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
+      } else {
+        // User is signed out or null
         if (isMounted) {
-          setCurrentUser(null);
           setDbUser(null);
         }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      }
+      
+      // Update current user state only if component is mounted
+      if (isMounted) {
+        setCurrentUser(userAuth);
+        setLoading(false);
       }
     });
 
+    // Cleanup function
     return () => {
       isMounted = false;
       unsubscribe();
