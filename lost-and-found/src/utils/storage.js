@@ -31,19 +31,28 @@ export const uploadProfilePicture = async (file, userId) => {
       return getPlaceholderImage('profile', userId);
     }
     
-    // Create a reference to the storage location
-    const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
-    
-    // Upload the file
-    const snapshot = await uploadBytes(storageRef, file);
-    
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    return downloadURL;
+    try {
+      // First attempt - try normal Firebase Storage upload
+      // Create a reference to the storage location
+      const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
+      
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      return downloadURL;
+    } catch (storageError) {
+      console.error('Firebase Storage error:', storageError);
+      console.log('Falling back to placeholder due to CORS or other issues');
+      
+      // If there's a CORS error or any other storage issue, fall back to placeholder
+      return getPlaceholderImage('profile', userId);
+    }
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
-    // Fall back to placeholder image
+    console.error('Error in uploadProfilePicture:', error);
+    // Fall back to placeholder image for any error
     return getPlaceholderImage('profile', userId);
   }
 };
@@ -63,16 +72,25 @@ export const uploadPostImage = async (file, userId, postId) => {
       return getPlaceholderImage('post', postId);
     }
     
-    // Create a storage reference with a unique path
-    const storageRef = ref(storage, `posts/${userId}/${postId}/${Date.now()}.${getFileExtension(file.name)}`);
-    
-    // Upload the file
-    const snapshot = await uploadBytes(storageRef, file);
-    
-    // Get the download URL
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    
-    return downloadURL;
+    try {
+      // First attempt - try normal Firebase Storage upload
+      // Create a storage reference with a unique path
+      const storageRef = ref(storage, `posts/${userId}/${postId}/${Date.now()}.${getFileExtension(file.name)}`);
+      
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      return downloadURL;
+    } catch (storageError) {
+      console.error('Firebase Storage error for post image:', storageError);
+      console.log('Falling back to placeholder due to CORS or other issues');
+      
+      // If there's a CORS error or any other storage issue, fall back to placeholder
+      return getPlaceholderImage('post', postId);
+    }
   } catch (error) {
     console.error('Error uploading post image:', error);
     // Fall back to placeholder image
