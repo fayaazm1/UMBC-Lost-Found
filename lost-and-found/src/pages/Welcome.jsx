@@ -54,24 +54,25 @@ function Welcome() {
       setError('');
       setFormLoading(true);
       
-      // Attempt login
-      const result = await login(email, password);
+      // Simple approach to avoid DOM errors
+      const userCredential = await login(email, password);
       
-      if (!result.user) {
-        throw new Error('Login failed - no user returned');
-      }
-
-      if (!result.user.emailVerified) {
-        setError('Please verify your email before logging in.');
+      if (!userCredential) {
+        setError('Login failed - please try again');
         return;
       }
 
-      // Successfully logged in and email verified
-      navigate('/', { replace: true });
+      // Store user ID in localStorage
+      localStorage.setItem('user_id', userCredential.uid);
+      
+      // Use timeout for navigation to avoid race conditions
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
       
     } catch (error) {
       console.error('Login error:', error);
-      setError('Failed to log in: ' + (error.message || 'Please try again'));
+      setError(error.message || 'Failed to log in. Please try again.');
     } finally {
       setFormLoading(false);
     }
