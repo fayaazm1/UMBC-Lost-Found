@@ -155,12 +155,7 @@ const Found = () => {
                 placeholder="Search by keyword..."
               />
             </div>
-            <div className="filter-input">
-              <input
-                type="date"
-                id="filterDate"
-              />
-            </div>
+            {/* Date filter input removed */}
             <div className="filter-input">
               <input
                 type="text"

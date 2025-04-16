@@ -16,7 +16,7 @@ const Lost = () => {
   const animationRef = useRef(null);
   const [filters, setFilters] = useState({
     keyword: "",
-    date: "",
+    date: "", // Keep this in state but hide from UI
     location: "",
   });
 
@@ -204,13 +204,7 @@ const Lost = () => {
               onChange={handleFilterChange}
               placeholder="Search by keyword..." 
             />
-            <input 
-              type="date" 
-              name="date"
-              value={filters.date}
-              onChange={handleFilterChange}
-              placeholder="Date Lost" 
-            />
+            {/* Date input removed from UI */}
             <input 
               type="text" 
               name="location"
