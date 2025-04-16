@@ -1,9 +1,13 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Ensure we're always using Firebase Storage in all environments
-// Force it to NEVER use placeholders by default, regardless of environment
-const DEVELOPMENT_MODE = false;
+// Check if we're in production (Render.com) to avoid CORS issues
+const isProduction = typeof window !== 'undefined' && 
+                    (window.location.hostname.includes('render.com') ||
+                     window.location.hostname.includes('firebaseapp.com'));
+
+// Force development mode in production to avoid CORS issues
+const DEVELOPMENT_MODE = isProduction;
 
 // Helper function to generate placeholder image URLs as a fallback only
 const getPlaceholderImage = (type, userId) => {
