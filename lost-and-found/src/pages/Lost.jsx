@@ -32,7 +32,6 @@ const Lost = () => {
         const data = response.data;
         
         if (isMounted) {
-          console.log("All posts:", data);
           const lostPosts = data.filter(post => 
             post && post.report_type && post.report_type.toLowerCase() === "lost"
           );
@@ -49,34 +48,15 @@ const Lost = () => {
 
     loadPosts();
     
-    const interval = setInterval(() => {
-      const isActive = true;
-      const fetchPosts = async () => {
-        try {
-          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, { withCredentials: true });
-          const data = response.data;
-          if (!Array.isArray(data)) {
-            throw new Error('Expected array of posts');
-          }
-          const lostPosts = data.filter(post => 
-            post && post.report_type && post.report_type.toLowerCase() === "lost"
-          );
-          if (isActive) {
-            setPosts(lostPosts);
-          }
-        } catch (error) {
-          console.error("Error fetching posts:", error);
-          if (isActive) {
-            setPosts([]); // Set empty array on error
-          }
-        }
-      };
-      fetchPosts();
+    const intervalId = setInterval(() => {
+      if (isMounted) {
+        loadPosts();
+      }
     }, 5000);
-    
+
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -200,8 +180,10 @@ const Lost = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
     animationRef.current = requestAnimationFrame(animateCarousel);
     return () => {
+      isMounted = false;
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }

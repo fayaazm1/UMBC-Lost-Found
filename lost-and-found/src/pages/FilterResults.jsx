@@ -13,13 +13,14 @@ const FilterResults = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Add mount tracking flag
     let isMounted = true;
     
     const fetchFilteredResults = async () => {
       try {
         if (isMounted) setLoading(true);
         const url = `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter${location.search}`;
-        console.log("Fetching from URL:", url); // Debug log
+        console.log("Filtering for items:", location.search);
         const response = await axios.get(url, { 
           withCredentials: true,
           headers: {
@@ -27,7 +28,7 @@ const FilterResults = () => {
             'Content-Type': 'application/json'
           }
         });
-        console.log("Response data:", response.data); // Debug log
+        
         // Only update state if component is still mounted
         if (isMounted) {
           setResults(response.data);
