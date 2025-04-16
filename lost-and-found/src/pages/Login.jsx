@@ -18,27 +18,30 @@ function Login() {
     try {
       setError('');
       setLoading(true);
+      
+      // Attempt to login
       const result = await login(email, password);
+      
+      if (!result) {
+        setError('Login failed - no user returned');
+        return;
+      }
       
       if (!result.user.emailVerified) {
         setError('Please verify your email before logging in.');
         return;
       }
 
-      // Get user from database
-      const dbUser = await getUserByEmail(email);
-      if (!dbUser) {
-        setError('User not found in database');
-        return;
-      }
-
       // Store user ID in localStorage
       localStorage.setItem('user_id', result.user.uid);
       
-      // Add a small delay to ensure authentication state is updated
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Add a longer delay to ensure authentication state and DOM are fully ready
+      // This prevents the race condition during navigation
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      navigate('/', { replace: true });
+      // Use window.location for a full page refresh instead of navigate
+      // This ensures a clean DOM state and prevents the race condition
+      window.location.href = '/';
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to log in: ' + (error.message || 'Please try again'));
