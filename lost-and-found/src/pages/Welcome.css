@@ -283,6 +283,91 @@ html, body {
   color: #EF4444;
 }
 
+/* Login success overlay */
+.login-success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.login-success-content {
+  background: linear-gradient(145deg, #001220, #001f3b);
+  padding: 30px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  max-width: 90%;
+  width: 350px;
+  color: #fff;
+}
+
+.login-success-content h3 {
+  margin: 15px 0 10px;
+  font-size: 24px;
+  color: #ffd700;
+}
+
+.login-success-content p {
+  margin: 10px 0;
+  font-size: 16px;
+  color: #e0e0e0;
+}
+
+/* Spinner animation */
+.loader-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 215, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #ffd700;
+  margin: 0 auto 15px;
+  animation: spin 1s linear infinite;
+}
+
+/* Loading text */
+.loading-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.loading-text::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  border-radius: 50%;
+  margin-left: 8px;
+  animation: blink 1.5s infinite;
+}
+
+.success-text {
+  color: #4caf50;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
 @media (max-width: 1024px) {
   .split-container {
     flex-direction: column;

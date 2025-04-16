@@ -67,16 +67,21 @@ function Welcome() {
   }, []);
 
   // Redirect if already logged in and email verified
-  // useEffect(() => {
-  //   if (!loading && currentUser?.emailVerified) {
-  //     navigate('/', { replace: true });
-  //   }
-  // }, [loading, currentUser, navigate]);
-  
-// Redirect if logged in
   if (currentUser && currentUser.emailVerified) {
     return <Navigate to="/" replace />;
   }
+
+  // Effect to handle navigation when user state changes
+  useEffect(() => {
+    if (currentUser) {
+      // User is authenticated, store ID
+      localStorage.setItem('user_id', currentUser.uid);
+      
+      // Force a page refresh for clean state
+      window.location.href = '/';
+    }
+  }, [currentUser]);
+
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -84,11 +89,8 @@ function Welcome() {
       setError('');
       setFormLoading(true);
       
-      // First authenticate with Firebase
+      // Just call login and let the effect handle the redirect
       await login(email, password);
-      
-      // We won't navigate immediately - we'll let the onAuthStateChanged listener handle it
-      // The listener in AuthContext will detect the login and set currentUser
       
     } catch (error) {
       console.error('Login error:', error);
@@ -96,21 +98,6 @@ function Welcome() {
       setError(error.message || 'Failed to log in. Please try again.');
     }
   }
-
-  // Set up auth state listener for smoother transitions
-  useEffect(() => {
-    if (currentUser) {
-      // User is authenticated, safe to navigate
-      localStorage.setItem('user_id', currentUser.uid);
-      
-      // Use timeout for smoother transition
-      const timer = setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [currentUser]);
 
   return (
     <div className="auth-page">
@@ -135,88 +122,103 @@ function Welcome() {
               }} />
             ))}
           </div>
-          <div className="auth-form-container">
-            <div className="title-container">
-              <h1 className="auth-title">Welcome To UMBC</h1>
-              <div className="title-decoration" />
-            </div>
-            <p className="auth-subtitle">Lost & Found Platform</p>
-            <p className="auth-description">
+          <div className="logo">UMBC Lost & Found</div>
+          <div className="welcome-text">
+            <h1>Welcome To UMBC</h1>
+            <div className="divider"></div>
+            <p>Lost & Found Platform</p>
+            <div className="subtext">
               See the items and connect with people who found your belongings, from anywhere on campus!
-            </p>
-
+            </div>
+          </div>
+        </div>
+        <div className="auth-right-side">
+          <div className="auth-form-container">
+            <div className="auth-form-header">
+              <h2>Get Started</h2>
+            </div>
+            
             {error && (
-              <div className="alert alert-error">
-                <div className="alert-content">{error}</div>
-                <div className="alert-line" />
+              <div className="auth-error">
+                {error}
               </div>
             )}
-
+            
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
-                <label htmlFor="email">E-mail</label>
-                <div className="input-container">
+                <label htmlFor="email">E-MAIL</label>
+                <div className="input-field">
+                  <span className="input-icon">✉️</span>
                   <input
-                    id="email"
                     type="email"
+                    id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="yourname@umbc.edu"
+                    placeholder="username@umbc.edu"
                     required
                   />
-                  <span className="input-icon">📧</span>
-                  <div className="input-focus-effect" />
                 </div>
               </div>
-
+              
               <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <div className="input-container">
+                <label htmlFor="password">PASSWORD</label>
+                <div className="input-field">
+                  <span className="input-icon">🔒</span>
                   <input
-                    id="password"
                     type="password"
+                    id="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="6+ strong characters"
+                    placeholder="strong characters"
                     required
                   />
-                  <span className="input-icon">🔒</span>
-                  <div className="input-focus-effect" />
                 </div>
               </div>
-
+              
               <div className="form-options">
-                <label className="checkbox-container">
+                <div className="checkbox-container">
                   <input
                     type="checkbox"
+                    id="rememberMe"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span className="checkbox-text">Remember for 30 days</span>
-                </label>
-                <Link to="/forgot-password" className="auth-link">
+                  <label htmlFor="rememberMe">Remember for 30 days</label>
+                </div>
+                <Link to="/forgot-password" className="forgot-password">
                   Forgot password?
                 </Link>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="auth-button"
                 disabled={formLoading}
               >
-                <span className="button-text">
-                  {formLoading ? 'Signing in...' : 'Sign in now'}
-                </span>
-                <div className="button-shine" />
+                {formLoading ? (
+                  <span className="loading-text">Signing in...</span>
+                ) : (
+                  <span>Sign in now</span>
+                )}
               </button>
 
               <div className="auth-footer">
-                <p>Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link></p>
+                <p>Don't have an account? <Link to="/signup">Sign Up</Link></p>
               </div>
             </form>
           </div>
         </div>
       </div>
+      {/* Login loading overlay */}
+      {formLoading && (
+        <div className="login-success-overlay">
+          <div className="login-success-content">
+            <div className="loader-spinner"></div>
+            <h3>Authenticating...</h3>
+            <p>Preparing your dashboard...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
