@@ -1,10 +1,10 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Set to production mode - using actual Firebase Storage
-const DEVELOPMENT_MODE = false; 
+// Use actual Firebase Storage now that CORS is fixed
+const DEVELOPMENT_MODE = false;
 
-// Helper function to generate placeholder image URLs (only used as fallback)
+// Helper function to generate placeholder image URLs
 const getPlaceholderImage = (type, userId) => {
   const seed = userId ? userId.substring(0, 8) : Math.random().toString(36).substring(2, 10);
   
@@ -25,6 +25,12 @@ const getPlaceholderImage = (type, userId) => {
  */
 export const uploadProfilePicture = async (file, userId) => {
   try {
+    // Skip actual upload in dev mode
+    if (DEVELOPMENT_MODE) {
+      console.log('Using placeholder image for profile picture');
+      return getPlaceholderImage('profile', userId);
+    }
+    
     // Create a reference to the storage location
     const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
     
@@ -37,7 +43,7 @@ export const uploadProfilePicture = async (file, userId) => {
     return downloadURL;
   } catch (error) {
     console.error('Error uploading profile picture:', error);
-    // Use placeholder as fallback only if upload fails
+    // Fall back to placeholder image
     return getPlaceholderImage('profile', userId);
   }
 };
@@ -51,6 +57,12 @@ export const uploadProfilePicture = async (file, userId) => {
  */
 export const uploadPostImage = async (file, userId, postId) => {
   try {
+    // Skip actual upload in dev mode
+    if (DEVELOPMENT_MODE) {
+      console.log('Using placeholder image for post');
+      return getPlaceholderImage('post', postId);
+    }
+    
     // Create a storage reference with a unique path
     const storageRef = ref(storage, `posts/${userId}/${postId}/${Date.now()}.${getFileExtension(file.name)}`);
     
@@ -63,7 +75,7 @@ export const uploadPostImage = async (file, userId, postId) => {
     return downloadURL;
   } catch (error) {
     console.error('Error uploading post image:', error);
-    // Use placeholder as fallback only if upload fails
+    // Fall back to placeholder image
     return getPlaceholderImage('post', postId);
   }
 };
@@ -77,6 +89,14 @@ export const uploadPostImage = async (file, userId, postId) => {
  */
 export const uploadMultiplePostImages = async (files, userId, postId) => {
   try {
+    // Skip actual upload in dev mode
+    if (DEVELOPMENT_MODE) {
+      console.log('Using placeholder images for multiple post images');
+      return Array.from(files).map((_, index) => 
+        getPlaceholderImage('post', `${postId}-${index}`)
+      );
+    }
+    
     const results = await Promise.all(
       Array.from(files).map(async (file, index) => {
         try {
@@ -104,8 +124,8 @@ export const uploadMultiplePostImages = async (files, userId, postId) => {
  */
 export const deleteImage = async (imageUrl) => {
   try {
-    // Skip deletion for placeholder images
-    if (imageUrl.includes('picsum.photos')) {
+    // Skip deletion for dev mode or placeholder images
+    if (DEVELOPMENT_MODE || imageUrl.includes('picsum.photos')) {
       console.log('Skipping deletion of placeholder image');
       return;
     }
@@ -117,7 +137,7 @@ export const deleteImage = async (imageUrl) => {
     await deleteObject(storageRef);
   } catch (error) {
     console.error('Error deleting image:', error);
-    // Suppress errors during deletion - non-critical operation
+    // Non-critical operation, suppress errors
   }
 };
 

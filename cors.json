@@ -1,8 +1,18 @@
 [
   {
-    "origin": ["*"],
-    "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
+    "origin": [
+      "http://localhost:5173",
+      "https://umbc-lost-found.web.app",
+      "https://umbc-lost-found.firebaseapp.com",
+      "https://umbc-lost-found-1.onrender.com"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE"],
     "maxAgeSeconds": 3600,
-    "responseHeader": ["Content-Type", "Authorization", "Content-Length", "User-Agent", "x-goog-resumable", "*"]
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "Content-Length",
+      "x-goog-resumable"
+    ]
   }
 ]

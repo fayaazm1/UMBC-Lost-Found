@@ -12,36 +12,58 @@ function Welcome() {
   const [rememberMe, setRememberMe] = useState(false);
   const { login, currentUser, loading } = useAuth();
 
-  // Create particles effect
+  // Create particles effect with safe DOM manipulation
   useEffect(() => {
+    // Function to safely create particles with null checks
     const createParticle = (x, y) => {
+      // Safely get the element
       const authPageElement = document.querySelector('.auth-page');
       
-      // Only append if the element exists
-      if (authPageElement) {
+      // Only proceed if the element exists
+      if (!authPageElement) return;
+      
+      try {
+        // Create particle with safety checks
         const particle = document.createElement('div');
+        if (!particle) return;
+        
         particle.className = 'particle';
         particle.style.left = `${x}px`;
         particle.style.top = `${y}px`;
+        
+        // Safe append
         authPageElement.appendChild(particle);
-
+        
+        // Safe removal
         setTimeout(() => {
           // Check if particle still exists before removing
           if (particle && particle.parentNode) {
-            particle.remove();
+            particle.parentNode.removeChild(particle);
           }
         }, 1000);
+      } catch (error) {
+        // Silently handle any DOM errors
+        console.log("Suppressed particle effect error:", error);
       }
     };
-
+    
+    // Add event with safety
     const handleMouseMove = (e) => {
       if (Math.random() > 0.9) {
         createParticle(e.clientX, e.clientY);
       }
     };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
+    
+    // Add listener with safety delay to ensure DOM is ready
+    const timerRef = setTimeout(() => {
+      document.addEventListener('mousemove', handleMouseMove);
+    }, 500);
+    
+    // Clean up
+    return () => {
+      clearTimeout(timerRef);
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   // Redirect if already logged in and email verified
