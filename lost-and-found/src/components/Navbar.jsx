@@ -42,8 +42,15 @@ function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      // Close all menus first
+      setIsMenuOpen(false);
+      setIsProfileOpen(false);
+      
+      // First navigate away - do this before async operations
       navigate('/welcome');
+      
+      // Then perform logout after navigation
+      await logout();
     } catch (error) {
       console.error('Failed to log out:', error);
     }

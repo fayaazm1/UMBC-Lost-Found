@@ -128,8 +128,21 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    setDbUser(null);
-    return signOut(auth);
+    try {
+      // Set dbUser to null first
+      setDbUser(null);
+      
+      // Then sign out from Firebase
+      await signOut(auth);
+      
+      // Clear any stored user data
+      localStorage.removeItem('user_id');
+      
+      return true;
+    } catch (error) {
+      console.error("Error during logout:", error);
+      throw error;
+    }
   }
 
   async function resendVerificationEmail() {
