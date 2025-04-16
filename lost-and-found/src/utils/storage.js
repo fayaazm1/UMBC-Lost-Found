@@ -1,11 +1,10 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Set to development mode to force using placeholders instead of Firebase Storage
-const DEVELOPMENT_MODE = true; // Forced to true to bypass CORS issues
-const MAX_RETRY_ATTEMPTS = 2;
+// Set to production mode - using actual Firebase Storage
+const DEVELOPMENT_MODE = false; 
 
-// Helper function to generate placeholder image URLs
+// Helper function to generate placeholder image URLs (only used as fallback)
 const getPlaceholderImage = (type, userId) => {
   const seed = userId ? userId.substring(0, 8) : Math.random().toString(36).substring(2, 10);
   
@@ -19,42 +18,32 @@ const getPlaceholderImage = (type, userId) => {
 };
 
 /**
- * Uploads a profile picture to Firebase Storage with fallback
+ * Uploads a profile picture to Firebase Storage
  * @param {File} file - The image file to upload
  * @param {string} userId - The user's ID
  * @returns {Promise<string>} - The download URL of the uploaded image
  */
 export const uploadProfilePicture = async (file, userId) => {
   try {
-    // If in development mode, use placeholders
-    if (DEVELOPMENT_MODE) {
-      console.log('DEV MODE: Skipping Firebase upload, using placeholder URL');
-      return getPlaceholderImage('profile', userId);
-    }
-    
-    // Real implementation for production with fallback
     // Create a reference to the storage location
     const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
     
-    try {
-      // Try to upload to Firebase Storage
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return downloadURL;
-    } catch (error) {
-      // If Firebase upload fails (e.g., CORS), use placeholder
-      console.error('Error uploading to Firebase, using fallback:', error);
-      return getPlaceholderImage('profile', userId);
-    }
+    // Upload the file
+    const snapshot = await uploadBytes(storageRef, file);
+    
+    // Get the download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    
+    return downloadURL;
   } catch (error) {
-    console.error('Error in uploadProfilePicture:', error);
-    // Always return a usable image URL even if everything fails
+    console.error('Error uploading profile picture:', error);
+    // Use placeholder as fallback only if upload fails
     return getPlaceholderImage('profile', userId);
   }
 };
 
 /**
- * Uploads a post image to Firebase Storage with fallback
+ * Uploads a post image to Firebase Storage
  * @param {File} file - The image file to upload
  * @param {string} userId - The user's ID
  * @param {string} postId - The post's ID
@@ -62,34 +51,25 @@ export const uploadProfilePicture = async (file, userId) => {
  */
 export const uploadPostImage = async (file, userId, postId) => {
   try {
-    // If in development mode, use placeholders
-    if (DEVELOPMENT_MODE) {
-      console.log('DEV MODE: Skipping Firebase upload, using placeholder URL');
-      return getPlaceholderImage('post', postId);
-    }
-    
     // Create a storage reference with a unique path
     const storageRef = ref(storage, `posts/${userId}/${postId}/${Date.now()}.${getFileExtension(file.name)}`);
     
-    try {
-      // Try to upload to Firebase Storage
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      return downloadURL;
-    } catch (error) {
-      // If Firebase upload fails (e.g., CORS), use placeholder
-      console.error('Error uploading to Firebase, using fallback:', error);
-      return getPlaceholderImage('post', postId);
-    }
+    // Upload the file
+    const snapshot = await uploadBytes(storageRef, file);
+    
+    // Get the download URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    
+    return downloadURL;
   } catch (error) {
     console.error('Error uploading post image:', error);
-    // Always return a usable image URL even if everything fails
+    // Use placeholder as fallback only if upload fails
     return getPlaceholderImage('post', postId);
   }
 };
 
 /**
- * Uploads multiple post images to Firebase Storage with fallback
+ * Uploads multiple post images to Firebase Storage
  * @param {File[]} files - Array of image files to upload
  * @param {string} userId - The user's ID
  * @param {string} postId - The post's ID
@@ -97,14 +77,6 @@ export const uploadPostImage = async (file, userId, postId) => {
  */
 export const uploadMultiplePostImages = async (files, userId, postId) => {
   try {
-    // If in development mode, skip actual upload and return placeholders
-    if (DEVELOPMENT_MODE) {
-      console.log('DEV MODE: Skipping Firebase upload, using placeholder URLs');
-      return Array.from(files).map((_, index) => 
-        getPlaceholderImage('post', `${postId}-${index}`)
-      );
-    }
-    
     const results = await Promise.all(
       Array.from(files).map(async (file, index) => {
         try {
@@ -112,8 +84,7 @@ export const uploadMultiplePostImages = async (files, userId, postId) => {
           const snapshot = await uploadBytes(storageRef, file);
           return await getDownloadURL(snapshot.ref);
         } catch (error) {
-          // If individual upload fails, use placeholder for that image
-          console.error(`Error uploading image ${index}, using fallback:`, error);
+          console.error(`Error uploading image ${index}:`, error);
           return getPlaceholderImage('post', `${postId}-${index}`);
         }
       })
@@ -122,10 +93,7 @@ export const uploadMultiplePostImages = async (files, userId, postId) => {
     return results;
   } catch (error) {
     console.error('Error uploading multiple images:', error);
-    // Return placeholders if the whole process fails
-    return Array.from(files).map((_, index) => 
-      getPlaceholderImage('post', `${postId}-${index}`)
-    );
+    return Array.from(files).map((_, index) => getPlaceholderImage('post', `${postId}-${index}`));
   }
 };
 
@@ -136,12 +104,6 @@ export const uploadMultiplePostImages = async (files, userId, postId) => {
  */
 export const deleteImage = async (imageUrl) => {
   try {
-    // Skip deletion in development mode
-    if (DEVELOPMENT_MODE) {
-      console.log('DEV MODE: Skipping Firebase deletion');
-      return;
-    }
-    
     // Skip deletion for placeholder images
     if (imageUrl.includes('picsum.photos')) {
       console.log('Skipping deletion of placeholder image');
