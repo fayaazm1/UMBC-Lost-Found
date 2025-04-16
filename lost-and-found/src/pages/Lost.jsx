@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import FilterResultsPopup from "../components/FilterResultsPopup";
 import Popup from "../components/Popup";
 import "../assets/lost_found.css";
 import "../assets/post_user.css";
 import { isPriorityPost } from "../utils/priorityClassifier";
 
 const Lost = () => {
-  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [popupData, setPopupData] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -19,6 +18,10 @@ const Lost = () => {
     date: "", // Keep this in state but hide from UI
     location: "",
   });
+  const [showFilterResults, setShowFilterResults] = useState(false);
+  const [filterResults, setFilterResults] = useState([]);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [filterError, setFilterError] = useState(null);
 
   const fetchPosts = async (filterParams = null) => {
     try {
@@ -63,18 +66,43 @@ const Lost = () => {
     }));
   };
 
-  const applyFilters = () => {
+  const applyFilters = async () => {
     // Build query string from non-empty filters
     const activeFilters = Object.fromEntries(
       Object.entries(filters).filter(([_, value]) => value !== "")
     );
     if (Object.keys(activeFilters).length > 0) {
-      const queryString = new URLSearchParams({
-        ...activeFilters,
-        type: "lost" // Always include type=lost
-      }).toString();
-      // Use the navigate function with replace: true to prevent back button issues
-      navigate(`/filter-results?${queryString}`, { replace: true });
+      setFilterLoading(true);
+      setFilterError(null);
+      setShowFilterResults(true);
+      
+      try {
+        // Add the type parameter
+        const queryParams = {
+          ...activeFilters,
+          type: "lost" // Always filter for LOST items only from this page
+        };
+        
+        const queryString = new URLSearchParams(queryParams).toString();
+        console.log("Filtering for LOST items:", queryString);
+        
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter?${queryString}`,
+          { withCredentials: true }
+        );
+        
+        // Double-check that we only have LOST items in the results
+        const lostItemsOnly = response.data.filter(item => 
+          item.report_type && item.report_type.toLowerCase() === "lost"
+        );
+        
+        setFilterResults(lostItemsOnly);
+        setFilterLoading(false);
+      } catch (error) {
+        console.error("Filter error:", error);
+        setFilterError("Failed to fetch results. Please try again.");
+        setFilterLoading(false);
+      }
     }
   };
 
@@ -119,6 +147,14 @@ const Lost = () => {
 
   const handleMouseDown = () => setIsPaused(true);
   const handleMouseUp = () => setIsPaused(false);
+
+  const closeFilterResults = () => {
+    setShowFilterResults(false);
+  };
+
+  const handleFilterResultClick = (post) => {
+    setPopupData(post);
+  };
 
   return (
     <div className="container">
@@ -224,6 +260,16 @@ const Lost = () => {
           </div>
         </aside>
       </div>
+
+      {showFilterResults && (
+        <FilterResultsPopup
+          results={filterResults}
+          loading={filterLoading}
+          error={filterError}
+          onClose={closeFilterResults}
+          onPostClick={handleFilterResultClick}
+        />
+      )}
 
       {popupData && <Popup post={popupData} onClose={() => setPopupData(null)} />}
     </div>

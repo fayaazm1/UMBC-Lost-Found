@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import FilterResultsPopup from "../components/FilterResultsPopup";
 import Popup from "../components/Popup";
 import "../assets/lost_found.css";
 import "../assets/post_user.css";
@@ -14,6 +16,13 @@ const Found = () => {
   const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef(null);
   const animationRef = useRef(null);
+  // Add state for filter functionality
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [showFilterResults, setShowFilterResults] = useState(false);
+  const [filterResults, setFilterResults] = useState([]);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [filterError, setFilterError] = useState(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -75,6 +84,55 @@ const Found = () => {
 
   const handleMouseDown = () => setIsPaused(true);
   const handleMouseUp = () => setIsPaused(false);
+
+  const handleFilter = async () => {
+    if (!filterKeyword && !filterLocation) return;
+    
+    setFilterLoading(true);
+    setFilterError(null);
+    setShowFilterResults(true);
+    
+    try {
+      const params = new URLSearchParams();
+      if (filterKeyword) params.append("keyword", filterKeyword);
+      if (filterLocation) params.append("location", filterLocation);
+      // IMPORTANT: Always filter for FOUND items only from this page
+      params.append("type", "found");
+      
+      console.log("Filtering for FOUND items:", params.toString());
+      
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter?${params.toString()}`,
+        { withCredentials: true }
+      );
+      
+      // Double-check that we only have FOUND items in the results
+      const foundItemsOnly = response.data.filter(item => 
+        item.report_type && item.report_type.toLowerCase() === "found"
+      );
+      
+      setFilterResults(foundItemsOnly);
+      setFilterLoading(false);
+    } catch (error) {
+      console.error("Filter error:", error);
+      setFilterError("Failed to fetch results. Please try again.");
+      setFilterLoading(false);
+    }
+  };
+
+  const clearFilter = () => {
+    setFilterKeyword("");
+    setFilterLocation("");
+    setShowFilterResults(false);
+  };
+
+  const closeFilterResults = () => {
+    setShowFilterResults(false);
+  };
+
+  const handleFilterResultClick = (post) => {
+    setPopupData(post);
+  };
 
   return (
     <div className="found-container">
@@ -153,6 +211,8 @@ const Found = () => {
                 type="text"
                 id="filterKeyword"
                 placeholder="Search by keyword..."
+                value={filterKeyword}
+                onChange={(e) => setFilterKeyword(e.target.value)}
               />
             </div>
             {/* Date filter input removed */}
@@ -161,10 +221,12 @@ const Found = () => {
                 type="text"
                 id="filterLocation"
                 placeholder="Location"
+                value={filterLocation}
+                onChange={(e) => setFilterLocation(e.target.value)}
               />
             </div>
-            <button className="filter-btn">Apply Filters</button>
-            <button className="clear-btn">Clear Filters</button>
+            <button className="filter-btn" onClick={handleFilter}>Apply Filters</button>
+            <button className="clear-btn" onClick={clearFilter}>Clear Filters</button>
           </div>
 
           <div className="lost-something">
@@ -175,6 +237,16 @@ const Found = () => {
           </div>
         </div>
       </div>
+
+      {showFilterResults && (
+        <FilterResultsPopup
+          results={filterResults}
+          loading={filterLoading}
+          error={filterError}
+          onClose={closeFilterResults}
+          onPostClick={handleFilterResultClick}
+        />
+      )}
 
       {popupData && <Popup post={popupData} onClose={() => setPopupData(null)} />}
     </div>
