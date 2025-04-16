@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import Navbar from '../components/Navbar';
+import ImageUpload from '../components/ImageUpload';
+import { uploadProfilePicture } from '../utils/storage';
 import './Profile.css';
 
 function Profile() {
-  const { currentUser, updateProfile } = useAuth();
+  const { currentUser, dbUser, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
-    displayName: currentUser?.displayName || '',
-    email: currentUser?.email || '',
-    phone: currentUser?.phoneNumber || '',
-    bio: currentUser?.bio || '',
-    avatar: currentUser?.photoURL || ''
+    displayName: '',
+    email: '',
+    phone: '',
+    bio: '',
+    avatar: ''
   });
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        displayName: currentUser.displayName || '',
+        email: currentUser.email || '',
+        phone: dbUser?.phone || '',
+        bio: dbUser?.bio || '',
+        avatar: currentUser.photoURL || ''
+      });
+    }
+  }, [currentUser, dbUser]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,13 +39,33 @@ function Profile() {
     }));
   };
 
+  const handleImageUpload = async (file) => {
+    if (!currentUser) return;
+    
+    try {
+      // Upload to Firebase Storage
+      const downloadURL = await uploadProfilePicture(file, currentUser.uid);
+      
+      // Update formData with the new avatar URL
+      setFormData(prev => ({
+        ...prev,
+        avatar: downloadURL
+      }));
+      
+      return downloadURL;
+    } catch (error) {
+      console.error('Error in handleImageUpload:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      await updateProfile({
+      await updateUserProfile({
         displayName: formData.displayName,
         photoURL: formData.avatar,
         phoneNumber: formData.phone,
@@ -37,7 +73,7 @@ function Profile() {
       });
       setIsEditing(false);
     } catch (error) {
-      setError('Failed to update profile: ' + error.message);
+      setError('Failed to update profile: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -46,13 +82,15 @@ function Profile() {
   const toggleEdit = () => {
     if (isEditing) {
       // Reset form data if canceling edit
-      setFormData({
-        displayName: currentUser?.displayName || '',
-        email: currentUser?.email || '',
-        phone: currentUser?.phoneNumber || '',
-        bio: currentUser?.bio || '',
-        avatar: currentUser?.photoURL || ''
-      });
+      if (currentUser) {
+        setFormData({
+          displayName: currentUser.displayName || '',
+          email: currentUser.email || '',
+          phone: dbUser?.phone || '',
+          bio: dbUser?.bio || '',
+          avatar: currentUser.photoURL || ''
+        });
+      }
     }
     setIsEditing(!isEditing);
     setError('');
@@ -60,6 +98,7 @@ function Profile() {
 
   return (
     <div className="profile-page">
+      <Navbar />
       <div className="profile-container">
         <div className="profile-header">
           <h1>Profile Details</h1>
@@ -70,7 +109,7 @@ function Profile() {
             {isEditing ? (
               <>
                 <span className="button-icon">✕</span>
-                Cancel
+                CANCEL
               </>
             ) : (
               <>
@@ -85,34 +124,29 @@ function Profile() {
 
         <div className="profile-content">
           <div className="profile-avatar-section">
-            <div className="avatar-container">
-              {formData.avatar ? (
-                <img 
-                  src={formData.avatar}
-                  alt="Profile" 
-                  className="avatar-image"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/default-avatar.png';
-                  }}
-                />
-              ) : (
-                <div className="avatar-placeholder">
-                  👤
-                </div>
-              )}
-            </div>
-            {isEditing && (
-              <div className="form-group">
-                <label>Profile Picture URL</label>
-                <input
-                  type="text"
-                  name="avatar"
-                  value={formData.avatar}
-                  onChange={handleInputChange}
-                  placeholder="Enter image URL"
-                  className="avatar-input"
-                />
+            {isEditing ? (
+              <ImageUpload 
+                onImageUpload={handleImageUpload}
+                currentImageUrl={formData.avatar}
+                buttonText="Upload Profile Image"
+              />
+            ) : (
+              <div className="avatar-container">
+                {formData.avatar ? (
+                  <img 
+                    src={formData.avatar}
+                    alt="Profile" 
+                    className="avatar-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/default-avatar.png';
+                    }}
+                  />
+                ) : (
+                  <div className="avatar-placeholder">
+                    👤
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -153,8 +187,6 @@ function Profile() {
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="Enter phone number"
-                  pattern="[0-9]{10}"
-                  title="Please enter a valid 10-digit phone number"
                 />
               ) : (
                 <p className="profile-value">{formData.phone || 'Not provided'}</p>

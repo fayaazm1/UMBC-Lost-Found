@@ -127,6 +127,56 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function updateUserProfile(profileData) {
+    try {
+      // Step 1: Update Firebase profile
+      if (!currentUser) {
+        throw new Error('No user is currently signed in');
+      }
+      
+      // Update Firebase profile first
+      await updateProfile(currentUser, {
+        displayName: profileData.displayName,
+        photoURL: profileData.photoURL
+      });
+      
+      // Step 2: Only update Firebase for now since the backend API isn't ready yet
+      // When you deploy the updated backend, you can uncomment the code below
+      /*
+      if (dbUser) {
+        const updatedDbUser = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${currentUser.email}/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            displayName: profileData.displayName,
+            photoURL: profileData.photoURL,
+            bio: profileData.bio,
+            phoneNumber: profileData.phoneNumber
+          })
+        });
+        
+        if (!updatedDbUser.ok) {
+          throw new Error('Failed to update user in database');
+        }
+        
+        const updatedUserData = await updatedDbUser.json();
+        setDbUser(updatedUserData);
+      }
+      */
+      
+      // Reload the user to get updated profile
+      await reload(currentUser);
+      
+      return true;
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      throw error;
+    }
+  }
+
   useEffect(() => {
     let isMounted = true;
 
@@ -169,6 +219,7 @@ export function AuthProvider({ children }) {
     signup,
     login,
     logout,
+    updateUserProfile,
     resendVerificationEmail
   };
 

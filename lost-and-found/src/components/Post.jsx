@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { uploadPostImage } from "../utils/storage";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css"; 
 
@@ -15,10 +16,11 @@ const Post = () => {
     time: "",
     image: null, 
   });
-
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     // Set default date to today
@@ -34,8 +36,16 @@ const Post = () => {
         setError("File size should be less than 5MB");
         return;
       }
+      
       setFormData({ ...formData, image: file });
       setError("");
+      
+      // Create and set preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -45,6 +55,7 @@ const Post = () => {
     setLoading(true);
     setError("");
     setSuccess(false);
+    setUploadProgress(0);
 
     if (!currentUser) {
       setError("You must be logged in to create a post");
@@ -52,31 +63,46 @@ const Post = () => {
       return;
     }
 
-    const formDataToSend = new FormData();
-    // Normalize report type to lowercase and trim whitespace
-    const normalizedReportType = formData.reportType.toLowerCase().trim();
-    console.log('Sending report_type:', normalizedReportType); // Debug log
+    let imageUrl = null;
     
-    formDataToSend.append("report_type", normalizedReportType);
-    formDataToSend.append("item_name", formData.itemName);
-    formDataToSend.append("description", formData.description);
-    formDataToSend.append("location", formData.location);
-    formDataToSend.append("contact_details", formData.contactDetails);
-    formDataToSend.append("date", formData.date);
-    formDataToSend.append("time", formData.time);
-    formDataToSend.append("user_id", currentUser.email);
-
-    if (formData.image) {
-      formDataToSend.append("image", formData.image);
-    }
-
     try {
+      // Upload image to Firebase Storage if provided
+      if (formData.image) {
+        setUploadProgress(10);
+        // Generate a temporary post ID for organizing files in storage
+        const tempPostId = new Date().getTime().toString();
+        imageUrl = await uploadPostImage(formData.image, currentUser.uid, tempPostId);
+        setUploadProgress(50);
+      }
+      
+      // Create request body
+      const normalizedReportType = formData.reportType.toLowerCase().trim();
+      console.log('Sending report_type:', normalizedReportType); // Debug log
+      
+      const postData = {
+        report_type: normalizedReportType,
+        item_name: formData.itemName,
+        description: formData.description,
+        location: formData.location,
+        contact_details: formData.contactDetails,
+        date: formData.date,
+        time: formData.time,
+        user_id: currentUser.email,
+        image_url: imageUrl // Now we're sending the URL instead of the file
+      };
+
+      // Send the post data to the backend
+      setUploadProgress(70);
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, {
         method: "POST",
-        body: formDataToSend,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(postData),
       });
 
       const data = await response.json();
+      setUploadProgress(100);
 
       if (response.ok) {
         setSuccess(true);
@@ -91,7 +117,8 @@ const Post = () => {
           image: null,
         });
         
-        // Reset file input
+        // Reset file input and preview
+        setImagePreview(null);
         const fileInput = document.querySelector('input[type="file"]');
         if (fileInput) fileInput.value = '';
         
@@ -107,6 +134,7 @@ const Post = () => {
       setError("Failed to create post. Please try again.");
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -209,14 +237,28 @@ const Post = () => {
 
           <div className="form-group">
             <label>Image (Optional)</label>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              accept="image/*"
-              className="file-input"
-            />
-            <small className="file-hint">Maximum file size: 5MB</small>
+            <div className="image-upload-container">
+              <input
+                type="file"
+                onChange={handleFileChange}
+                accept="image/*"
+                className="file-input"
+              />
+              {imagePreview && (
+                <div className="image-preview">
+                  <img src={imagePreview} alt="Preview" className="preview-thumbnail" />
+                </div>
+              )}
+              <small className="file-hint">Maximum file size: 5MB</small>
+            </div>
           </div>
+
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="upload-progress">
+              <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
+              <span className="progress-text">{uploadProgress}% Uploaded</span>
+            </div>
+          )}
 
           <button 
             type="submit" 

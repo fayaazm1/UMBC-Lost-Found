@@ -35,6 +35,12 @@ class UserCreate(BaseModel):
     username: str
     firebase_uid: str
 
+class UserProfileUpdate(BaseModel):
+    displayName: str = None
+    photoURL: str = None
+    bio: str = None
+    phoneNumber: str = None
+
 @router.options("/")
 async def options_list_users(request: Request):
     return JSONResponse(
@@ -246,6 +252,102 @@ async def search_user_activity(request: Request, email: str, db: Session = Depen
         )
     except Exception as e:
         logger.error(f"Error searching user activity: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Database error: {str(e)}"},
+            headers=get_cors_headers(request)
+        )
+
+@router.options("/{email}/profile")
+async def options_update_profile(request: Request, email: str):
+    return JSONResponse(
+        content={},
+        headers=get_cors_headers(request)
+    )
+
+@router.put("/{email}/profile")
+async def update_user_profile(request: Request, email: str, profile_data: UserProfileUpdate, db: Session = Depends(get_db)):
+    """Update user profile"""
+    logger.info(f"Updating profile for user with email: {email}")
+    try:
+        # Find user by email
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            logger.warning(f"User not found for profile update: {email}")
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "User not found"},
+                headers=get_cors_headers(request)
+            )
+        
+        # Update user fields if provided
+        if profile_data.displayName is not None:
+            user.username = profile_data.displayName
+            
+        # Add additional fields to User model if they don't exist
+        if not hasattr(user, 'photo_url') and profile_data.photoURL is not None:
+            # Add column if it doesn't exist in the table
+            try:
+                db.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url VARCHAR(255)")
+                db.commit()
+            except Exception as e:
+                logger.warning(f"Failed to add photo_url column: {str(e)}")
+                
+            # Now set the value
+            user.photo_url = profile_data.photoURL
+        elif hasattr(user, 'photo_url') and profile_data.photoURL is not None:
+            user.photo_url = profile_data.photoURL
+            
+        if not hasattr(user, 'bio') and profile_data.bio is not None:
+            try:
+                db.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT")
+                db.commit()
+            except Exception as e:
+                logger.warning(f"Failed to add bio column: {str(e)}")
+                
+            user.bio = profile_data.bio
+        elif hasattr(user, 'bio') and profile_data.bio is not None:
+            user.bio = profile_data.bio
+            
+        if not hasattr(user, 'phone') and profile_data.phoneNumber is not None:
+            try:
+                db.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)")
+                db.commit()
+            except Exception as e:
+                logger.warning(f"Failed to add phone column: {str(e)}")
+                
+            user.phone = profile_data.phoneNumber
+        elif hasattr(user, 'phone') and profile_data.phoneNumber is not None:
+            user.phone = profile_data.phoneNumber
+        
+        # Save changes
+        db.commit()
+        db.refresh(user)
+        
+        # Create response with all user fields
+        response_data = {
+            "id": user.id,
+            "email": user.email,
+            "username": user.username,
+            "firebase_uid": user.firebase_uid,
+            "is_admin": user.is_admin
+        }
+        
+        # Add the new fields if they exist
+        if hasattr(user, 'photo_url'):
+            response_data["photo_url"] = user.photo_url
+        if hasattr(user, 'bio'):
+            response_data["bio"] = user.bio
+        if hasattr(user, 'phone'):
+            response_data["phone"] = user.phone
+        
+        logger.info(f"User profile updated successfully: {email}")
+        return JSONResponse(
+            content=response_data,
+            headers=get_cors_headers(request)
+        )
+    except Exception as e:
+        logger.error(f"Error updating user profile: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"detail": f"Database error: {str(e)}"},
