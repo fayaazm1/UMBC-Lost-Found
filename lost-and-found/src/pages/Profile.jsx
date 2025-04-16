@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { uploadProfilePicture } from '../utils/storage';
 import './Profile.css';
 import Navbar from "../components/Navbar";
+import ImageUpload from "../components/ImageUpload";
 
 const Profile = () => {
   const { currentUser, updateUserProfile } = useAuth();
@@ -44,11 +45,18 @@ const Profile = () => {
     if (!file) return;
 
     try {
+      console.log('Profile: Starting image upload process', file);
+      console.log('Profile: Current user ID:', currentUser.uid);
+      
       const photoURL = await uploadProfilePicture(file, currentUser.uid);
+      console.log('Profile: Received photo URL:', photoURL);
+      
       setProfile(prev => ({ ...prev, photoURL }));
       
       // Update Firebase profile with the new photo URL
+      console.log('Profile: Updating user profile with new photo URL');
       await updateUserProfile({ photoURL });
+      console.log('Profile: User profile updated successfully');
     } catch (error) {
       console.error('Failed to upload image:', error);
     }

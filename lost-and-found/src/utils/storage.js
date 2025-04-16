@@ -1,10 +1,11 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { storage } from '../firebase';
 
-// Use Firebase Storage now that CORS is configured
-const DEVELOPMENT_MODE = false; // Use Firebase Storage in all environments
+// Ensure we're always using Firebase Storage in all environments
+// Force it to NEVER use placeholders by default, regardless of environment
+const DEVELOPMENT_MODE = false;
 
-// Helper function to generate placeholder image URLs
+// Helper function to generate placeholder image URLs as a fallback only
 const getPlaceholderImage = (type, userId) => {
   const seed = userId ? userId.substring(0, 8) : Math.random().toString(36).substring(2, 10);
   
@@ -25,21 +26,30 @@ const getPlaceholderImage = (type, userId) => {
  */
 export const uploadProfilePicture = async (file, userId) => {
   try {
+    console.log('Starting profile picture upload for user:', userId);
+    console.log('Storage reference:', storage);
+    
     // Create a reference to the storage location
     const storageRef = ref(storage, `users/${userId}/profile.${getFileExtension(file.name)}`);
+    console.log('Storage reference path:', storageRef.fullPath);
     
     // Upload the file
+    console.log('Attempting to upload file...');
     const snapshot = await uploadBytes(storageRef, file);
+    console.log('Upload successful, snapshot:', snapshot);
     
     // Get the download URL
+    console.log('Getting download URL...');
     const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log('Download URL obtained:', downloadURL);
     
     return downloadURL;
   } catch (storageError) {
     console.error('Firebase Storage error:', storageError);
-    console.log('Falling back to placeholder due to CORS or other issues');
+    console.log('Error details:', JSON.stringify(storageError, null, 2));
+    console.log('Falling back to placeholder due to storage issues');
     
-    // If there's a CORS error or any other storage issue, fall back to placeholder
+    // If there's a storage error, fall back to placeholder
     return getPlaceholderImage('profile', userId);
   }
 };
