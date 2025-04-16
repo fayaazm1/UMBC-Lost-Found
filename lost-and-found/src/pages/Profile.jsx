@@ -1,142 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import Navbar from '../components/Navbar';
-import ImageUpload from '../components/ImageUpload';
-import { uploadProfilePicture } from '../utils/storage';
 import './Profile.css';
+import Navbar from "../components/Navbar";
 
-function Profile() {
-  const { currentUser, dbUser, updateUserProfile } = useAuth();
+const Profile = () => {
+  const { currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    displayName: '',
-    email: '',
-    phone: '',
-    bio: '',
-    avatar: ''
+  const [profile, setProfile] = useState({
+    displayName: currentUser?.displayName || '',
+    email: currentUser?.email || '',
+    phoneNumber: currentUser?.phoneNumber || '',
+    bio: currentUser?.bio || ''
   });
 
-  // Update form data when user data changes
-  useEffect(() => {
-    if (currentUser) {
-      setFormData({
-        displayName: currentUser.displayName || '',
-        email: currentUser.email || '',
-        phone: dbUser?.phone || '',
-        bio: dbUser?.bio || '',
-        avatar: currentUser.photoURL || ''
-      });
-    }
-  }, [currentUser, dbUser]);
+  const handleEdit = () => {
+    setIsEditing(!isEditing);
+  };
 
-  const handleInputChange = (e) => {
+  const handleSave = async () => {
+    setIsEditing(false);
+    try {
+      await updateProfile({
+        displayName: profile.displayName,
+        phoneNumber: profile.phoneNumber,
+        bio: profile.bio
+      });
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setProfile(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleImageUpload = async (file) => {
-    if (!currentUser) return;
-    
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
     try {
-      // Upload to Firebase Storage
-      const downloadURL = await uploadProfilePicture(file, currentUser.uid);
-      
-      // Update formData with the new avatar URL
-      setFormData(prev => ({
-        ...prev,
-        avatar: downloadURL
-      }));
-      
-      return downloadURL;
+      const photoURL = await uploadImage(file);
+      setProfile(prev => ({ ...prev, photoURL }));
     } catch (error) {
-      console.error('Error in handleImageUpload:', error);
-      throw error;
+      console.error('Failed to upload image:', error);
     }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      await updateUserProfile({
-        displayName: formData.displayName,
-        photoURL: formData.avatar,
-        phoneNumber: formData.phone,
-        bio: formData.bio
-      });
-      setIsEditing(false);
-    } catch (error) {
-      setError('Failed to update profile: ' + (error.message || 'Unknown error'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleEdit = () => {
-    if (isEditing) {
-      // Reset form data if canceling edit
-      if (currentUser) {
-        setFormData({
-          displayName: currentUser.displayName || '',
-          email: currentUser.email || '',
-          phone: dbUser?.phone || '',
-          bio: dbUser?.bio || '',
-          avatar: currentUser.photoURL || ''
-        });
-      }
-    }
-    setIsEditing(!isEditing);
-    setError('');
   };
 
   return (
     <div className="profile-page">
       <Navbar />
-      <div className="profile-container">
-        <div className="profile-header">
-          <h1>Profile Details</h1>
-          <button 
-            className={`edit-button ${isEditing ? 'cancel' : ''}`}
-            onClick={toggleEdit}
-          >
-            {isEditing ? (
-              <>
-                <span className="button-icon">✕</span>
-                CANCEL
-              </>
-            ) : (
-              <>
-                <span className="button-icon">✏️</span>
-                Edit Profile
-              </>
-            )}
-          </button>
+      <div className="main-content">
+        <div className="hero-section">
+          <h1>
+            LOST &<br />
+            FOUND
+          </h1>
+          <div className="hero-subtext">
+            <p>"Lost Something?</p>
+            <p>Found Something?</p>
+            <p>We've Got You Covered!"</p>
+          </div>
+          <p className="hero-tagline">Because even lost things deserve a second chance.</p>
         </div>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        <div className="profile-card">
+          <div className="profile-header">
+            <h2>Profile Details</h2>
+            <button className={`edit-button ${isEditing ? 'cancel' : ''}`} onClick={handleEdit}>
+              <span className="icon">{isEditing ? '✕' : '✎'}</span>
+              {isEditing ? 'Cancel' : 'Edit Profile'}
+            </button>
+          </div>
 
-        <div className="profile-content">
-          <div className="profile-avatar-section">
-            {isEditing ? (
-              <ImageUpload 
-                onImageUpload={handleImageUpload}
-                currentImageUrl={formData.avatar}
-                buttonText="Upload Profile Image"
-              />
-            ) : (
+          <div className="profile-content">
+            <div className="profile-avatar-section">
               <div className="avatar-container">
-                {formData.avatar ? (
+                {currentUser?.photoURL ? (
                   <img 
-                    src={formData.avatar}
+                    src={currentUser.photoURL}
                     alt="Profile" 
-                    className="avatar-image"
+                    className="avatar-placeholder"
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = '/default-avatar.png';
@@ -144,86 +89,87 @@ function Profile() {
                   />
                 ) : (
                   <div className="avatar-placeholder">
-                    👤
+                    {currentUser?.displayName ? currentUser.displayName[0].toUpperCase() : 'N'}
+                  </div>
+                )}
+                {isEditing && (
+                  <label className="avatar-upload">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <span className="upload-icon">📷</span>
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <form className="profile-form">
+              <div className="form-group">
+                <label>DISPLAY NAME</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="displayName"
+                    value={profile.displayName}
+                    onChange={handleChange}
+                  />
+                ) : (
+                  <div className="profile-value">{profile.displayName || 'Not provided'}</div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>EMAIL</label>
+                <div className="profile-value">{profile.email || 'Not provided'}</div>
+              </div>
+
+              <div className="form-group">
+                <label>PHONE NUMBER</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={profile.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="Enter your phone number"
+                  />
+                ) : (
+                  <div className={`profile-value ${!profile.phoneNumber && 'empty-value'}`}>
+                    {profile.phoneNumber || 'Not provided'}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          <form onSubmit={handleSubmit} className="profile-form">
-            <div className="form-group">
-              <label>Display Name</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="displayName"
-                  value={formData.displayName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your display name"
-                  required
-                />
-              ) : (
-                <p className="profile-value">{formData.displayName || 'Not set'}</p>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                disabled
-                className="profile-value"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Phone Number</label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="Enter phone number"
-                />
-              ) : (
-                <p className="profile-value">{formData.phone || 'Not provided'}</p>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label>Bio</label>
-              {isEditing ? (
-                <textarea
-                  name="bio"
-                  value={formData.bio}
-                  onChange={handleInputChange}
-                  placeholder="Tell us about yourself"
-                  rows="4"
-                />
-              ) : (
-                <p className="profile-value">{formData.bio || 'No bio provided'}</p>
-              )}
-            </div>
-
-            {isEditing && (
-              <div className="form-actions">
-                <button 
-                  type="submit" 
-                  className="save-button"
-                  disabled={loading}
-                >
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
+              <div className="form-group">
+                <label>BIO</label>
+                {isEditing ? (
+                  <textarea
+                    name="bio"
+                    value={profile.bio}
+                    onChange={handleChange}
+                    placeholder="Tell us about yourself"
+                  />
+                ) : (
+                  <div className={`profile-value ${!profile.bio && 'empty-value'}`}>
+                    {profile.bio || 'Not provided'}
+                  </div>
+                )}
               </div>
-            )}
-          </form>
+
+              {isEditing && (
+                <button type="button" className="save-button" onClick={handleSave}>
+                  Save Changes
+                </button>
+              )}
+            </form>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Profile;

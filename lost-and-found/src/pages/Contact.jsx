@@ -1,164 +1,75 @@
-import React, { useState, useRef } from "react";
+import React, { useRef } from 'react';
 import emailjs from '@emailjs/browser';
 import Navbar from "../components/Navbar";
 import "../assets/about-contact.css";
 
 const Contact = () => {
   const form = useRef();
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    topic: "lost",
-    message: ""
-  });
 
-  const [showPopup, setShowPopup] = useState(false);
-  const [error, setError] = useState("");
-  const [sending, setSending] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
+  const sendEmail = (e) => {
     e.preventDefault();
-    setError("");
-    setSending(true);
 
-    try {
-      // Prepare template parameters
-      const templateParams = {
-        from_name: `${formData.firstName} ${formData.lastName}`,
-        from_email: formData.email,
-        topic: formData.topic,
-        message: formData.message,
-        to_name: "UMBC Lost & Found",
-        title: formData.topic
-      };
-
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_483bu2i',
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_5aanyi3',
-        templateParams,
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'IeLpp7S3HoyNwXsmE'
-      );
-
-      setShowPopup(true);
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        topic: "lost",
-        message: ""
+    emailjs.sendForm('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', form.current, 'YOUR_PUBLIC_KEY')
+      .then((result) => {
+        console.log(result.text);
+      }, (error) => {
+        console.log(error.text);
       });
-
-      setTimeout(() => {
-        setShowPopup(false);
-      }, 3000);
-    } catch (err) {
-      console.error('EmailJS Error:', err);
-      setError(err.text || "Failed to send message. Please try again.");
-    } finally {
-      setSending(false);
-    }
   };
 
   return (
-    <div className="page-wrapper">
+    <>
       <Navbar />
-      <div className="page-container">
-        <div className="contact-container">
-          <div className="contact-content">
-            <div className="contact-left">
-              <h2>Need support?</h2>
-              <p>Fill in the form to get in touch.</p>
+      <div className="about-contact-container">
+        <div className="contact-left">
+          <h1 className="contact-title">Need support?</h1>
+          <p className="contact-subtitle">Have questions or need assistance? We're here to help! Fill out the form, and our team will get back to you as soon as possible.</p>
+        </div>
+        
+        <div className="contact-right">
+          <form ref={form} onSubmit={sendEmail} className="contact-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label>First Name</label>
+                <input type="text" name="first_name" placeholder="Your first name" required />
+              </div>
+              <div className="form-group">
+                <label>Last Name</label>
+                <input type="text" name="last_name" placeholder="Your last name" required />
+              </div>
             </div>
             
-            <div className="contact-form-wrapper">
-              <form onSubmit={handleSubmit} className="contact-form" ref={form}>
-                {error && <div className="error-message">{error}</div>}
-                <div className="form-row">
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      placeholder="First name"
-                      required
-                      disabled={sending}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      placeholder="Last name"
-                      required
-                      disabled={sending}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Email"
-                    required
-                    disabled={sending}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <select
-                    name="topic"
-                    value={formData.topic}
-                    onChange={handleChange}
-                    required
-                    disabled={sending}
-                  >
-                    <option value="lost">Lost</option>
-                    <option value="found">Found</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    placeholder="Your message"
-                    required
-                    disabled={sending}
-                  ></textarea>
-                </div>
-
-                <button type="submit" className="submit-button" disabled={sending}>
-                  {sending ? "Sending..." : "Submit"}
-                </button>
-              </form>
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" name="email" placeholder="Your email address" required />
             </div>
-          </div>
+            
+            <div className="form-group">
+              <label>Subject</label>
+              <select name="subject" required defaultValue="">
+                <option value="" disabled>Select a subject</option>
+                <option value="lost">Lost Item</option>
+                <option value="found">Found Item</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label>Message</label>
+              <textarea 
+                name="message" 
+                placeholder="Please describe your inquiry in detail..." 
+                required
+              ></textarea>
+            </div>
+            
+            <button type="submit" className="submit-button">
+              Send Message
+            </button>
+          </form>
         </div>
-
-        {showPopup && (
-          <div className="popup">
-            <p>Message sent successfully!</p>
-          </div>
-        )}
       </div>
-    </div>
+    </>
   );
 };
 

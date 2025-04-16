@@ -18,22 +18,27 @@ function Login() {
     try {
       setError('');
       setLoading(true);
+      const result = await login(email, password);
       
-      const userCredential = await login(email, password);
-      
-      if (!userCredential) {
-        setError('Login failed - no user returned');
+      if (!result.user.emailVerified) {
+        setError('Please verify your email before logging in.');
         return;
       }
-      
+
+      // Get user from database
+      const dbUser = await getUserByEmail(email);
+      if (!dbUser) {
+        setError('User not found in database');
+        return;
+      }
+
       // Store user ID in localStorage
-      localStorage.setItem('user_id', userCredential.user.uid);
+      localStorage.setItem('user_id', result.user.uid);
       
-      // Use simple timeout and direct href for cleaner navigation
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      // Add a small delay to ensure authentication state is updated
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
       setError('Failed to log in: ' + (error.message || 'Please try again'));
