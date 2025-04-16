@@ -167,16 +167,9 @@ function Messages() {
           {selectedChat ? (
             <>
               <div className="chat-header">
-                <div className="chat-header-left">
-                  <button className="back-to-list" onClick={handleBackToList}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M15 18l-6-6 6-6"/>
-                    </svg>
-                  </button>
+                <div className="chat-header-center">
                   <div className="chat-avatar">{selectedChat.username.charAt(0).toUpperCase()}</div>
-                  <div className="chat-user-info">
-                    <div className="chat-username">{selectedChat.username}</div>
-                  </div>
+                  <div className="chat-username">{selectedChat.username}</div>
                 </div>
                 <button className="close-chat-button" onClick={handleCloseChat}>✕</button>
               </div>
