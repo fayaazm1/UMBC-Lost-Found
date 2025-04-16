@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserByEmail } from '../utils/api';
 import '../styles/Auth.css';
 
 function Login() {
@@ -9,42 +8,34 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-
+    setError('');
+    setLoading(true);
+    
     try {
-      setError('');
-      setLoading(true);
+      // Call login function from AuthContext
+      const user = await login(email, password);
       
-      // Attempt to login
-      const result = await login(email, password);
-      
-      if (!result) {
-        setError('Login failed - no user returned');
-        return;
+      if (user) {
+        // Success - store user ID and show success message
+        localStorage.setItem('user_id', user.uid);
+        setSuccess(true);
+        
+        // Delay redirect to ensure DOM is ready and state is updated
+        setTimeout(() => {
+          // Use window.location for full page refresh
+          window.location.href = '/';
+        }, 1500);
+      } else {
+        setError('Login failed - please try again');
       }
-      
-      if (!result.user.emailVerified) {
-        setError('Please verify your email before logging in.');
-        return;
-      }
-
-      // Store user ID in localStorage
-      localStorage.setItem('user_id', result.user.uid);
-      
-      // Add a longer delay to ensure authentication state and DOM are fully ready
-      // This prevents the race condition during navigation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Use window.location for a full page refresh instead of navigate
-      // This ensures a clean DOM state and prevents the race condition
-      window.location.href = '/';
     } catch (error) {
       console.error('Login error:', error);
-      setError('Failed to log in: ' + (error.message || 'Please try again'));
+      setError(error.message || 'Failed to log in. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -59,6 +50,7 @@ function Login() {
             <p className="auth-subtitle">Sign in to your account</p>
 
             {error && <div className="alert alert-error">{error}</div>}
+            {success && <div className="alert alert-success">Login successful! Redirecting...</div>}
             
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -70,6 +62,7 @@ function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="yourname@umbc.edu"
                     required
+                    disabled={loading || success}
                   />
                   <span className="input-icon">📧</span>
                 </div>
@@ -84,6 +77,7 @@ function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="6+ strong characters"
                     required
+                    disabled={loading || success}
                   />
                   <span className="input-icon">🔒</span>
                 </div>
@@ -98,9 +92,9 @@ function Login() {
               <button 
                 type="submit" 
                 className="auth-button"
-                disabled={loading}
+                disabled={loading || success}
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? 'Signing in...' : success ? 'Signed in!' : 'Sign in'}
               </button>
 
               <div className="auth-footer">
