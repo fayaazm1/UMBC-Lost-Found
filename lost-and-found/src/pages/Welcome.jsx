@@ -15,15 +15,23 @@ function Welcome() {
   // Create particles effect
   useEffect(() => {
     const createParticle = (x, y) => {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = `${x}px`;
-      particle.style.top = `${y}px`;
-      document.querySelector('.auth-page').appendChild(particle);
+      const authPageElement = document.querySelector('.auth-page');
+      
+      // Only append if the element exists
+      if (authPageElement) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        authPageElement.appendChild(particle);
 
-      setTimeout(() => {
-        particle.remove();
-      }, 1000);
+        setTimeout(() => {
+          // Check if particle still exists before removing
+          if (particle && particle.parentNode) {
+            particle.remove();
+          }
+        }, 1000);
+      }
     };
 
     const handleMouseMove = (e) => {
@@ -54,29 +62,33 @@ function Welcome() {
       setError('');
       setFormLoading(true);
       
-      // Simple approach to avoid DOM errors
-      const userCredential = await login(email, password);
+      // First authenticate with Firebase
+      await login(email, password);
       
-      if (!userCredential) {
-        setError('Login failed - please try again');
-        return;
-      }
-
-      // Store user ID in localStorage
-      localStorage.setItem('user_id', userCredential.uid);
-      
-      // Use timeout for navigation to avoid race conditions
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
+      // We won't navigate immediately - we'll let the onAuthStateChanged listener handle it
+      // The listener in AuthContext will detect the login and set currentUser
       
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.message || 'Failed to log in. Please try again.');
-    } finally {
       setFormLoading(false);
+      setError(error.message || 'Failed to log in. Please try again.');
     }
   }
+
+  // Set up auth state listener for smoother transitions
+  useEffect(() => {
+    if (currentUser) {
+      // User is authenticated, safe to navigate
+      localStorage.setItem('user_id', currentUser.uid);
+      
+      // Use timeout for smoother transition
+      const timer = setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser]);
 
   return (
     <div className="auth-page">
