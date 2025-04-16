@@ -1,50 +1,42 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getUserByEmail } from '../utils/api';
 import '../styles/Auth.css';
-import './Login.css'; // For the loading animation styles
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-    
+
     try {
-      // Call login function from AuthContext
-      const user = await login(email, password);
+      setError('');
+      setLoading(true);
       
-      if (user) {
-        // Success - store user ID and show success message
-        localStorage.setItem('user_id', user.uid);
-        setSuccess(true);
-        
-        // Delay redirect to ensure authentication state is fully ready
-        setTimeout(() => {
-          // Try to use React Router first for a smoother experience
-          navigate('/', { replace: true });
-          
-          // Fallback to window.location if navigation fails
-          setTimeout(() => {
-            if (window.location.pathname !== '/') {
-              window.location.href = '/';
-            }
-          }, 1000);
-        }, 1500);
-      } else {
-        setError('Login failed - please try again');
+      const userCredential = await login(email, password);
+      
+      if (!userCredential) {
+        setError('Login failed - no user returned');
+        return;
       }
+      
+      // Store user ID in localStorage
+      localStorage.setItem('user_id', userCredential.user.uid);
+      
+      // Use simple timeout and direct href for cleaner navigation
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+      
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.message || 'Failed to log in. Please try again.');
+      setError('Failed to log in: ' + (error.message || 'Please try again'));
     } finally {
       setLoading(false);
     }
@@ -59,17 +51,6 @@ function Login() {
             <p className="auth-subtitle">Sign in to your account</p>
 
             {error && <div className="alert alert-error">{error}</div>}
-            {success && (
-              <div className="alert alert-success">
-                <div className="login-success-container">
-                  <div className="login-success-message">Login successful!</div>
-                  <div className="login-loader">
-                    <div className="login-loader-spinner"></div>
-                  </div>
-                  <div className="login-redirect-message">Redirecting you to dashboard...</div>
-                </div>
-              </div>
-            )}
             
             <form onSubmit={handleSubmit}>
               <div className="form-group">
@@ -81,7 +62,6 @@ function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="yourname@umbc.edu"
                     required
-                    disabled={loading || success}
                   />
                   <span className="input-icon">📧</span>
                 </div>
@@ -96,7 +76,6 @@ function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="6+ strong characters"
                     required
-                    disabled={loading || success}
                   />
                   <span className="input-icon">🔒</span>
                 </div>
@@ -111,14 +90,9 @@ function Login() {
               <button 
                 type="submit" 
                 className="auth-button"
-                disabled={loading || success}
+                disabled={loading}
               >
-                {loading ? (
-                  <span className="button-loader-container">
-                    <span className="button-loader"></span>
-                    <span>Signing in...</span>
-                  </span>
-                ) : success ? 'Signed in!' : 'Sign in'}
+                {loading ? 'Signing in...' : 'Sign in'}
               </button>
 
               <div className="auth-footer">
