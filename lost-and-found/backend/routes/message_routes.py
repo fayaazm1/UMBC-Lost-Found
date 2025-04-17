@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from config.db import get_db
 from bson import ObjectId
 from schemas import CreateMessageRequest
+from models.notification import Notification  # <-- Added for notification
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -49,6 +50,19 @@ async def create_message(payload: CreateMessageRequest, db: Session = Depends(ge
         result = await messages.insert_one(message_data)
         if not result.inserted_id:
             raise HTTPException(status_code=500, detail="Failed to save message to database")
+
+        # ✅ Send New Message Notification
+        db_notification = Notification(
+            user_id=receiver["id"],
+            title="New Message",
+            message=f"You received a new message from {sender['username']}",
+            type="message",
+            related_post_id=payload.postId,
+            is_read=False,
+            created_at=datetime.now(eastern)
+        )
+        db.add(db_notification)
+        db.commit()
 
         return {"success": True, "message": "Message sent successfully", "message_id": str(result.inserted_id)}
 
