@@ -96,6 +96,18 @@ const Home = () => {
                         <div className="floating-element elem-1"></div>
                         <div className="floating-element elem-2"></div>
                         <div className="floating-element elem-3"></div>
+                        {/* App download promo text */}
+                        <div className="app-download-promo">Download our app today</div>
+                        {/* Download APK button */}
+                        <a href="/downloads/LostandFound.apk" download className="download-app-btn">
+                            <div className="android-logo">
+                                <img src="/android-logo.svg" alt="Android" />
+                            </div>
+                            <div className="download-text">
+                                <span className="download-label">DOWNLOAD FOR</span>
+                                <span className="platform-label">Android</span>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
