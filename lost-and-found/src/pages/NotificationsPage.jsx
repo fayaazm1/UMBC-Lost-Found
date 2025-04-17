@@ -5,13 +5,13 @@ import '../assets/notification.css';
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
-  const { dbUser } = useAuth();
+  const { currentUser } = useAuth();
 
   const fetchNotifications = async () => {
-    if (!dbUser?.id) return;
-    
+    if (!currentUser?.uid) return;
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/${dbUser.id}/notifications`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/user/${currentUser.uid}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -25,13 +25,11 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     fetchNotifications();
-  }, [dbUser?.id]);
+  }, [currentUser?.uid]);
 
   const markAsRead = async (notificationId) => {
-    if (!dbUser?.id) return;
-
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/mark-as-read`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/read`, {
         method: 'PUT'
       });
       if (!response.ok) {
@@ -44,10 +42,8 @@ const NotificationsPage = () => {
   };
 
   const deleteNotification = async (notificationId) => {
-    if (!dbUser?.id) return;
-
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/delete`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE'
       });
       if (!response.ok) {
@@ -59,7 +55,7 @@ const NotificationsPage = () => {
     }
   };
 
-  if (!dbUser?.id) {
+  if (!currentUser?.uid) {
     return (
       <div className="notifications-page">
         <h1>Notifications</h1>
@@ -78,7 +74,7 @@ const NotificationsPage = () => {
           notifications.map((notification) => (
             <div 
               key={notification.id} 
-              className={`notification-item ${!notification.read ? 'unread' : ''}`}
+              className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
               onClick={() => markAsRead(notification.id)}
             >
               <div className="notification-content">
