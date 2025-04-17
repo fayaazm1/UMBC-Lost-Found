@@ -99,7 +99,7 @@ const Home = () => {
                         {/* App download promo text */}
                         <div className="app-download-promo">Download our app today</div>
                         {/* Download APK button */}
-                        <a href="/downloads/LostandFound.apk" download className="download-app-btn">
+                        <a href="https://kodular.app/WSS-GCZ" target="_blank" rel="noopener noreferrer" className="download-app-btn">
                             <div className="android-logo">
                                 <img src="/android-logo.svg" alt="Android" />
                             </div>
