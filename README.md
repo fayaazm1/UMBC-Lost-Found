@@ -10,7 +10,7 @@ posts — Stores both Lost & Found items
 users — Stores user credentials
 
 🗂️ Lost vs Found Items
-Both item types are stored in the posts table and are distinguished using the report_type field:
+Both types of items are stored in the posts table and are differentiated by the report_type field.
 
 'Lost' for lost items
 
