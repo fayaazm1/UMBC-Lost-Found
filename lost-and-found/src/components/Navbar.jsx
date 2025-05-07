@@ -98,7 +98,13 @@ function Navbar() {
         <div className="nav-right desktop-only">
           {currentUser && (
             <>
-              <Link to="/messages" className="nav-icon">
+              <Link 
+                to="/messages" 
+                className="nav-icon speech-enabled" 
+                aria-label="Messages" 
+                data-speech="Messages"
+                data-speech-enabled="true"
+              >
                 <FaEnvelope />
               </Link>
               <NotificationBell />
@@ -176,11 +182,25 @@ function Navbar() {
               <span className="mobile-user-name">{currentUser.displayName || 'User'}</span>
             </div>
             <div className="mobile-user-links">
-              <Link to="/messages" className="mobile-nav-link" onClick={closeMenu}>
+              <Link 
+                to="/messages" 
+                className="mobile-nav-link speech-enabled" 
+                onClick={closeMenu}
+                aria-label="Messages" 
+                data-speech="Messages"
+                data-speech-enabled="true"
+              >
                 <FaEnvelope />
                 <span>Messages</span>
               </Link>
-              <Link to="/notifications" className="mobile-nav-link" onClick={closeMenu}>
+              <Link 
+                to="/notifications" 
+                className="mobile-nav-link speech-enabled" 
+                onClick={closeMenu}
+                aria-label="Notifications" 
+                data-speech="Notifications"
+                data-speech-enabled="true"
+              >
                 <FaBell />
                 <span>Notifications</span>
               </Link>

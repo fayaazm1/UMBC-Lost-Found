@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css";
+import api from "../utils/apiConfig";
 
 const Post = () => {
   const { currentUser } = useAuth();
@@ -46,32 +47,31 @@ const Post = () => {
       formDataToSend.append('contact_details', formData.contactDetails);
       formDataToSend.append('date', formData.date);
       formDataToSend.append('time', formData.time);
-      formDataToSend.append('user_id', currentUser.email);
+      // Send Firebase UID instead of email for consistent user identification
+      formDataToSend.append('user_id', currentUser.uid);
 
       setUploadProgress(50);
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`, {
-        method: "POST",
-        body: formDataToSend
-      });
-
-      const data = await response.json();
+      const response = await api.post('/api/posts/', formDataToSend);
       setUploadProgress(100);
 
-      if (response.ok) {
-        setSuccess(true);
-        setFormData({
-          reportType: "",
-          itemName: "",
-          description: "",
-          location: "",
-          contactDetails: "",
-          date: new Date().toISOString().split('T')[0],
-          time: "",
-        });
-        setTimeout(() => {
-          setSuccess(false);
-        }, 3000);
-      } else {
+      // Success - axios automatically throws for non-2xx responses
+      setSuccess(true);
+      setFormData({
+        reportType: "",
+        itemName: "",
+        description: "",
+        location: "",
+        contactDetails: "",
+        date: new Date().toISOString().split('T')[0],
+        time: "",
+      });
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error submitting post:", error);
+      if (error.response && error.response.data) {
+        const data = error.response.data;
         if (typeof data.detail === 'object') {
           try {
             setError(JSON.stringify(data.detail));
@@ -81,10 +81,9 @@ const Post = () => {
         } else {
           setError(data.detail || "Failed to create post");
         }
+      } else {
+        setError("Failed to create post. Please try again.");
       }
-    } catch (error) {
-      console.error("Error submitting post:", error);
-      setError("Failed to create post. Please try again.");
     } finally {
       setLoading(false);
       setUploadProgress(0);

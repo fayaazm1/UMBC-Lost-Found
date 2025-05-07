@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { FaBell } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import '../assets/notification.css';
+import api from '../utils/apiConfig'; 
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -19,11 +20,8 @@ const NotificationBell = () => {
     }
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/user/${currentUser.uid}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const response = await api.get(`/api/notifications/user/${currentUser.uid}`);
+      const data = response.data;
       
       if (Array.isArray(data)) {
         setNotifications(data);
@@ -66,15 +64,7 @@ const NotificationBell = () => {
     if (!currentUser?.uid) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await api.put(`/api/notifications/${notificationId}/read`);
       await fetchNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -85,12 +75,7 @@ const NotificationBell = () => {
     if (!currentUser?.uid) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await api.delete(`/api/notifications/${notificationId}`);
       await fetchNotifications();
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -108,9 +93,20 @@ const NotificationBell = () => {
     setShowNotifications(false);
   };
 
+  // Create a notification speech text that includes the unread count
+  const notificationSpeechText = unreadCount > 0 
+    ? `Notifications. You have ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}.` 
+    : 'Notifications. No unread notifications.';
+
   return (
     <div className="notification-container" ref={dropdownRef}>
-      <button className="nav-icon notification-bell" onClick={handleBellClick}>
+      <button 
+        className="nav-icon notification-bell speech-enabled" 
+        onClick={handleBellClick}
+        aria-label={notificationSpeechText}
+        data-speech={notificationSpeechText}
+        data-speech-enabled="true"
+      >
         <FaBell />
         {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
       </button>
@@ -119,7 +115,13 @@ const NotificationBell = () => {
         <div className="notification-dropdown">
           <div className="notification-header">
             <h3>Notifications</h3>
-            <button className="view-all" onClick={handleViewAll}>
+            <button 
+              className="view-all speech-enabled" 
+              onClick={handleViewAll}
+              aria-label="View all notifications"
+              data-speech="View all notifications"
+              data-speech-enabled="true"
+            >
               View All
             </button>
           </div>
@@ -130,8 +132,11 @@ const NotificationBell = () => {
               notifications.slice(0, 5).map((notification) => (
                 <div
                   key={notification.id}
-                  className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
+                  className={`notification-item ${!notification.is_read ? 'unread' : ''} speech-enabled`}
                   onClick={() => markAsRead(notification.id)}
+                  aria-label={`${!notification.is_read ? 'Unread notification: ' : 'Notification: '} ${notification.title}`}
+                  data-speech={`${!notification.is_read ? 'Unread notification: ' : 'Notification: '} ${notification.title}. ${notification.message}`}
+                  data-speech-enabled="true"
                 >
                   <div className="notification-content">
                     <h4>{notification.title}</h4>
@@ -139,12 +144,14 @@ const NotificationBell = () => {
                     <small>{new Date(notification.created_at).toLocaleString()}</small>
                   </div>
                   <button
-                    className="delete-notification"
+                    className="delete-notification speech-enabled"
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteNotification(notification.id);
                     }}
                     aria-label="Delete notification"
+                    data-speech="Delete notification"
+                    data-speech-enabled="true"
                   >
                     ×
                   </button>

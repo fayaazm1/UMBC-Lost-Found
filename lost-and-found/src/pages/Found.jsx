@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import FilterResultsPopup from "../components/FilterResultsPopup";
@@ -8,6 +7,7 @@ import "../assets/lost_found.css";
 import "../assets/post_user.css";
 import "../assets/found.css";
 import { isPriorityPost } from "../utils/priorityClassifier";
+import api from "../utils/apiConfig";
 
 const Found = () => {
   const navigate = useNavigate();
@@ -27,11 +27,8 @@ const Found = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const response = await api.get('/api/posts');
+        const data = response.data;
         console.log("All posts:", data); // Debug log
 
         if (!Array.isArray(data)) {
@@ -101,10 +98,7 @@ const Found = () => {
       
       console.log("Filtering for FOUND items:", params.toString());
       
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter?${params.toString()}`,
-        { withCredentials: true }
-      );
+      const response = await api.get(`/api/posts/filter?${params.toString()}`);
       
       // Double-check that we only have FOUND items in the results
       const foundItemsOnly = response.data.filter(item => 

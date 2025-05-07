@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaTrash } from 'react-icons/fa';
 import '../assets/notification.css';
+import api from '../utils/apiConfig';
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
@@ -11,12 +12,8 @@ const NotificationsPage = () => {
     if (!currentUser?.uid) return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/user/${currentUser.uid}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setNotifications(data);
+      const response = await api.get(`/api/notifications/user/${currentUser.uid}`);
+      setNotifications(response.data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       setNotifications([]);
@@ -29,12 +26,7 @@ const NotificationsPage = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}/read`, {
-        method: 'PUT'
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await api.put(`/api/notifications/${notificationId}/read`);
       await fetchNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -43,12 +35,7 @@ const NotificationsPage = () => {
 
   const deleteNotification = async (notificationId) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/notifications/${notificationId}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      await api.delete(`/api/notifications/${notificationId}`);
       await fetchNotifications();
     } catch (error) {
       console.error('Error deleting notification:', error);

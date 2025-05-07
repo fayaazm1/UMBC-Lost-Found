@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Post from "./components/Post";
@@ -20,14 +20,35 @@ import Messages from "./pages/Messages";
 import Search from "./pages/Search";
 import FilterResults from "./pages/FilterResults"; 
 import { useAuth } from "./contexts/AuthContext";
+import { SkipToContent } from "./utils/accessibility.jsx";
+import AccessibilityPanel from "./components/AccessibilityPanel";
+import { initializeSpeech } from "./utils/speechSynthesis.jsx";
 
 function App() {
   const { currentUser } = useAuth();
 
+  // Initialize speech functionality if screen reader is active
+  useEffect(() => {
+    const isScreenReaderActive = localStorage.getItem('screen-reader-active') === 'true';
+    if (isScreenReaderActive) {
+      document.body.classList.add('screen-reader-active');
+      // Initialize speech on interactive elements
+      const observer = initializeSpeech();
+      
+      // Clean up observer on unmount
+      return () => {
+        if (observer) {
+          observer.disconnect();
+        }
+      };
+    }
+  }, []);
+
   return (
     <div>
+      <SkipToContent />
       {currentUser && !window.location.pathname.startsWith('/admin') && <Navbar />}
-      <div className="content">
+      <div className="content" id="main-content" tabIndex="-1">
         <Routes>
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -109,6 +130,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
+      <AccessibilityPanel />
     </div>
   );
 }

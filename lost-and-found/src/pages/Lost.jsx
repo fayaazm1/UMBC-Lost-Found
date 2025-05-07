@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import { API_BASE_URL } from "../utils/apiConfig";
+import api from "../utils/apiConfig";
 import Navbar from "../components/Navbar";
 import FilterResultsPopup from "../components/FilterResultsPopup";
 import Popup from "../components/Popup";
@@ -30,7 +31,7 @@ const Lost = () => {
     
     const loadPosts = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts`, { withCredentials: true });
+        const response = await api.get('/api/posts');
         const data = response.data;
         
         if (isMounted) {
@@ -66,9 +67,9 @@ const Lost = () => {
     let isActive = true;
     
     try {
-      let url = `${import.meta.env.VITE_API_BASE_URL}/api/posts`;
+      let url = '/api/posts';
       if (filterParams) {
-        url = `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter`;
+        url = '/api/posts/filter';
         const params = new URLSearchParams();
         if (filterParams.keyword) params.append("keyword", filterParams.keyword);
         if (filterParams.date) params.append("date", filterParams.date);
@@ -77,7 +78,7 @@ const Lost = () => {
         url += `?${params.toString()}`;
       }
 
-      const response = await axios.get(url, { withCredentials: true });
+      const response = await api.get(url);
       const data = response.data;
       if (!Array.isArray(data)) {
         throw new Error('Expected array of posts');
@@ -124,9 +125,8 @@ const Lost = () => {
       const queryString = new URLSearchParams(queryParams).toString();
       console.log("Filtering for LOST items:", queryString);
       
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter?${queryString}`,
-        { withCredentials: true }
+      const response = await api.get(
+        `/api/posts/filter?${queryString}`
       );
       
       const lostItemsOnly = response.data.filter(item => 
@@ -267,7 +267,7 @@ const Lost = () => {
                 <div className="recent-post-desc">{post.description}</div>
                 {post.image_path && (
                   <img
-                    src={`${import.meta.env.VITE_API_BASE_URL}/${post.image_path}`}
+                    src={`${API_BASE_URL}/${post.image_path}`}
                     alt="Lost Item"
                     style={{ width: "120px", marginTop: "8px" }}
                   />
