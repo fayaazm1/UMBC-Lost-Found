@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -15,6 +15,7 @@ class Post(Base):
     date = Column(String)
     time = Column(String)
     image_path = Column(String, nullable=True)
+    verification_questions = Column(JSON, nullable=True)  # Store verification questions as JSON
     
     # Foreign key to link to user
     user_id = Column(Integer, ForeignKey("users.id"))

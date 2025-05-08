@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaUser, FaCog, FaSignOutAlt, FaEnvelope, FaBars, FaBell, FaShieldAlt } from 'react-icons/fa';
+import { FaSearch, FaUser, FaCog, FaSignOutAlt, FaEnvelope, FaBars, FaBell, FaShieldAlt, FaQrcode } from 'react-icons/fa';
 import './Navbar.css';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -90,6 +90,7 @@ function Navbar() {
             <Link to="/" className="nav-link">Home</Link>
             <Link to="/lost" className="nav-link">Lost</Link>
             <Link to="/found" className="nav-link">Found</Link>
+            <Link to="/qr-generator" className="nav-link">QR Code</Link>
             <Link to="/about" className="nav-link">About</Link>
             <Link to="/contact" className="nav-link">Contact</Link>
           </div>
@@ -118,6 +119,14 @@ function Navbar() {
                     <Link to="/profile" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
                       <FaUser className="dropdown-icon" />
                       Profile
+                    </Link>
+                    <Link to="/qr-generator" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
+                      <FaQrcode className="dropdown-icon" />
+                      Generate QR Code
+                    </Link>
+                    <Link to="/qr-scanner" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
+                      <FaQrcode className="dropdown-icon" />
+                      Scan QR Code
                     </Link>
                     <Link to="/admin/login" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
                       <FaShieldAlt className="dropdown-icon" />
@@ -166,6 +175,14 @@ function Navbar() {
           </Link>
           <Link to="/found" className="mobile-nav-link" onClick={closeMenu}>
             <span>Found</span>
+          </Link>
+          <Link to="/qr-generator" className="mobile-nav-link" onClick={closeMenu}>
+            <FaQrcode />
+            <span>Generate QR Code</span>
+          </Link>
+          <Link to="/qr-scanner" className="mobile-nav-link" onClick={closeMenu}>
+            <FaQrcode />
+            <span>Scan QR Code</span>
           </Link>
           <Link to="/about" className="mobile-nav-link" onClick={closeMenu}>
             <span>About</span>

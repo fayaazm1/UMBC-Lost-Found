@@ -1,6 +1,7 @@
 from datetime import datetime
 import os
 import shutil
+import json
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func
@@ -10,6 +11,7 @@ from models.post import Post
 from models.user import User
 from fastapi.responses import JSONResponse
 import logging
+from utils.ai_matching_inmemory import find_matching_posts, create_match_notifications
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +52,7 @@ async def get_posts(request: Request, db: Session = Depends(get_db)):
             "date": post.date,
             "time": post.time,
             "image_path": post.image_path,
+            "verification_questions": post.verification_questions,
             "user": {
                 "id": post.user.id,
                 "_id": post.user.id,
@@ -103,15 +106,17 @@ async def create_post(
     date: str = Form(...),
     time: str = Form(...),
     user_id: str = Form(...),
+    verification_questions: str = Form(None),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     request: Request = None,
 ):
     try:
         logger.info(f"Received report_type: {report_type}")
-        user = db.query(User).filter(User.email == user_id).first()
+        # Look up user by Firebase UID instead of email
+        user = db.query(User).filter(User.firebase_uid == user_id).first()
         if not user:
-            logger.error(f"User not found with email: {user_id}")
+            logger.error(f"User not found with firebase_uid: {user_id}")
             return JSONResponse(status_code=404, content={"detail": "User not found"}, headers=get_cors_headers(request))
 
         image_path = None
@@ -125,6 +130,15 @@ async def create_post(
         normalized_report_type = report_type.lower().strip()
         logger.info(f"Normalized report_type: {normalized_report_type}")
 
+        # Parse verification questions if provided
+        verification_questions_data = None
+        if verification_questions:
+            try:
+                verification_questions_data = json.loads(verification_questions)
+                logger.info(f"Parsed verification questions: {verification_questions_data}")
+            except json.JSONDecodeError as e:
+                logger.error(f"Error parsing verification questions: {str(e)}")
+
         new_post = Post(
             report_type=normalized_report_type,
             item_name=item_name,
@@ -134,11 +148,23 @@ async def create_post(
             date=date,
             time=time,
             image_path=image_path,
+            verification_questions=verification_questions_data,
             user_id=user.id,
         )
         db.add(new_post)
         db.commit()
         db.refresh(new_post)
+
+        # Find matching posts and create notifications using in-memory AI matching
+        logger.info(f"Looking for matching posts for new {normalized_report_type} post...")
+        matches = find_matching_posts(db, new_post, threshold=0.7)
+        
+        if matches:
+            logger.info(f"Found {len(matches)} potential matches")
+            # Create notifications for the top match
+            top_match, similarity = matches[0]
+            create_match_notifications(db, new_post, top_match, similarity)
+            logger.info(f"Created match notifications with similarity score: {similarity:.2f}")
 
         logger.info(f"Post created successfully by user {user_id} with report_type: {new_post.report_type}")
         return JSONResponse(content={
@@ -153,6 +179,7 @@ async def create_post(
                 "date": new_post.date,
                 "time": new_post.time,
                 "image_path": new_post.image_path,
+                "verification_questions": new_post.verification_questions,
                 "user": {
                     "id": user.id,
                     "username": user.username,
