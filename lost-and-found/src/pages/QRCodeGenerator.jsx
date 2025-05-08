@@ -1,232 +1,303 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import QRCode from 'react-qr-code';
-import { Container, Typography, TextField, Button, Paper, Grid, Box, FormControlLabel, Checkbox } from '@mui/material';
-import { useReactToPrint } from 'react-to-print';
+import '../assets/qrcode.css';
+
+// Create a fallback QR code component in case the library fails to load
+const FallbackQRCode = ({ value, size = 256, level = 'L', ...props }) => {
+  return (
+    <div 
+      style={{ 
+        width: size, 
+        height: size, 
+        backgroundColor: '#f0f0f0', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        padding: '10px'
+      }}
+      {...props}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div>QR Code</div>
+        <div style={{ fontSize: '10px', marginTop: '5px' }}>{value.substring(0, 30)}...</div>
+      </div>
+    </div>
+  );
+};
 
 const QRCodeGenerator = () => {
   const { currentUser } = useAuth();
-  const [contactInfo, setContactInfo] = useState({
-    name: '',
-    email: currentUser?.email || '',
-    phone: '',
-    additionalInfo: '',
-    includeEmail: true,
-    includePhone: true
-  });
+  const [deviceName, setDeviceName] = useState('');
   const [qrGenerated, setQrGenerated] = useState(false);
-  const qrCodeRef = useRef();
-
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setContactInfo(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // Generate QR code data as JSON string
-  const generateQRData = () => {
-    const qrData = {
-      name: contactInfo.name,
-      email: contactInfo.includeEmail ? contactInfo.email : '',
-      phone: contactInfo.includePhone ? contactInfo.phone : '',
-      additionalInfo: contactInfo.additionalInfo,
-      appUrl: window.location.origin,
-      timestamp: new Date().toISOString()
+  const qrCodeRef = useRef(null);
+  const [QRCode, setQRCode] = useState(null);
+  const [html2canvas, setHtml2canvas] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Dynamically import the QR code and html2canvas libraries
+  useEffect(() => {
+    const loadDependencies = async () => {
+      try {
+        // Try to import the libraries
+        const [qrCodeModule, html2canvasModule] = await Promise.all([
+          import('react-qr-code').catch(() => ({ default: FallbackQRCode })),
+          import('html2canvas').catch(() => ({ default: () => Promise.resolve(null) }))
+        ]);
+        
+        setQRCode(() => qrCodeModule.default);
+        setHtml2canvas(() => html2canvasModule.default);
+      } catch (error) {
+        console.error('Failed to load dependencies:', error);
+        // Use fallbacks
+        setQRCode(() => FallbackQRCode);
+        setHtml2canvas(() => () => Promise.resolve(null));
+      } finally {
+        setIsLoading(false);
+      }
     };
-    return JSON.stringify(qrData);
+    
+    loadDependencies();
+  }, []);
+  
+  // Basic user info
+  const contactInfo = {
+    name: currentUser?.displayName || 'User',
+    email: currentUser?.email || '',
+    deviceName: deviceName
   };
 
-  // Handle QR code generation
+  // Generate QR code data as a simple text message
+  const generateQRData = () => {
+    // Format date in a readable way
+    const formattedDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    // Create a simple formatted text message
+    const textMessage = 
+`UMBC LOST & FOUND
+
+This ${deviceName} belongs to:
+Name: ${contactInfo.name}
+Email: ${contactInfo.email}
+
+If found, please either:
+1. Contact the owner via email, or
+2. Hand over the item to the UMBC Lost & Found department located in The Commons building (1st floor).
+
+Thank you for helping return this lost item!
+
+Generated: ${formattedDate}`;
+    
+    return textMessage;
+  };
+
+  // Handle generating QR code
   const handleGenerateQR = () => {
-    if (!contactInfo.name) {
-      alert('Please enter your name');
-      return;
+    if (deviceName.trim()) {
+      setQrGenerated(true);
     }
-    setQrGenerated(true);
   };
-
-  // Handle printing the QR code
-  const handlePrint = useReactToPrint({
-    content: () => qrCodeRef.current,
-    documentTitle: 'UMBC Lost & Found - Contact QR Code',
-    onAfterPrint: () => console.log('QR code printed successfully')
-  });
 
   // Reset the form
   const handleReset = () => {
-    setContactInfo({
-      name: '',
-      email: currentUser?.email || '',
-      phone: '',
-      additionalInfo: '',
-      includeEmail: true,
-      includePhone: true
-    });
+    setDeviceName('');
     setQrGenerated(false);
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Contact QR Code Generator
-      </Typography>
+    <div className="qr-container">
+      <div className="decorative-circle circle-1"></div>
+      <div className="decorative-circle circle-2"></div>
+      <div className="decorative-dot dot-1"></div>
+      <div className="decorative-dot dot-2"></div>
+      <div className="decorative-dot dot-3"></div>
       
-      <Typography variant="body1" paragraph align="center">
-        Generate a QR code with your contact information that you can attach to your valuable items.
-        If someone finds your lost item, they can scan the QR code to get your contact details.
-      </Typography>
+      <div className="qr-content">
+        <div className="qr-header">
+          <h1>📱 Generate Your QR Code</h1>
+          <p className="qr-subtitle">
+            Create a QR code for your devices to help return them if lost
+          </p>
+        </div>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <TextField
-              required
-              fullWidth
-              label="Your Name"
-              name="name"
-              value={contactInfo.name}
-              onChange={handleChange}
-              variant="outlined"
-              margin="normal"
-            />
-          </Grid>
+      {!qrGenerated && (
+        <div className="qr-form-container">
+          <div className="qr-profile-info">
+            <h3>Your Profile Information</h3>
+            <div className="profile-detail">
+              <span className="profile-label">Name:</span>
+              <span className="profile-value">{contactInfo.name}</span>
+            </div>
+            <div className="profile-detail">
+              <span className="profile-label">Email:</span>
+              <span className="profile-value">{contactInfo.email || 'Not provided'}</span>
+            </div>
+          </div>
           
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Email Address"
-              name="email"
-              value={contactInfo.email}
-              onChange={handleChange}
-              variant="outlined"
-              margin="normal"
-              disabled={!contactInfo.includeEmail}
+          <div className="qr-input-group">
+            <label htmlFor="deviceName">
+              Device Name
+            </label>
+            <input
+              id="deviceName"
+              type="text"
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+              placeholder="e.g., MacBook Pro, iPhone 15, AirPods"
+              className="qr-input"
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={contactInfo.includeEmail}
-                  onChange={handleChange}
-                  name="includeEmail"
-                />
-              }
-              label="Include email in QR code"
-            />
-          </Grid>
+            <small className="input-helper">
+              Enter the name of your device
+            </small>
+          </div>
           
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Phone Number"
-              name="phone"
-              value={contactInfo.phone}
-              onChange={handleChange}
-              variant="outlined"
-              margin="normal"
-              disabled={!contactInfo.includePhone}
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={contactInfo.includePhone}
-                  onChange={handleChange}
-                  name="includePhone"
-                />
-              }
-              label="Include phone in QR code"
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Additional Information"
-              name="additionalInfo"
-              value={contactInfo.additionalInfo}
-              onChange={handleChange}
-              variant="outlined"
-              margin="normal"
-              multiline
-              rows={3}
-              placeholder="Add any additional information you want to include (e.g., reward offered)"
-            />
-          </Grid>
-          
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={handleGenerateQR}
-              sx={{ mr: 2 }}
-              disabled={!contactInfo.name}
-            >
-              Generate QR Code
-            </Button>
-            <Button 
-              variant="outlined" 
-              color="secondary" 
-              onClick={handleReset}
-            >
-              Reset
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
+          <button 
+            onClick={handleGenerateQR}
+            disabled={!deviceName.trim()}
+            className={`qr-button ${!deviceName.trim() ? 'disabled' : ''}`}
+          >
+            Create QR Code
+          </button>
+        </div>
+      )}
 
       {qrGenerated && (
-        <Paper 
-          elevation={3} 
-          sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-          ref={qrCodeRef}
-        >
-          <Typography variant="h5" component="h2" gutterBottom align="center">
-            Your Contact QR Code
-          </Typography>
+        <div className="qr-result-container">
+          <h2 className="qr-result-title">
+            QR Code for {deviceName}
+          </h2>
           
-          <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 1, mb: 3 }}>
-            <QRCode 
-              value={generateQRData()} 
-              size={256}
-              level="H"
-            />
-          </Box>
+          <div className="qr-code-display" ref={qrCodeRef}>
+            {isLoading ? (
+              <div className="loading-indicator">Loading QR Code...</div>
+            ) : QRCode ? (
+              <QRCode 
+                value={generateQRData()} 
+                size={250}
+                level="H"
+                className="qr-code"
+              />
+            ) : (
+              <FallbackQRCode 
+                value={generateQRData()} 
+                size={250}
+                className="qr-code"
+              />
+            )}
+          </div>
           
-          <Typography variant="body1" paragraph align="center">
-            Print this QR code and attach it to your valuable items.
-          </Typography>
+          <div className="qr-info-summary">
+            <div className="info-item">
+              <span className="info-label">Name:</span>
+              <span className="info-value">{contactInfo.name}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Email:</span>
+              <span className="info-value">{contactInfo.email || 'Not provided'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Device:</span>
+              <span className="info-value">{deviceName}</span>
+            </div>
+          </div>
           
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={handlePrint}
-              sx={{ mr: 2 }}
+          <div className="qr-actions">
+            <button
+              onClick={() => {
+                if (qrCodeRef.current && html2canvas) {
+                  html2canvas(qrCodeRef.current)
+                    .then(canvas => {
+                      if (canvas) {
+                        const win = window.open('');
+                        win.document.write(`
+                      <html>
+                        <head>
+                          <title>Print QR Code - ${deviceName}</title>
+                          <style>
+                            body {
+                              display: flex;
+                              flex-direction: column;
+                              align-items: center;
+                              justify-content: center;
+                              padding: 20px;
+                              font-family: Arial, sans-serif;
+                            }
+                            img {
+                              max-width: 100%;
+                              height: auto;
+                            }
+                            .print-container {
+                              text-align: center;
+                              max-width: 500px;
+                            }
+                            .info {
+                              margin-top: 20px;
+                              text-align: left;
+                              border-top: 1px solid #eee;
+                              padding-top: 10px;
+                            }
+                            @media print {
+                              .no-print {
+                                display: none;
+                              }
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="print-container">
+                            <img src="${canvas.toDataURL('image/png')}" alt="QR Code" style="width: 100%; max-width: 350px;" />
+                          </div>
+                          <script>
+                            // Automatically open print dialog when page loads
+                            window.onload = function() {
+                              window.print();
+                            }
+                          </script>
+                        </body>
+                      </html>
+                    `);
+                        win.document.close();
+                      }
+                    })
+                    .catch(error => {
+                      console.error('Error generating printable QR code:', error);
+                      alert('Failed to generate printable QR code. Please try again.');
+                    });
+                } else {
+                  alert('QR Code printing is not available. Please try downloading instead.');
+                }
+              }}
+              className="qr-button print"
             >
               Print QR Code
-            </Button>
-            <Button 
-              variant="outlined" 
-              onClick={() => {
-                const qrData = generateQRData();
-                const blob = new Blob([qrData], { type: 'application/json' });
-                const href = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = href;
-                link.download = "contact-info.json";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }}
+            </button>
+            
+            <button
+              onClick={handleReset}
+              className="qr-button reset"
             >
-              Download Data
-            </Button>
-          </Box>
-        </Paper>
+              Create New QR Code
+            </button>
+          </div>
+          
+          <div className="qr-instructions">
+            <h3>How to use this QR code:</h3>
+            <ol>
+              <li>Download the QR code image</li>
+              <li>Print it on a sticker or label</li>
+              <li>Attach it to your device in a visible location</li>
+              <li>If someone finds your device, they can scan the code to contact you</li>
+            </ol>
+          </div>
+        </div>
       )}
-    </Container>
+      </div>
+    </div>
   );
 };
 
