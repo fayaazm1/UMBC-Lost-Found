@@ -17,16 +17,6 @@ export default defineConfig({
       }
     }
   },
-  build: {
-    rollupOptions: {
-      external: [],
-    },
-  },
-  resolve: {
-    alias: {
-      'html5-qrcode': resolve(__dirname, 'node_modules/html5-qrcode')
-    },
-  },
   preview: {
     port: 5173,
     strictPort: true,
@@ -45,11 +35,15 @@ export default defineConfig({
   },
   base: '/',
   publicDir: 'public',
-  // Add rewrite rules for client-side routing
   resolve: {
     alias: {
       '@': '/src',
-    },
+      'html5-qrcode': resolve(__dirname, 'node_modules/html5-qrcode'),
+      'react-qr-code': resolve(__dirname, 'node_modules/react-qr-code'),
+      'qrcode': resolve(__dirname, 'node_modules/qrcode'),
+      'html2canvas': resolve(__dirname, 'node_modules/html2canvas'),
+      'react-to-print': resolve(__dirname, 'node_modules/react-to-print')
+    }
   },
   optimizeDeps: {
     include: ['@emailjs/browser']
