@@ -1,19 +1,33 @@
+# FastAPI and web server
 fastapi==0.63.0
 uvicorn==0.13.4
 python-multipart==0.0.5
+
+# Authentication and security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-pymongo==4.3.3
-motor==3.1.1
-python-dotenv==0.19.0
 bcrypt==4.0.1
-email-validator==2.0.0
 PyJWT==2.8.0
+
+# Database
 sqlalchemy==1.4.41
 psycopg2-binary==2.9.5
 asyncpg==0.27.0
+pymongo==4.3.3
+motor==3.1.1
+
+# Utilities
+python-dotenv==0.19.0
+email-validator==2.0.0
 pytz==2023.3.post1
 
-# AI matching dependencies
+# AI matching dependencies with compatible versions
 numpy==1.24.3
+torch==2.0.1
+transformers==4.30.2
 sentence-transformers==2.2.2
+huggingface-hub==0.16.4
+tqdm==4.65.0
+scikit-learn==1.2.2
+Pillow==9.5.0
+requests==2.31.0
