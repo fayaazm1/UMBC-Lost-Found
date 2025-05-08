@@ -11,7 +11,8 @@ from models.post import Post
 from models.user import User
 from fastapi.responses import JSONResponse
 import logging
-from utils.ai_matching_inmemory import find_matching_posts, create_match_notifications
+# Fix import path to use relative import
+from ..utils.ai_matching_inmemory import find_matching_posts, create_match_notifications
 
 logger = logging.getLogger(__name__)
 
