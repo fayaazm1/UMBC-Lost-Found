@@ -13,7 +13,11 @@ services:
   - type: web
     name: umbc-lost-found-1
     env: node
-    buildCommand: cd lost-and-found && npm install && npm run build
+    buildCommand: |
+      cd lost-and-found && 
+      npm install && 
+      npm install react-qr-code@2.0.15 html5-qrcode@2.3.8 @mui/material @mui/icons-material @emotion/react @emotion/styled --force && 
+      npm run build
     startCommand: cd lost-and-found && npm install -g serve && serve -s dist -l $PORT
     envVars:
       - key: NODE_VERSION
