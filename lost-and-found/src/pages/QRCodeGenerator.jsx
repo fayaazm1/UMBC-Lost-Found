@@ -1,29 +1,34 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 // Import the CSS with an absolute path to avoid build issues
 import '/src/assets/qrcode.css';
 
-// Create a fallback QR code component in case the library fails to load
-const FallbackQRCode = ({ value, size = 256, level = 'L', ...props }) => {
+// Simple QR code component that doesn't rely on external libraries
+const SimpleQRCode = ({ value, size = 256, ...props }) => {
+  // Create a text representation of the QR code data
+  const displayValue = value.substring(0, 100) + (value.length > 100 ? '...' : '');
+  
   return (
     <div 
+      className="simple-qr-code"
       style={{ 
         width: size, 
         height: size, 
-        backgroundColor: '#f0f0f0', 
-        display: 'flex', 
-        alignItems: 'center', 
+        backgroundColor: '#f5f5f5', 
+        border: '1px solid #ddd',
+        borderRadius: '8px',
+        padding: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         justifyContent: 'center',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        padding: '10px'
+        textAlign: 'center',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}
       {...props}
     >
-      <div style={{ textAlign: 'center' }}>
-        <div>QR Code</div>
-        <div style={{ fontSize: '10px', marginTop: '5px' }}>{value.substring(0, 30)}...</div>
-      </div>
+      <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>Contact Information</div>
+      <div style={{ fontSize: '14px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>{displayValue}</div>
     </div>
   );
 };
@@ -33,34 +38,6 @@ const QRCodeGenerator = () => {
   const [deviceName, setDeviceName] = useState('');
   const [qrGenerated, setQrGenerated] = useState(false);
   const qrCodeRef = useRef(null);
-  const [QRCode, setQRCode] = useState(null);
-  const [html2canvas, setHtml2canvas] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Dynamically import the QR code and html2canvas libraries
-  useEffect(() => {
-    const loadDependencies = async () => {
-      try {
-        // Try to import the libraries
-        const [qrCodeModule, html2canvasModule] = await Promise.all([
-          import('react-qr-code').catch(() => ({ default: FallbackQRCode })),
-          import('html2canvas').catch(() => ({ default: () => Promise.resolve(null) }))
-        ]);
-        
-        setQRCode(() => qrCodeModule.default);
-        setHtml2canvas(() => html2canvasModule.default);
-      } catch (error) {
-        console.error('Failed to load dependencies:', error);
-        // Use fallbacks
-        setQRCode(() => FallbackQRCode);
-        setHtml2canvas(() => () => Promise.resolve(null));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadDependencies();
-  }, []);
   
   // Basic user info
   const contactInfo = {
@@ -174,22 +151,11 @@ Generated: ${formattedDate}`;
           </h2>
           
           <div className="qr-code-display" ref={qrCodeRef}>
-            {isLoading ? (
-              <div className="loading-indicator">Loading QR Code...</div>
-            ) : QRCode ? (
-              <QRCode 
-                value={generateQRData()} 
-                size={250}
-                level="H"
-                className="qr-code"
-              />
-            ) : (
-              <FallbackQRCode 
-                value={generateQRData()} 
-                size={250}
-                className="qr-code"
-              />
-            )}
+            <SimpleQRCode 
+              value={generateQRData()} 
+              size={250}
+              className="qr-code"
+            />
           </div>
           
           <div className="qr-info-summary">
@@ -210,68 +176,71 @@ Generated: ${formattedDate}`;
           <div className="qr-actions">
             <button
               onClick={() => {
-                if (qrCodeRef.current && html2canvas) {
-                  html2canvas(qrCodeRef.current)
-                    .then(canvas => {
-                      if (canvas) {
-                        const win = window.open('');
-                        win.document.write(`
-                      <html>
-                        <head>
-                          <title>Print QR Code - ${deviceName}</title>
-                          <style>
-                            body {
-                              display: flex;
-                              flex-direction: column;
-                              align-items: center;
-                              justify-content: center;
-                              padding: 20px;
-                              font-family: Arial, sans-serif;
-                            }
-                            img {
-                              max-width: 100%;
-                              height: auto;
-                            }
-                            .print-container {
-                              text-align: center;
-                              max-width: 500px;
-                            }
-                            .info {
-                              margin-top: 20px;
-                              text-align: left;
-                              border-top: 1px solid #eee;
-                              padding-top: 10px;
-                            }
-                            @media print {
-                              .no-print {
-                                display: none;
-                              }
-                            }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="print-container">
-                            <img src="${canvas.toDataURL('image/png')}" alt="QR Code" style="width: 100%; max-width: 350px;" />
-                          </div>
-                          <script>
-                            // Automatically open print dialog when page loads
-                            window.onload = function() {
-                              window.print();
-                            }
-                          </script>
-                        </body>
-                      </html>
-                    `);
-                        win.document.close();
-                      }
-                    })
-                    .catch(error => {
-                      console.error('Error generating printable QR code:', error);
-                      alert('Failed to generate printable QR code. Please try again.');
-                    });
-                } else {
-                  alert('QR Code printing is not available. Please try downloading instead.');
-                }
+                // Simple print approach that doesn't rely on html2canvas
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>Print QR Code - ${deviceName}</title>
+                      <style>
+                        body {
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          justify-content: center;
+                          padding: 20px;
+                          font-family: Arial, sans-serif;
+                        }
+                        .qr-container {
+                          text-align: center;
+                          max-width: 500px;
+                          padding: 20px;
+                          border: 1px solid #ddd;
+                          border-radius: 8px;
+                          background-color: #f5f5f5;
+                        }
+                        .qr-title {
+                          font-size: 18px;
+                          font-weight: bold;
+                          margin-bottom: 12px;
+                        }
+                        .qr-content {
+                          white-space: pre-wrap;
+                          text-align: left;
+                          line-height: 1.5;
+                        }
+                        .info-section {
+                          margin-top: 20px;
+                          text-align: left;
+                          border-top: 1px solid #eee;
+                          padding-top: 10px;
+                        }
+                        @media print {
+                          .no-print {
+                            display: none;
+                          }
+                        }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="qr-container">
+                        <div class="qr-title">Contact Information</div>
+                        <div class="qr-content">${generateQRData()}</div>
+                      </div>
+                      <div class="info-section">
+                        <p>This QR code was generated on ${new Date().toLocaleDateString()}.</p>
+                        <p>Please attach this to your ${deviceName}.</p>
+                      </div>
+                      <script>
+                        // Automatically open print dialog when page loads
+                        window.onload = function() {
+                          window.print();
+                        }
+                      </script>
+                    </body>
+                  </html>
+                `);
+                printWindow.document.close();
               }}
               className="qr-button print"
             >
