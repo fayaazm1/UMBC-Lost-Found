@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const QRCodeScanner = () => {
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [cameraStarted, setCameraStarted] = useState(false);
   const navigate = useNavigate();
+  const scannerRef = useRef(null);
+  const scannerContainerRef = useRef(null);
   
   // Define styles for the component
   const styles = {
@@ -125,17 +130,130 @@ const QRCodeScanner = () => {
     }
   };
 
-  // Set loading state with a short delay to simulate loading
+  // Initialize QR code scanner and handle camera permissions
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setError('QR scanning is only available in the mobile app. Please use your device camera app to scan QR codes instead.');
-    }, 1000);
+    setIsLoading(true);
     
-    return () => clearTimeout(timer);
+    // Initialize the scanner
+    const initializeScanner = async () => {
+      try {
+        // Check if camera is available
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cameras = devices.filter(device => device.kind === 'videoinput');
+        
+        if (cameras.length === 0) {
+          setError('No camera found on your device.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Initialize the scanner
+        if (!scannerRef.current && scannerContainerRef.current) {
+          scannerRef.current = new Html5Qrcode('scanner-container');
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Error initializing scanner:', err);
+        setError('Error initializing QR scanner: ' + err.message);
+        setIsLoading(false);
+      }
+    };
+    
+    initializeScanner();
+    
+    // Cleanup function
+    return () => {
+      if (scannerRef.current && cameraStarted) {
+        scannerRef.current.stop().catch(err => {
+          console.error('Error stopping scanner:', err);
+        });
+      }
+    };
   }, []);
+  
+  // Function to request camera permission and start scanning
+  const startScanner = async () => {
+    if (!scannerRef.current) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Request camera permission
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      setHasPermission(true);
+      
+      // Start the scanner
+      await scannerRef.current.start(
+        { facingMode: 'environment' },  // Use back camera
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        onScanSuccess,
+        onScanError
+      );
+      
+      setCameraStarted(true);
+      setError('');
+    } catch (err) {
+      console.error('Error starting scanner:', err);
+      
+      if (err.name === 'NotAllowedError') {
+        setError('Camera permission denied. Please allow camera access to scan QR codes.');
+        setHasPermission(false);
+      } else {
+        setError('Error starting QR scanner: ' + err.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Simplified function to handle contact owner actions
+  // Handle successful QR code scan
+  const onScanSuccess = (decodedText) => {
+    try {
+      // Try to parse as JSON first (for backward compatibility)
+      try {
+        const parsedData = JSON.parse(decodedText);
+        setScanResult({
+          name: parsedData.name,
+          email: parsedData.email,
+          deviceName: parsedData.deviceName,
+          timestamp: parsedData.timestamp,
+          isTextFormat: false
+        });
+      } catch (jsonError) {
+        // If not JSON, treat as plain text format
+        setScanResult({
+          rawText: decodedText,
+          isTextFormat: true
+        });
+      }
+      
+      // Stop the scanner after successful scan
+      if (scannerRef.current && cameraStarted) {
+        scannerRef.current.stop().catch(err => {
+          console.error('Error stopping scanner:', err);
+        });
+        setCameraStarted(false);
+      }
+    } catch (error) {
+      console.error('Error processing QR code data:', error);
+      setError('Error processing QR code data: ' + error.message);
+    }
+  };
+  
+  // Handle QR code scanning errors
+  const onScanError = (errorMessage) => {
+    console.error('QR Scan error:', errorMessage);
+    // Don't set error for every scan failure, only for critical errors
+    if (typeof errorMessage === 'string' && errorMessage.includes('Camera access denied')) {
+      setError(errorMessage);
+      setHasPermission(false);
+    }
+  };
+  
+  // Function to handle contacting the owner
   const handleContactOwner = (method, value) => {
     if (method === 'email' && value) {
       window.location.href = `mailto:${value}?subject=Found%20Your%20Item%20-%20UMBC%20Lost%20and%20Found`;
@@ -144,10 +262,15 @@ const QRCodeScanner = () => {
     }
   };
 
-  // Reset the scanner state
+  // Reset the scanner state and restart scanning
   const resetScanner = () => {
     setScanResult(null);
     setError('');
+    
+    // If scanner was previously started, restart it
+    if (scannerRef.current) {
+      startScanner();
+    }
   };
 
   // Format date for display
@@ -172,51 +295,146 @@ const QRCodeScanner = () => {
         Scan a QR code from a lost item to view the owner's contact information.
       </p>
 
-      <div style={styles.scannerContainer}>
-        {isLoading ? (
-          <div style={{textAlign: 'center', padding: '1rem'}}>
-            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>Loading QR Scanner...</h2>
-            <p style={{color: '#666', fontSize: '0.875rem'}}>
-              Please wait while we initialize the QR code scanner.
+      {error && (
+        <div style={styles.errorContainer}>
+          <p style={styles.errorText}>{error}</p>
+          {hasPermission === false && (
+            <p style={{marginTop: '0.5rem', fontSize: '0.875rem'}}>
+              You need to allow camera access in your browser settings to scan QR codes.
             </p>
-          </div>
-        ) : (
-          <div style={{textAlign: 'center', padding: '1rem'}}>
-            <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>QR Code Scanner</h2>
-            {error && (
-              <div style={styles.errorContainer}>
-                <p style={styles.errorText}>{error}</p>
-              </div>
-            )}
-            <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
-              This feature works best in the native mobile app. Please use your device's camera app to scan QR codes.
-            </p>
-            <div style={{marginBottom: '1.5rem'}}>
-              <p style={{fontWeight: 'bold', marginBottom: '0.5rem'}}>How to use:</p>
-              <ol style={{textAlign: 'left', paddingLeft: '2rem'}}>
-                <li style={{marginBottom: '0.5rem'}}>Open your device's camera app</li>
-                <li style={{marginBottom: '0.5rem'}}>Point it at a QR code from a lost item</li>
-                <li style={{marginBottom: '0.5rem'}}>Tap the notification that appears</li>
-                <li style={{marginBottom: '0.5rem'}}>Contact the owner using the provided information</li>
-              </ol>
+          )}
+          <button 
+            style={styles.button}
+            onClick={resetScanner}
+          >
+            Try Again
+          </button>
+        </div>
+      )}
+
+      {!scanResult ? (
+        <div style={styles.scannerContainer}>
+          {isLoading ? (
+            <div style={{textAlign: 'center', padding: '1rem'}}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>Loading QR Scanner...</h2>
+              <p style={{color: '#666', fontSize: '0.875rem'}}>
+                Please wait while we initialize the QR code scanner.
+              </p>
             </div>
-            <div style={{display: 'flex', justifyContent: 'center', gap: '1rem'}}>
+          ) : !cameraStarted ? (
+            <div style={{textAlign: 'center', padding: '1rem'}}>
+              <div id="scanner-container" ref={scannerContainerRef} style={{width: '100%', height: '300px', marginBottom: '1rem'}}></div>
+              <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
+                Click the button below to start scanning QR codes. You will be asked to allow camera access.
+              </p>
               <button 
                 style={styles.button}
-                onClick={() => navigate('/')}
+                onClick={startScanner}
               >
-                Back to Home
+                Start Camera & Scan QR Code
               </button>
-              <button 
-                style={styles.outlinedButton}
-                onClick={() => window.location.reload()}
-              >
-                Try Again
-              </button>
+              <div style={{marginTop: '1.5rem'}}>
+                <button 
+                  style={styles.outlinedButton}
+                  onClick={() => navigate('/')}
+                >
+                  Back to Home
+                </button>
+              </div>
             </div>
+          ) : (
+            <div style={{textAlign: 'center', padding: '1rem'}}>
+              <div id="scanner-container" style={{width: '100%', height: '300px', marginBottom: '1rem'}}></div>
+              <p style={{color: '#666', fontSize: '0.875rem'}}>
+                Point your camera at a QR code to scan it.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={styles.resultContainer}>
+          <h2 style={styles.resultHeading}>
+            Contact Information
+          </h2>
+          
+          {scanResult.isTextFormat ? (
+            // Display text format QR code content
+            <div style={styles.card}>
+              <div style={{padding: '0.5rem'}}>
+                <p style={{whiteSpace: 'pre-line'}}>
+                  {scanResult.rawText}
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Display JSON format QR code content
+            <div style={styles.card}>
+              <div style={{padding: '0.5rem'}}>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>👤</span>
+                  <span style={styles.infoLabel}>Name:</span>
+                  <span>{scanResult.name}</span>
+                </div>
+                
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>📧</span>
+                  <span style={styles.infoLabel}>Email:</span>
+                  <span>{scanResult.email}</span>
+                </div>
+                
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>📱</span>
+                  <span style={styles.infoLabel}>Device:</span>
+                  <span>{scanResult.deviceName}</span>
+                </div>
+                
+                {scanResult.timestamp && (
+                  <div style={styles.infoRow}>
+                    <span style={styles.infoIcon}>📅</span>
+                    <span style={styles.infoLabel}>Generated:</span>
+                    <span style={{color: '#666'}}>{formatDate(scanResult.timestamp)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <hr style={styles.divider} />
+          
+          {!scanResult.isTextFormat && scanResult.email && (
+            <>
+              <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
+                Contact Options
+              </h3>
+              
+              <div style={styles.buttonContainer}>
+                <button 
+                  style={{...styles.button, width: '100%'}}
+                  onClick={() => handleContactOwner('email', scanResult.email)}
+                  disabled={!scanResult.email}
+                >
+                  📧 Email Owner
+                </button>
+              </div>
+            </>
+          )}
+          
+          <div style={styles.actionContainer}>
+            <button 
+              style={styles.button}
+              onClick={resetScanner}
+            >
+              Scan Another QR Code
+            </button>
+            <button 
+              style={styles.outlinedButton}
+              onClick={() => navigate('/')}
+            >
+              Back to Home
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
