@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: umbc-lost-found-2-backend
+    env: python
+    buildCommand: cd lost-and-found/backend && pip install -r requirements.txt
+    startCommand: cd lost-and-found/backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
