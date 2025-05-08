@@ -42,10 +42,20 @@ export default defineConfig({
       'react-qr-code': resolve(__dirname, 'node_modules/react-qr-code'),
       'qrcode': resolve(__dirname, 'node_modules/qrcode'),
       'html2canvas': resolve(__dirname, 'node_modules/html2canvas'),
-      'react-to-print': resolve(__dirname, 'node_modules/react-to-print')
+      'react-to-print': resolve(__dirname, 'node_modules/react-to-print'),
+      '@mui/material': resolve(__dirname, 'node_modules/@mui/material'),
+      '@mui/icons-material': resolve(__dirname, 'node_modules/@mui/icons-material'),
+      '@emotion/react': resolve(__dirname, 'node_modules/@emotion/react'),
+      '@emotion/styled': resolve(__dirname, 'node_modules/@emotion/styled')
     }
   },
   optimizeDeps: {
-    include: ['@emailjs/browser']
+    include: [
+      '@emailjs/browser',
+      '@mui/material',
+      '@mui/icons-material',
+      '@emotion/react',
+      '@emotion/styled'
+    ]
   }
 })
