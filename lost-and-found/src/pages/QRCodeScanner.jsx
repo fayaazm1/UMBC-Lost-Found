@@ -1,28 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Paper, Button, Box, Card, CardContent, Divider, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 // Create a fallback scanner component in case the library fails to load
 const FallbackScanner = ({ onScan }) => {
-  return (
-    <div style={{ 
-      padding: '20px', 
-      border: '1px solid #ccc', 
+  const styles = {
+    container: {
+      padding: '20px',
+      border: '1px solid #ccc',
       borderRadius: '8px',
       textAlign: 'center',
-      backgroundColor: '#f8f8f8'
-    }}>
-      <Typography variant="h6" gutterBottom>QR Scanner Unavailable</Typography>
-      <Typography variant="body2" color="textSecondary" paragraph>
+      backgroundColor: '#f8f8f8',
+      maxWidth: '600px',
+      margin: '0 auto'
+    },
+    heading: {
+      fontSize: '1.25rem',
+      fontWeight: 'bold',
+      marginBottom: '1rem'
+    },
+    paragraph: {
+      fontSize: '0.875rem',
+      color: '#666',
+      marginBottom: '1.5rem'
+    },
+    button: {
+      backgroundColor: '#1976d2',
+      color: 'white',
+      border: 'none',
+      padding: '8px 16px',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontWeight: 'bold',
+      fontSize: '0.875rem'
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <h2 style={styles.heading}>QR Scanner Unavailable</h2>
+      <p style={styles.paragraph}>
         The QR code scanner could not be loaded. Please try again later or use a different browser.
-      </Typography>
-      <Button 
-        variant="contained" 
-        color="primary" 
+      </p>
+      <button 
+        style={styles.button}
         onClick={() => window.location.reload()}
       >
         Retry Loading Scanner
-      </Button>
+      </button>
     </div>
   );
 };
@@ -34,6 +58,124 @@ const QRCodeScanner = () => {
   const [Html5QrcodeScanner, setHtml5QrcodeScanner] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  
+  // Define styles for the component
+  const styles = {
+    container: {
+      maxWidth: '800px',
+      margin: '2rem auto',
+      padding: '1rem'
+    },
+    heading: {
+      fontSize: '2rem',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      marginBottom: '1rem'
+    },
+    subheading: {
+      fontSize: '1.25rem',
+      textAlign: 'center',
+      marginBottom: '2rem',
+      color: '#666'
+    },
+    errorContainer: {
+      padding: '1rem',
+      marginBottom: '1.5rem',
+      backgroundColor: '#ffebee',
+      border: '1px solid #f44336',
+      borderRadius: '4px'
+    },
+    errorText: {
+      color: '#d32f2f'
+    },
+    button: {
+      backgroundColor: '#1976d2',
+      color: 'white',
+      border: 'none',
+      padding: '8px 16px',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontWeight: 'bold',
+      fontSize: '0.875rem',
+      marginTop: '1rem'
+    },
+    outlinedButton: {
+      backgroundColor: 'transparent',
+      color: '#1976d2',
+      border: '1px solid #1976d2',
+      padding: '8px 16px',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontWeight: 'bold',
+      fontSize: '0.875rem',
+      marginLeft: '0.5rem'
+    },
+    scannerContainer: {
+      padding: '1.5rem',
+      marginBottom: '1.5rem',
+      backgroundColor: 'white',
+      borderRadius: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    },
+    resultContainer: {
+      padding: '1.5rem',
+      marginTop: '1.5rem',
+      backgroundColor: 'white',
+      borderRadius: '4px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    },
+    resultHeading: {
+      fontSize: '1.5rem',
+      fontWeight: 'bold',
+      marginBottom: '1rem'
+    },
+    card: {
+      marginBottom: '1rem',
+      border: '1px solid #eee',
+      borderRadius: '4px',
+      padding: '1rem'
+    },
+    infoRow: {
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: '0.5rem'
+    },
+    infoIcon: {
+      marginRight: '0.5rem',
+      color: '#1976d2'
+    },
+    infoLabel: {
+      fontWeight: 'bold',
+      marginRight: '0.5rem'
+    },
+    divider: {
+      margin: '1rem 0',
+      height: '1px',
+      backgroundColor: '#eee',
+      border: 'none'
+    },
+    buttonContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1rem'
+    },
+    additionalInfo: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      marginBottom: '1rem'
+    },
+    timestamp: {
+      fontSize: '0.75rem',
+      color: '#666',
+      marginTop: '1rem',
+      display: 'block'
+    },
+    actionContainer: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginTop: '1.5rem'
+    }
+  };
 
   // Dynamically import the Html5QrcodeScanner library
   useEffect(() => {
@@ -159,154 +301,141 @@ const QRCodeScanner = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        QR Code Scanner
-      </Typography>
+    <div style={styles.container}>
+      <h1 style={styles.heading}>QR Code Scanner</h1>
       
-      <Typography variant="body1" paragraph align="center">
+      <p style={styles.subheading}>
         Scan a QR code from a lost item to view the owner's contact information.
-      </Typography>
+      </p>
 
       {error && (
-        <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: '#ffebee' }}>
-          <Typography color="error">{error}</Typography>
-          <Button 
-            variant="outlined" 
-            color="primary" 
+        <div style={styles.errorContainer}>
+          <p style={styles.errorText}>{error}</p>
+          <button 
+            style={styles.button}
             onClick={resetScanner}
-            sx={{ mt: 2 }}
           >
             Try Again
-          </Button>
-        </Paper>
+          </button>
+        </div>
       )}
 
       {!scanResult ? (
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <div style={styles.scannerContainer}>
           {isLoading ? (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="h6" gutterBottom>Loading QR Scanner...</Typography>
-              <Typography variant="body2" color="textSecondary">
+            <div style={{textAlign: 'center', padding: '1rem'}}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>Loading QR Scanner...</h2>
+              <p style={{color: '#666', fontSize: '0.875rem'}}>
                 Please wait while we initialize the QR code scanner.
-              </Typography>
-            </Box>
+              </p>
+            </div>
           ) : Html5QrcodeScanner ? (
             <div id="reader" style={{ width: '100%' }}></div>
           ) : (
             <FallbackScanner />
           )}
-        </Paper>
+        </div>
       ) : (
-        <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom>
+        <div style={styles.resultContainer}>
+          <h2 style={styles.resultHeading}>
             Contact Information
-          </Typography>
+          </h2>
           
           {scanResult.isTextFormat ? (
             // Display text format QR code content
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Typography variant="body1" component="div" sx={{ whiteSpace: 'pre-line' }}>
+            <div style={styles.card}>
+              <div style={{padding: '0.5rem'}}>
+                <p style={{whiteSpace: 'pre-line'}}>
                   {scanResult.rawText}
-                </Typography>
-              </CardContent>
-            </Card>
+                </p>
+              </div>
+            </div>
           ) : (
             // Display JSON format QR code content (backward compatibility)
-            <Card sx={{ mb: 2 }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>👤</Typography>
-                  <Typography variant="subtitle1" component="div">
-                    <strong>Name:</strong> {scanResult.name}
-                  </Typography>
-                </Box>
+            <div style={styles.card}>
+              <div style={{padding: '0.5rem'}}>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>👤</span>
+                  <span style={styles.infoLabel}>Name:</span>
+                  <span>{scanResult.name}</span>
+                </div>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>📧</Typography>
-                  <Typography variant="body1" component="div">
-                    <strong>Email:</strong> {scanResult.email}
-                  </Typography>
-                </Box>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>📧</span>
+                  <span style={styles.infoLabel}>Email:</span>
+                  <span>{scanResult.email}</span>
+                </div>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>📱</Typography>
-                  <Typography variant="body1" component="div">
-                    <strong>Device:</strong> {scanResult.deviceName}
-                  </Typography>
-                </Box>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>📱</span>
+                  <span style={styles.infoLabel}>Device:</span>
+                  <span>{scanResult.deviceName}</span>
+                </div>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>📅</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Generated:</strong> {formatDate(scanResult.timestamp)}
-                  </Typography>
-                </Box>
-              </CardContent>
-            </Card>
+                <div style={styles.infoRow}>
+                  <span style={styles.infoIcon}>📅</span>
+                  <span style={styles.infoLabel}>Generated:</span>
+                  <span style={{color: '#666'}}>{formatDate(scanResult.timestamp)}</span>
+                </div>
+              </div>
+            </div>
           )}
           
-          <Divider sx={{ my: 2 }} />
+          <hr style={styles.divider} />
           
           {!scanResult.isTextFormat && scanResult.email && (
             <>
-              <Typography variant="h6" component="h3" gutterBottom>
+              <h3 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>
                 Contact Options
-              </Typography>
+              </h3>
               
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
+              <div style={styles.buttonContainer}>
+                <button 
+                  style={{...styles.button, width: '100%'}}
                   onClick={() => handleContactOwner('email', scanResult.email)}
                   disabled={!scanResult.email}
-                  fullWidth
                 >
                   📧 Email Owner
-                </Button>
-              </Box>
+                </button>
+              </div>
             </>
           )}
           
           {scanResult.additionalInfo && (
             <>
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                <Typography variant="body1" sx={{ mr: 2, mt: 0.5, color: 'primary.main' }}>ℹ️</Typography>
-                <Typography variant="body1">
+              <hr style={styles.divider} />
+              <div style={styles.additionalInfo}>
+                <span style={{...styles.infoIcon, marginTop: '0.25rem'}}>ℹ️</span>
+                <p>
                   {scanResult.additionalInfo}
-                </Typography>
-              </Box>
+                </p>
+              </div>
             </>
           )}
           
           {scanResult.timestamp && !scanResult.isTextFormat && (
-            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 2 }}>
+            <span style={styles.timestamp}>
               QR Code generated on: {formatDate(scanResult.timestamp)}
-            </Typography>
+            </span>
           )}
           
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
+          <div style={styles.actionContainer}>
+            <button 
+              style={styles.button}
               onClick={resetScanner}
-              sx={{ mr: 2 }}
             >
               Scan Another QR Code
-            </Button>
-            <Button 
-              variant="outlined" 
-              color="secondary" 
-              onClick={() => navigate('/found')}
+            </button>
+            <button 
+              style={styles.outlinedButton}
+              onClick={() => navigate('/')}
             >
-              Report Found Item
-            </Button>
-          </Box>
-        </Paper>
+              Back to Home
+            </button>
+          </div>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
 
