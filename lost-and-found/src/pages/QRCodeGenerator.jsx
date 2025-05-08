@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import '../assets/qrcode.css';
+// Import the CSS with an absolute path to avoid build issues
+import '/src/assets/qrcode.css';
 
 // Create a fallback QR code component in case the library fails to load
 const FallbackQRCode = ({ value, size = 256, level = 'L', ...props }) => {

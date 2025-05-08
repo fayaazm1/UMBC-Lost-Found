@@ -43,6 +43,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src',
+      '/src': resolve(__dirname, 'src'),
       'html5-qrcode': resolve(__dirname, 'node_modules/html5-qrcode'),
       'react-qr-code': resolve(__dirname, 'node_modules/react-qr-code'),
       'qrcode': resolve(__dirname, 'node_modules/qrcode'),
