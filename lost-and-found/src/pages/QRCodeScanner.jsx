@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Paper, Button, Box, Card, CardContent, Divider, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
-import InfoIcon from '@mui/icons-material/Info';
-import PersonIcon from '@mui/icons-material/Person';
 
 // Create a fallback scanner component in case the library fails to load
 const FallbackScanner = ({ onScan }) => {
@@ -221,28 +217,28 @@ const QRCodeScanner = () => {
             <Card sx={{ mb: 2 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>👤</Typography>
                   <Typography variant="subtitle1" component="div">
                     <strong>Name:</strong> {scanResult.name}
                   </Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <EmailIcon sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>📧</Typography>
                   <Typography variant="body1" component="div">
                     <strong>Email:</strong> {scanResult.email}
                   </Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <InfoIcon sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>📱</Typography>
                   <Typography variant="body1" component="div">
                     <strong>Device:</strong> {scanResult.deviceName}
                   </Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <InfoIcon sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="body1" sx={{ mr: 1, color: 'primary.main' }}>📅</Typography>
                   <Typography variant="body2" color="text.secondary">
                     <strong>Generated:</strong> {formatDate(scanResult.timestamp)}
                   </Typography>
@@ -263,12 +259,11 @@ const QRCodeScanner = () => {
                 <Button 
                   variant="contained" 
                   color="primary" 
-                  startIcon={<EmailIcon />}
                   onClick={() => handleContactOwner('email', scanResult.email)}
                   disabled={!scanResult.email}
                   fullWidth
                 >
-                  Email Owner
+                  📧 Email Owner
                 </Button>
               </Box>
             </>
@@ -278,7 +273,7 @@ const QRCodeScanner = () => {
             <>
               <Divider sx={{ my: 2 }} />
               <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-                <InfoIcon sx={{ mr: 2, mt: 0.5, color: 'primary.main' }} />
+                <Typography variant="body1" sx={{ mr: 2, mt: 0.5, color: 'primary.main' }}>ℹ️</Typography>
                 <Typography variant="body1">
                   {scanResult.additionalInfo}
                 </Typography>
