@@ -3,12 +3,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 // A text-based QR code component that doesn't rely on external libraries
 const SimpleQRCode = ({ value, size = 256, ...props }) => {
-  // Convert the data to a string for display
-  const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+  // Get the formatted text message from the value
+  const textMessage = value.textMessage || value;
   
   // Create a data URL for a real QR code using a free API service
   // This will generate an actual scannable QR code
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(stringValue)}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(textMessage)}`;
   
   return (
     <div 
@@ -79,15 +79,14 @@ Thank you for helping return this lost item!
 
 Generated: ${formattedDate}`;
     
-    // Also create a JSON object for QR code data
-    const jsonData = {
+    // Create a combined object with both the formatted message and JSON data
+    return {
+      textMessage: textMessage,
       name: contactInfo.name,
       email: contactInfo.email,
       deviceName: deviceName,
       timestamp: new Date().toISOString()
     };
-    
-    return jsonData;
   };
 
   // Handle generating QR code
