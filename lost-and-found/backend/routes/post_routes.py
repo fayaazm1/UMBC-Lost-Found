@@ -11,8 +11,13 @@ from models.post import Post
 from models.user import User
 from fastapi.responses import JSONResponse
 import logging
-# Fix import path to use relative import
-from ..utils.ai_matching_inmemory import find_matching_posts, create_match_notifications
+# Use absolute import path for compatibility with how the app is run on Render
+import sys
+import os
+
+# Add the parent directory to sys.path to allow absolute imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.ai_matching_inmemory import find_matching_posts, create_match_notifications
 
 logger = logging.getLogger(__name__)
 
