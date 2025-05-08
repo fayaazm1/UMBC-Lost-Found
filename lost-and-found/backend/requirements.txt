@@ -13,3 +13,7 @@ sqlalchemy==1.4.41
 psycopg2-binary==2.9.5
 asyncpg==0.27.0
 pytz==2023.3.post1
+
+# AI matching dependencies
+numpy==1.24.3
+sentence-transformers==2.2.2
