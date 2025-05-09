@@ -219,9 +219,29 @@ const QRCodeScanner = () => {
     try {
       setIsLoading(true);
       
+      // Make sure the scanner-container element exists
+      if (!document.getElementById('qr-reader')) {
+        // Create the element if it doesn't exist
+        const scannerDiv = document.createElement('div');
+        scannerDiv.id = 'qr-reader';
+        scannerDiv.style.width = '100%';
+        scannerDiv.style.minHeight = '300px';
+        
+        // Find the container where we want to append this element
+        const container = scannerContainerRef.current;
+        if (container) {
+          // Clear any existing content
+          container.innerHTML = '';
+          // Append the new element
+          container.appendChild(scannerDiv);
+        } else {
+          throw new Error('Scanner container reference not found');
+        }
+      }
+      
       // Initialize the scanner
       const qrScanner = new Html5QrcodeScanner(
-        'scanner-container',
+        'qr-reader',
         { 
           fps: 10, 
           qrbox: { width: 250, height: 250 },
@@ -370,13 +390,12 @@ const QRCodeScanner = () => {
             <div style={{textAlign: 'center', padding: '1rem'}}>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>QR Code Scanner</h2>
               <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
-                You can use the camera to scan a QR code or manually enter the QR code data below.
+                Click the button below to start scanning QR codes with your camera.
               </p>
               
               <div style={{marginBottom: '2rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
-                <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Option 1: Scan with camera</h3>
                 <p style={{marginBottom: '1rem'}}>
-                  Click the button below to start scanning QR codes. You will be asked to allow camera access.
+                  You will be asked to allow camera access when you start scanning.
                 </p>
                 <button 
                   style={styles.button}
@@ -384,30 +403,6 @@ const QRCodeScanner = () => {
                 >
                   Start Camera & Scan QR Code
                 </button>
-              </div>
-              
-              <div style={{marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
-                <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Option 2: Enter QR code data manually</h3>
-                <form onSubmit={handleManualInput}>
-                  <textarea 
-                    name="qrData"
-                    placeholder="Paste QR code data here..."
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      padding: '0.5rem',
-                      borderRadius: '4px',
-                      border: '1px solid #ccc',
-                      marginBottom: '1rem'
-                    }}
-                  />
-                  <button 
-                    type="submit"
-                    style={styles.button}
-                  >
-                    Process QR Data
-                  </button>
-                </form>
               </div>
               
               <div style={{marginTop: '1.5rem'}}>
@@ -422,7 +417,7 @@ const QRCodeScanner = () => {
           ) : cameraStarted ? (
             <div style={{textAlign: 'center', padding: '1rem'}}>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Scanning QR Code</h2>
-              <div id="scanner-container" style={{width: '100%', minHeight: '300px', marginBottom: '1.5rem'}}></div>
+              <div ref={scannerContainerRef} style={{width: '100%', minHeight: '300px', marginBottom: '1.5rem'}}></div>
               <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1rem'}}>
                 Point your camera at a QR code to scan it.
               </p>
@@ -437,36 +432,18 @@ const QRCodeScanner = () => {
             <div style={{textAlign: 'center', padding: '1rem'}}>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>QR Code Scanner</h2>
               <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
-                You can either use your device's camera app to scan a QR code, or manually enter the QR code data below.
+                The QR code scanner failed to load. Please try refreshing the page.
               </p>
-              
-              <div style={{marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
-                <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Enter QR code data manually</h3>
-                <form onSubmit={handleManualInput}>
-                  <textarea 
-                    name="qrData"
-                    placeholder="Paste QR code data here..."
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      padding: '0.5rem',
-                      borderRadius: '4px',
-                      border: '1px solid #ccc',
-                      marginBottom: '1rem'
-                    }}
-                  />
-                  <button 
-                    type="submit"
-                    style={styles.button}
-                  >
-                    Process QR Data
-                  </button>
-                </form>
-              </div>
               
               <div style={{marginTop: '1.5rem'}}>
                 <button 
-                  style={styles.outlinedButton}
+                  style={styles.button}
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh Page
+                </button>
+                <button 
+                  style={{...styles.outlinedButton, marginLeft: '0.5rem'}}
                   onClick={() => navigate('/')}
                 >
                   Back to Home
