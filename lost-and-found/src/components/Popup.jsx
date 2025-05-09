@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import ClaimForm from "./ClaimForm";
 import "../assets/style.css";
 
 const Popup = ({ post, onClose }) => {
@@ -8,6 +9,7 @@ const Popup = ({ post, onClose }) => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showClaimForm, setShowClaimForm] = useState(false);
   const { dbUser: currentUser } = useAuth();
   const navigate = useNavigate();
   
@@ -216,6 +218,33 @@ const Popup = ({ post, onClose }) => {
 
         {currentUser?.id ? (
           <div style={{ marginTop: '1rem' }}>
+            {/* Show claim button for found items */}
+            {post.report_type?.toLowerCase() === 'found' && (
+              <div style={{ marginBottom: '1rem' }}>
+                <button
+                  onClick={() => setShowClaimForm(true)}
+                  style={{
+                    background: 'var(--primary-color)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    transition: 'all 0.3s',
+                    fontWeight: '500',
+                    width: '100%',
+                    marginBottom: '1rem'
+                  }}
+                >
+                  Claim This Item
+                </button>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                  If this is your item, click above to answer verification questions and submit a claim.
+                </p>
+              </div>
+            )}
+            
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -280,6 +309,18 @@ const Popup = ({ post, onClose }) => {
           </div>
         )}
       </div>
+
+      {/* Claim Form Modal */}
+      {showClaimForm && (
+        <ClaimForm 
+          postId={post.id} 
+          onClose={() => setShowClaimForm(false)} 
+          onSuccess={(data) => {
+            setSuccess("Claim submitted successfully! The finder will contact you if your answers match.");
+            setShowClaimForm(false);
+          }}
+        />
+      )}
     </div>
   );
 };
