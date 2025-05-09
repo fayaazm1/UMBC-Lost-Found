@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Import the Html5QrcodeScanner class dynamically to avoid build issues
+
+// We'll load the Html5QrcodeScanner from a CDN instead of npm package
 let Html5QrcodeScanner;
 
 const QRCodeScanner = () => {
@@ -131,16 +132,36 @@ const QRCodeScanner = () => {
     }
   };
 
-  // Dynamically import the html5-qrcode library
+  // Load the html5-qrcode library from CDN
   useEffect(() => {
     setIsLoading(true);
     
-    // Dynamically import the html5-qrcode library
+    // Load the html5-qrcode library from CDN
     const loadScanner = async () => {
       try {
-        // Dynamic import to avoid build issues
-        const html5QrCode = await import('html5-qrcode');
-        Html5QrcodeScanner = html5QrCode.Html5QrcodeScanner;
+        // Check if script is already loaded
+        if (!document.getElementById('html5-qrcode-script')) {
+          // Create script element
+          const script = document.createElement('script');
+          script.id = 'html5-qrcode-script';
+          script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+          script.async = true;
+          
+          // Create a promise to wait for script to load
+          const scriptLoadPromise = new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Failed to load QR scanner script'));
+          });
+          
+          // Add script to document
+          document.head.appendChild(script);
+          
+          // Wait for script to load
+          await scriptLoadPromise;
+        }
+        
+        // After script is loaded, Html5QrcodeScanner should be available in window
+        Html5QrcodeScanner = window.Html5QrcodeScanner;
         setIsLoading(false);
       } catch (err) {
         console.error('Failed to load QR scanner library:', err);
