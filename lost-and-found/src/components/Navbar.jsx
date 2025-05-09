@@ -16,18 +16,29 @@ function Navbar() {
     setIsProfileOpen(false);
   }, [navigate]);
 
+  // Add event listener for clicks outside the menu
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMenuOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.hamburger-menu')) {
-        setIsMenuOpen(false);
-      }
+    function handleClickOutside(event) {
+      // For profile dropdown
       if (isProfileOpen && !event.target.closest('.profile-section')) {
         setIsProfileOpen(false);
       }
+      
+      // For mobile menu - only if target is not part of the menu or hamburger button
+      if (isMenuOpen && 
+          !event.target.closest('.mobile-menu') && 
+          !event.target.closest('.hamburger-button')) {
+        setIsMenuOpen(false);
+      }
+    }
+    
+    // Add the event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
   }, [isMenuOpen, isProfileOpen]);
 
   const handleSearch = (e) => {
@@ -48,12 +59,14 @@ function Navbar() {
     }
   };
 
+  // Toggle mobile menu function
   const toggleMenu = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsMenuOpen(!isMenuOpen);
+    setIsMenuOpen(prevState => !prevState);
   };
 
+  // Close mobile menu
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
@@ -141,19 +154,21 @@ function Navbar() {
 
         <div className="mobile-only">
           <button 
-            className="hamburger-menu" 
+            className="hamburger-button" 
             onClick={toggleMenu} 
             aria-label="Toggle menu"
             style={{
-              padding: '8px 12px',
+              padding: '10px 15px',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              fontSize: '24px',
+              fontSize: '28px',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              zIndex: 1001,
+              position: 'relative'
             }}
           >
             <span>☰</span>
@@ -161,43 +176,113 @@ function Navbar() {
         </div>
       </nav>
 
-      {isMenuOpen && (
-        <div className="mobile-menu">
-          <div className="mobile-search">
-            <form onSubmit={handleSearch} className="mobile-search-container">
-              <input 
-                type="text" 
-                className="mobile-search-input" 
-                placeholder="Search for items..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button type="submit" className="search-button" aria-label="Search">
-                <span className="search-icon">🔍</span>
-              </button>
-            </form>
-          </div>
+      {/* Mobile menu with inline styles for better visibility */}
+      <div 
+        className="mobile-menu" 
+        style={{
+          display: isMenuOpen ? 'block' : 'none',
+          position: 'fixed',
+          top: '60px',
+          left: '0',
+          right: '0',
+          backgroundColor: '#1a1a2e',
+          padding: '1rem',
+          zIndex: '1000',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          maxHeight: 'calc(100vh - 60px)',
+          overflowY: 'auto'
+        }}
+      >
+        <div className="mobile-search" style={{ marginBottom: '1rem' }}>
+          <form onSubmit={handleSearch} className="mobile-search-container" style={{ display: 'flex' }}>
+            <input 
+              type="text" 
+              className="mobile-search-input" 
+              placeholder="Search for items..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                flex: '1',
+                padding: '0.75rem',
+                borderRadius: '4px 0 0 4px',
+                border: 'none',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                color: 'white'
+              }}
+            />
+            <button 
+              type="submit" 
+              className="search-button" 
+              aria-label="Search"
+              style={{
+                padding: '0.75rem',
+                backgroundColor: '#ffd700',
+                border: 'none',
+                borderRadius: '0 4px 4px 0',
+                cursor: 'pointer'
+              }}
+            >
+              <span className="search-icon">🔍</span>
+            </button>
+          </form>
+        </div>
 
-          <div className="mobile-nav-links">
-            <Link to="/" className="mobile-nav-link" onClick={closeMenu}>
+          <div className="mobile-nav-links" style={{ display: 'flex', flexDirection: 'column' }}>
+            <Link 
+              to="/" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>Home</span>
             </Link>
-            <Link to="/lost" className="mobile-nav-link" onClick={closeMenu}>
+            <Link 
+              to="/lost" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>Lost</span>
             </Link>
-            <Link to="/found" className="mobile-nav-link" onClick={closeMenu}>
+            <Link 
+              to="/found" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>Found</span>
             </Link>
-            <Link to="/qr-generator" className="mobile-nav-link" onClick={closeMenu}>
+            <Link 
+              to="/qr-generator" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>QR Code</span>
             </Link>
-            <Link to="/post" className="mobile-nav-link" onClick={closeMenu}>
+            <Link 
+              to="/post" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>Post</span>
             </Link>
-            <Link to="/about" className="mobile-nav-link" onClick={closeMenu}>
+            <Link 
+              to="/about" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>About</span>
             </Link>
-            <Link to="/contact" className="mobile-nav-link" onClick={closeMenu}>
+            <Link 
+              to="/contact" 
+              className="mobile-nav-link" 
+              onClick={closeMenu}
+              style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+            >
               <span>Contact</span>
             </Link>
             
@@ -210,13 +295,15 @@ function Navbar() {
                   aria-label="Messages" 
                   data-speech="Messages"
                   data-speech-enabled="true"
+                  style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
                 >
-                  <span>📧 Messages</span>
+                  <span>📫 Messages</span>
                 </Link>
                 <Link 
                   to="/profile" 
                   className="mobile-nav-link" 
                   onClick={closeMenu}
+                  style={{ padding: '0.75rem', color: 'white', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
                 >
                   <span>👤 Profile</span>
                 </Link>
@@ -226,6 +313,17 @@ function Navbar() {
                     closeMenu();
                     handleLogout();
                   }}
+                  style={{ 
+                    padding: '0.75rem', 
+                    color: 'white', 
+                    textDecoration: 'none', 
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    width: '100%',
+                    fontSize: '1rem'
+                  }}
                 >
                   <span>🚪 Logout</span>
                 </button>
@@ -233,7 +331,6 @@ function Navbar() {
             )}
           </div>
         </div>
-      )}
     </>
   );
 }
