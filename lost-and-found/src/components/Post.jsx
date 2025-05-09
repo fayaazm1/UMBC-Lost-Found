@@ -44,35 +44,46 @@ const Post = () => {
     }
 
     try {
-      // Create a simple JSON object with all required fields
-      const postData = {
-        report_type: formData.reportType.toLowerCase().trim(),
-        item_name: formData.itemName,
-        description: formData.description,
-        location: formData.location,
-        contact_details: formData.contactDetails,
-        date: formData.date,
-        time: formData.time,
-        user_id: currentUser.uid
-      };
+      // Create a new FormData object
+      const formDataToSend = new FormData();
+      
+      // Add all required fields with exact field names
+      formDataToSend.append('report_type', formData.reportType.toLowerCase().trim());
+      formDataToSend.append('item_name', formData.itemName);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('contact_details', formData.contactDetails);
+      formDataToSend.append('date', formData.date);
+      formDataToSend.append('time', formData.time);
+      formDataToSend.append('user_id', currentUser.uid);
       
       // Add verification questions if they exist and are valid
       const validQuestions = formData.verificationQuestions.filter(q => q.question.trim() && q.answer.trim());
       if (validQuestions.length > 0) {
-        postData.verification_questions = validQuestions;
+        formDataToSend.append('verification_questions', JSON.stringify(validQuestions));
       }
       
-      // Log the complete request payload for debugging
-      console.log('Sending post data:', postData);
+      // Log the form data for debugging
+      console.log('FormData being sent:');
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
       
       setUploadProgress(50);
-      // Send as JSON with appropriate content type
-      const response = await api.post('/api/posts/', postData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      
+      // Use fetch API directly instead of axios
+      const fetchResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`, {
+        method: 'POST',
+        body: formDataToSend
       });
-      console.log('API Response:', response.data);
+      
+      const responseData = await fetchResponse.json();
+      console.log('API Response:', responseData);
+      
+      if (!fetchResponse.ok) {
+        throw new Error(`Server responded with ${fetchResponse.status}: ${JSON.stringify(responseData)}`);
+      }
+      
       setUploadProgress(100);
 
       // Success - axios automatically throws for non-2xx responses
@@ -93,9 +104,10 @@ const Post = () => {
     } catch (error) {
       console.error("Error submitting post:", error);
       
-      // Improved error handling
+      // Improved error handling with detailed logging
       if (error.response) {
         console.log('Error response:', error.response);
+        console.log('Error response data:', JSON.stringify(error.response.data, null, 2));
         
         // Handle validation errors (422)
         if (error.response.status === 422) {
