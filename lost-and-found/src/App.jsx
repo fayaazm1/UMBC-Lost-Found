@@ -20,7 +20,6 @@ import Messages from "./pages/Messages";
 import Search from "./pages/Search";
 import FilterResults from "./pages/FilterResults"; 
 import QRCodeGenerator from "./pages/QRCodeGenerator";
-import QRCodeScanner from "./pages/QRCodeScanner";
 import { useAuth } from "./contexts/AuthContext";
 import { SkipToContent } from "./utils/accessibility.jsx";
 import AccessibilityPanel from "./components/AccessibilityPanel";
@@ -130,11 +129,6 @@ function App() {
           <Route path="/qr-generator" element={
             <ProtectedRoute>
               <QRCodeGenerator />
-            </ProtectedRoute>
-          } />
-          <Route path="/qr-scanner" element={
-            <ProtectedRoute>
-              <QRCodeScanner />
             </ProtectedRoute>
           } />
 

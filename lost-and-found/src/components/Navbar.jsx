@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSearch, FaUser, FaCog, FaSignOutAlt, FaEnvelope, FaBars, FaBell, FaShieldAlt, FaQrcode } from 'react-icons/fa';
 import './Navbar.css';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -82,7 +81,7 @@ function Navbar() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <button type="submit" className="search-button" aria-label="Search">
-              <FaSearch className="search-icon" />
+              <span className="search-icon">🔍</span>
             </button>
           </form>
           
@@ -106,34 +105,30 @@ function Navbar() {
                 data-speech="Messages"
                 data-speech-enabled="true"
               >
-                <FaEnvelope />
+                <span>📧</span>
               </Link>
               <NotificationBell />
               <div className="profile-section">
                 <button className="profile-button" onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                  <FaUser className="profile-icon" />
+                  <span className="profile-icon">👤</span>
                   <span className="profile-name">{currentUser.displayName || 'User'}</span>
                 </button>
                 {isProfileOpen && (
                   <div className="profile-dropdown">
                     <Link to="/profile" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                      <FaUser className="dropdown-icon" />
+                      <span className="dropdown-icon">👤</span>
                       Profile
                     </Link>
                     <Link to="/qr-generator" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                      <FaQrcode className="dropdown-icon" />
+                      <span className="dropdown-icon">📱</span>
                       Generate QR Code
                     </Link>
-                    <Link to="/qr-scanner" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                      <FaQrcode className="dropdown-icon" />
-                      Scan QR Code
-                    </Link>
                     <Link to="/admin/login" className="dropdown-item" onClick={() => setIsProfileOpen(false)}>
-                      <FaShieldAlt className="dropdown-icon" />
+                      <span className="dropdown-icon">🔐</span>
                       Admin Panel
                     </Link>
                     <button className="dropdown-item" onClick={handleLogout}>
-                      <FaSignOutAlt className="dropdown-icon" />
+                      <span className="dropdown-icon">🚪</span>
                       Logout
                     </button>
                   </div>
@@ -145,98 +140,84 @@ function Navbar() {
 
         <div className="mobile-only">
           <button className="hamburger-menu" onClick={toggleMenu} aria-label="Toggle menu">
-            <FaBars />
+            <span>☰</span>
           </button>
         </div>
       </nav>
 
-      <div className={`mobile-menu ${isMenuOpen ? 'show' : ''}`}>
-        <div className="mobile-search">
-          <form onSubmit={handleSearch} className="mobile-search-form">
-            <input 
-              type="text" 
-              className="search-input" 
-              placeholder="Search for items..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="search-button" aria-label="Search">
-              <FaSearch className="search-icon" />
-            </button>
-          </form>
-        </div>
-
-        <div className="mobile-nav-links">
-          <Link to="/" className="mobile-nav-link" onClick={closeMenu}>
-            <span>Home</span>
-          </Link>
-          <Link to="/lost" className="mobile-nav-link" onClick={closeMenu}>
-            <span>Lost</span>
-          </Link>
-          <Link to="/found" className="mobile-nav-link" onClick={closeMenu}>
-            <span>Found</span>
-          </Link>
-          <Link to="/qr-generator" className="mobile-nav-link" onClick={closeMenu}>
-            <FaQrcode />
-            <span>Generate QR Code</span>
-          </Link>
-          <Link to="/qr-scanner" className="mobile-nav-link" onClick={closeMenu}>
-            <FaQrcode />
-            <span>Scan QR Code</span>
-          </Link>
-          <Link to="/about" className="mobile-nav-link" onClick={closeMenu}>
-            <span>About</span>
-          </Link>
-          <Link to="/contact" className="mobile-nav-link" onClick={closeMenu}>
-            <span>Contact</span>
-          </Link>
-        </div>
-
-        {currentUser && (
-          <div className="mobile-user-section">
-            <div className="mobile-user-header">
-              <FaUser className="mobile-user-icon" />
-              <span className="mobile-user-name">{currentUser.displayName || 'User'}</span>
-            </div>
-            <div className="mobile-user-links">
-              <Link 
-                to="/messages" 
-                className="mobile-nav-link speech-enabled" 
-                onClick={closeMenu}
-                aria-label="Messages" 
-                data-speech="Messages"
-                data-speech-enabled="true"
-              >
-                <FaEnvelope />
-                <span>Messages</span>
-              </Link>
-              <Link 
-                to="/notifications" 
-                className="mobile-nav-link speech-enabled" 
-                onClick={closeMenu}
-                aria-label="Notifications" 
-                data-speech="Notifications"
-                data-speech-enabled="true"
-              >
-                <FaBell />
-                <span>Notifications</span>
-              </Link>
-              <Link to="/profile" className="mobile-nav-link" onClick={closeMenu}>
-                <FaUser />
-                <span>Profile</span>
-              </Link>
-              <Link to="/admin/login" className="mobile-nav-link" onClick={closeMenu}>
-                <FaShieldAlt />
-                <span>Admin Panel</span>
-              </Link>
-              <button className="mobile-nav-link logout-button" onClick={handleLogout}>
-                <FaSignOutAlt />
-                <span>Logout</span>
+      {isMenuOpen && (
+        <div className="mobile-menu">
+          <div className="mobile-search">
+            <form onSubmit={handleSearch} className="mobile-search-container">
+              <input 
+                type="text" 
+                className="mobile-search-input" 
+                placeholder="Search for items..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button type="submit" className="search-button" aria-label="Search">
+                <span className="search-icon">🔍</span>
               </button>
-            </div>
+            </form>
           </div>
-        )}
-      </div>
+
+          <div className="mobile-nav-links">
+            <Link to="/" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Home</span>
+            </Link>
+            <Link to="/lost" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Lost</span>
+            </Link>
+            <Link to="/found" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Found</span>
+            </Link>
+            <Link to="/qr-generator" className="mobile-nav-link" onClick={closeMenu}>
+              <span>QR Code</span>
+            </Link>
+            <Link to="/post" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Post</span>
+            </Link>
+            <Link to="/about" className="mobile-nav-link" onClick={closeMenu}>
+              <span>About</span>
+            </Link>
+            <Link to="/contact" className="mobile-nav-link" onClick={closeMenu}>
+              <span>Contact</span>
+            </Link>
+            
+            {currentUser && (
+              <>
+                <Link 
+                  to="/messages" 
+                  className="mobile-nav-link" 
+                  onClick={closeMenu}
+                  aria-label="Messages" 
+                  data-speech="Messages"
+                  data-speech-enabled="true"
+                >
+                  <span>📧 Messages</span>
+                </Link>
+                <Link 
+                  to="/profile" 
+                  className="mobile-nav-link" 
+                  onClick={closeMenu}
+                >
+                  <span>👤 Profile</span>
+                </Link>
+                <button 
+                  className="mobile-nav-link logout-button" 
+                  onClick={() => {
+                    closeMenu();
+                    handleLogout();
+                  }}
+                >
+                  <span>🚪 Logout</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
