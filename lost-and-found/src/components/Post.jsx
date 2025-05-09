@@ -44,27 +44,37 @@ const Post = () => {
     }
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('report_type', formData.reportType.toLowerCase().trim());
-      formDataToSend.append('item_name', formData.itemName);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('location', formData.location);
-      formDataToSend.append('contact_details', formData.contactDetails);
-      formDataToSend.append('date', formData.date);
-      formDataToSend.append('time', formData.time);
-      // Send Firebase UID instead of email for consistent user identification
-      formDataToSend.append('user_id', currentUser.uid);
+      // Log form data for debugging
+      console.log('Submitting form data:', formData);
+      
+      // Create JSON data instead of FormData for better compatibility
+      const jsonData = {
+        report_type: formData.reportType.toLowerCase().trim(),
+        item_name: formData.itemName,
+        description: formData.description,
+        location: formData.location,
+        contact_details: formData.contactDetails,
+        date: formData.date,
+        time: formData.time,
+        user_id: currentUser.uid
+      };
       
       // Always include verification questions if they exist and are valid
       const validQuestions = formData.verificationQuestions.filter(q => q.question.trim() && q.answer.trim());
       if (validQuestions.length > 0) {
-        // Ensure verification questions are properly formatted for the backend
-        formDataToSend.append('verification_questions', JSON.stringify(validQuestions));
+        // Add verification questions directly to the JSON object
+        jsonData.verification_questions = validQuestions;
         console.log('Sending verification questions:', validQuestions);
       }
 
       setUploadProgress(50);
-      const response = await api.post('/api/posts/', formDataToSend);
+      // Use JSON data instead of FormData
+      const response = await api.post('/api/posts/', jsonData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('API Response:', response.data);
       setUploadProgress(100);
 
       // Success - axios automatically throws for non-2xx responses
@@ -84,19 +94,49 @@ const Post = () => {
       }, 3000);
     } catch (error) {
       console.error("Error submitting post:", error);
-      if (error.response && error.response.data) {
-        const data = error.response.data;
-        if (typeof data.detail === 'object') {
-          try {
-            setError(JSON.stringify(data.detail));
-          } catch (e) {
-            setError("Failed to create post. Validation error.");
+      
+      // Improved error handling
+      if (error.response) {
+        console.log('Error response:', error.response);
+        
+        // Handle validation errors (422)
+        if (error.response.status === 422) {
+          const data = error.response.data;
+          
+          if (data && typeof data === 'object') {
+            // Format validation errors in a user-friendly way
+            let errorMessage = "Validation errors:\n";
+            
+            if (Array.isArray(data)) {
+              // Handle array of errors
+              errorMessage += data.map(err => `- ${err.msg || JSON.stringify(err)}`).join('\n');
+            } else if (typeof data.detail === 'object') {
+              // Handle nested error object
+              try {
+                const detailStr = JSON.stringify(data.detail);
+                errorMessage = `Validation error: ${detailStr}`;
+              } catch (e) {
+                errorMessage = "Failed to create post. Validation error.";
+              }
+            } else {
+              // Handle simple error message
+              errorMessage = data.detail || "Failed to create post";
+            }
+            
+            setError(errorMessage);
+          } else {
+            setError("Invalid form data. Please check all required fields.");
           }
         } else {
-          setError(data.detail || "Failed to create post");
+          // Handle other HTTP errors
+          setError(`Server error (${error.response.status}): ${error.response.statusText || "Failed to create post"}`);
         }
+      } else if (error.request) {
+        // Request was made but no response received
+        setError("No response from server. Please check your internet connection and try again.");
       } else {
-        setError("Failed to create post. Please try again.");
+        // Something else caused the error
+        setError("Failed to create post: " + error.message);
       }
     } finally {
       setLoading(false);
