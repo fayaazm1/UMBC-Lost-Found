@@ -314,7 +314,14 @@ Generated: ${formattedDate}`;
           <div style={styles.actions}>
             <button
               onClick={() => {
-                // Simple print approach that doesn't rely on html2canvas
+                // Get QR code data
+                const qrData = generateQRData();
+                const qrTextMessage = qrData.textMessage;
+                
+                // Create QR code URL
+                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrTextMessage)}`;
+                
+                // Open print window with QR code image
                 const printWindow = window.open('', '_blank');
                 printWindow.document.write(`
                   <html>
@@ -342,10 +349,17 @@ Generated: ${formattedDate}`;
                           font-weight: bold;
                           margin-bottom: 12px;
                         }
+                        .qr-image {
+                          margin: 20px 0;
+                        }
                         .qr-content {
                           white-space: pre-wrap;
                           text-align: left;
                           line-height: 1.5;
+                          margin-top: 20px;
+                          font-size: 12px;
+                          border-top: 1px solid #eee;
+                          padding-top: 10px;
                         }
                         .info-section {
                           margin-top: 20px;
@@ -363,7 +377,10 @@ Generated: ${formattedDate}`;
                     <body>
                       <div class="qr-container">
                         <div class="qr-title">Contact Information</div>
-                        <div class="qr-content">${generateQRData()}</div>
+                        <div class="qr-image">
+                          <img src="${qrCodeUrl}" alt="QR Code" style="width: 250px; height: 250px;" />
+                        </div>
+                        <div class="qr-content">${qrTextMessage}</div>
                       </div>
                       <div class="info-section">
                         <p>This QR code was generated on ${new Date().toLocaleDateString()}.</p>

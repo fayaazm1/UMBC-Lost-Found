@@ -49,6 +49,7 @@ function Navbar() {
   };
 
   const toggleMenu = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     setIsMenuOpen(!isMenuOpen);
   };
@@ -139,7 +140,22 @@ function Navbar() {
         </div>
 
         <div className="mobile-only">
-          <button className="hamburger-menu" onClick={toggleMenu} aria-label="Toggle menu">
+          <button 
+            className="hamburger-menu" 
+            onClick={toggleMenu} 
+            aria-label="Toggle menu"
+            style={{
+              padding: '8px 12px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '24px',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <span>☰</span>
           </button>
         </div>
