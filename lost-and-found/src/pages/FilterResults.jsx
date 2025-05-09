@@ -22,7 +22,6 @@ const FilterResults = () => {
         const url = `${import.meta.env.VITE_API_BASE_URL}/api/posts/filter${location.search}`;
         console.log("Filtering for items:", location.search);
         const response = await axios.get(url, { 
-          withCredentials: true,
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'

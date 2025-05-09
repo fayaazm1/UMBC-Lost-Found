@@ -24,9 +24,7 @@ function Search() {
 
       try {
         setLoading(true);
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts/search?q=${encodeURIComponent(query)}`, {
-          withCredentials: true
-        });
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/posts/search?q=${encodeURIComponent(query)}`);
 
         const data = response.data;
         if (Array.isArray(data)) {
