@@ -44,40 +44,34 @@ const Post = () => {
     }
 
     try {
-      // Log form data for debugging
-      console.log('Submitting form data:', formData);
+      // Create a simple JSON object with all required fields
+      const postData = {
+        report_type: formData.reportType.toLowerCase().trim(),
+        item_name: formData.itemName,
+        description: formData.description,
+        location: formData.location,
+        contact_details: formData.contactDetails,
+        date: formData.date,
+        time: formData.time,
+        user_id: currentUser.uid
+      };
       
-      // Create FormData with the exact field names expected by the backend
-      const formDataToSend = new FormData();
-      
-      // Add all required fields with exact names expected by the backend
-      formDataToSend.append('report_type', formData.reportType.toLowerCase().trim());
-      formDataToSend.append('item_name', formData.itemName);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('location', formData.location);
-      formDataToSend.append('contact_details', formData.contactDetails);
-      formDataToSend.append('date', formData.date);
-      formDataToSend.append('time', formData.time);
-      formDataToSend.append('user_id', currentUser.uid);
-      
-      // Log the FormData entries for debugging
-      console.log('FormData entries:');
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
-      }
-      
-      // Always include verification questions if they exist and are valid
+      // Add verification questions if they exist and are valid
       const validQuestions = formData.verificationQuestions.filter(q => q.question.trim() && q.answer.trim());
       if (validQuestions.length > 0) {
-        // Ensure verification questions are properly formatted for the backend
-        formDataToSend.append('verification_questions', JSON.stringify(validQuestions));
-        console.log('Sending verification questions:', validQuestions);
+        postData.verification_questions = validQuestions;
       }
-
+      
+      // Log the complete request payload for debugging
+      console.log('Sending post data:', postData);
+      
       setUploadProgress(50);
-      // When using FormData, let Axios set the Content-Type header automatically
-      // This ensures the correct boundary parameter is included
-      const response = await api.post('/api/posts/', formDataToSend);
+      // Send as JSON with appropriate content type
+      const response = await api.post('/api/posts/', postData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       console.log('API Response:', response.data);
       setUploadProgress(100);
 
