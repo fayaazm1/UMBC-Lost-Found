@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Import the Html5QrcodeScanner class dynamically to avoid build issues
+let Html5QrcodeScanner;
 
 const QRCodeScanner = () => {
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [scanner, setScanner] = useState(null);
+  const [cameraStarted, setCameraStarted] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
   const navigate = useNavigate();
+  const scannerContainerRef = useRef(null);
   
   // Define styles for the component
   const styles = {
@@ -125,13 +131,36 @@ const QRCodeScanner = () => {
     }
   };
 
-  // Set loading state with a short delay
+  // Dynamically import the html5-qrcode library
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    setIsLoading(true);
     
-    return () => clearTimeout(timer);
+    // Dynamically import the html5-qrcode library
+    const loadScanner = async () => {
+      try {
+        // Dynamic import to avoid build issues
+        const html5QrCode = await import('html5-qrcode');
+        Html5QrcodeScanner = html5QrCode.Html5QrcodeScanner;
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to load QR scanner library:', err);
+        setError('Failed to load QR code scanner. Please try again later.');
+        setIsLoading(false);
+      }
+    };
+    
+    loadScanner();
+    
+    // Cleanup function
+    return () => {
+      if (scanner && cameraStarted) {
+        try {
+          scanner.clear();
+        } catch (err) {
+          console.error('Error stopping scanner:', err);
+        }
+      }
+    };
   }, []);
   
   // Function to handle contacting the owner
@@ -143,10 +172,100 @@ const QRCodeScanner = () => {
     }
   };
 
-  // Reset the scanner state
+  // Reset the scanner state and restart scanning
   const resetScanner = () => {
     setScanResult(null);
     setError('');
+    
+    // Clear the previous scanner if it exists
+    if (scanner && cameraStarted) {
+      try {
+        scanner.clear();
+        setCameraStarted(false);
+      } catch (err) {
+        console.error('Error stopping scanner:', err);
+      }
+    }
+  };
+  
+  // Start the QR code scanner
+  const startScanner = () => {
+    if (!Html5QrcodeScanner) {
+      setError('QR code scanner library not loaded. Please refresh the page and try again.');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Initialize the scanner
+      const qrScanner = new Html5QrcodeScanner(
+        'scanner-container',
+        { 
+          fps: 10, 
+          qrbox: { width: 250, height: 250 },
+          rememberLastUsedCamera: true,
+        },
+        false // Do not start scanning immediately
+      );
+      
+      // Set callbacks
+      qrScanner.render(onScanSuccess, onScanError);
+      
+      setScanner(qrScanner);
+      setCameraStarted(true);
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error starting scanner:', err);
+      setError('Error starting QR scanner: ' + err.message);
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle successful QR code scan
+  const onScanSuccess = (decodedText) => {
+    try {
+      // Try to parse as JSON first
+      try {
+        const parsedData = JSON.parse(decodedText);
+        setScanResult({
+          name: parsedData.name,
+          email: parsedData.email,
+          deviceName: parsedData.deviceName,
+          timestamp: parsedData.timestamp,
+          isTextFormat: false
+        });
+      } catch (jsonError) {
+        // If not JSON, treat as plain text format
+        setScanResult({
+          rawText: decodedText,
+          isTextFormat: true
+        });
+      }
+      
+      // Stop the scanner after successful scan
+      if (scanner) {
+        try {
+          scanner.clear();
+          setCameraStarted(false);
+        } catch (err) {
+          console.error('Error stopping scanner:', err);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing QR code data:', error);
+      setError('Error processing QR code data: ' + error.message);
+    }
+  };
+  
+  // Handle QR code scanning errors
+  const onScanError = (errorMessage) => {
+    console.error('QR Scan error:', errorMessage);
+    // Don't set error for every scan failure, only for critical errors
+    if (typeof errorMessage === 'string' && errorMessage.includes('Camera access denied')) {
+      setError('Camera access denied. Please allow camera access to scan QR codes.');
+      setHasPermission(false);
+    }
   };
   
   // Handle manual QR code data input
@@ -223,50 +342,105 @@ const QRCodeScanner = () => {
             <div style={{textAlign: 'center', padding: '1rem'}}>
               <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem'}}>Loading...</h2>
               <p style={{color: '#666', fontSize: '0.875rem'}}>
-                Please wait while we initialize.
+                Please wait while we initialize the QR code scanner.
               </p>
+            </div>
+          ) : !cameraStarted && Html5QrcodeScanner ? (
+            <div style={{textAlign: 'center', padding: '1rem'}}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>QR Code Scanner</h2>
+              <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
+                You can use the camera to scan a QR code or manually enter the QR code data below.
+              </p>
+              
+              <div style={{marginBottom: '2rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
+                <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Option 1: Scan with camera</h3>
+                <p style={{marginBottom: '1rem'}}>
+                  Click the button below to start scanning QR codes. You will be asked to allow camera access.
+                </p>
+                <button 
+                  style={styles.button}
+                  onClick={startScanner}
+                >
+                  Start Camera & Scan QR Code
+                </button>
+              </div>
+              
+              <div style={{marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
+                <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Option 2: Enter QR code data manually</h3>
+                <form onSubmit={handleManualInput}>
+                  <textarea 
+                    name="qrData"
+                    placeholder="Paste QR code data here..."
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc',
+                      marginBottom: '1rem'
+                    }}
+                  />
+                  <button 
+                    type="submit"
+                    style={styles.button}
+                  >
+                    Process QR Data
+                  </button>
+                </form>
+              </div>
+              
+              <div style={{marginTop: '1.5rem'}}>
+                <button 
+                  style={styles.outlinedButton}
+                  onClick={() => navigate('/')}
+                >
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          ) : cameraStarted ? (
+            <div style={{textAlign: 'center', padding: '1rem'}}>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>Scanning QR Code</h2>
+              <div id="scanner-container" style={{width: '100%', minHeight: '300px', marginBottom: '1.5rem'}}></div>
+              <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1rem'}}>
+                Point your camera at a QR code to scan it.
+              </p>
+              <button 
+                style={styles.outlinedButton}
+                onClick={() => navigate('/')}
+              >
+                Cancel
+              </button>
             </div>
           ) : (
             <div style={{textAlign: 'center', padding: '1rem'}}>
-              <div style={{marginBottom: '1.5rem'}}>
-                <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>QR Code Scanner</h2>
-                <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
-                  You can either use your device's camera app to scan a QR code, or manually enter the QR code data below.
-                </p>
-                
-                <div style={{marginBottom: '2rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
-                  <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Option 1: Use your device camera</h3>
-                  <ol style={{textAlign: 'left', paddingLeft: '2rem'}}>
-                    <li style={{marginBottom: '0.5rem'}}>Open your device's camera app</li>
-                    <li style={{marginBottom: '0.5rem'}}>Point it at a QR code from a lost item</li>
-                    <li style={{marginBottom: '0.5rem'}}>Tap the notification that appears</li>
-                    <li style={{marginBottom: '0.5rem'}}>Contact the owner using the provided information</li>
-                  </ol>
-                </div>
-                
-                <div style={{marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
-                  <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Option 2: Enter QR code data manually</h3>
-                  <form onSubmit={handleManualInput}>
-                    <textarea 
-                      name="qrData"
-                      placeholder="Paste QR code data here..."
-                      style={{
-                        width: '100%',
-                        minHeight: '100px',
-                        padding: '0.5rem',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc',
-                        marginBottom: '1rem'
-                      }}
-                    />
-                    <button 
-                      type="submit"
-                      style={styles.button}
-                    >
-                      Process QR Data
-                    </button>
-                  </form>
-                </div>
+              <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem'}}>QR Code Scanner</h2>
+              <p style={{color: '#666', fontSize: '0.875rem', marginBottom: '1.5rem'}}>
+                You can either use your device's camera app to scan a QR code, or manually enter the QR code data below.
+              </p>
+              
+              <div style={{marginBottom: '1.5rem', border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem'}}>
+                <h3 style={{fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '1rem'}}>Enter QR code data manually</h3>
+                <form onSubmit={handleManualInput}>
+                  <textarea 
+                    name="qrData"
+                    placeholder="Paste QR code data here..."
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '0.5rem',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc',
+                      marginBottom: '1rem'
+                    }}
+                  />
+                  <button 
+                    type="submit"
+                    style={styles.button}
+                  >
+                    Process QR Data
+                  </button>
+                </form>
               </div>
               
               <div style={{marginTop: '1.5rem'}}>
