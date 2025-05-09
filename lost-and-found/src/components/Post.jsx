@@ -3,9 +3,13 @@ import { useAuth } from "../contexts/AuthContext";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css";
 import api from "../utils/apiConfig";
+import { FaPlus, FaTrash } from 'react-icons/fa';
 
 const Post = () => {
   const { currentUser } = useAuth();
+  // Always enable verification questions in all environments
+  const [showVerificationQuestions] = useState(true);
+  
   const [formData, setFormData] = useState({
     reportType: "",
     itemName: "",
@@ -14,6 +18,7 @@ const Post = () => {
     contactDetails: "",
     date: "",
     time: "",
+    verificationQuestions: [{ question: "", answer: "" }],
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -49,6 +54,14 @@ const Post = () => {
       formDataToSend.append('time', formData.time);
       // Send Firebase UID instead of email for consistent user identification
       formDataToSend.append('user_id', currentUser.uid);
+      
+      // Always include verification questions if they exist and are valid
+      const validQuestions = formData.verificationQuestions.filter(q => q.question.trim() && q.answer.trim());
+      if (validQuestions.length > 0) {
+        // Ensure verification questions are properly formatted for the backend
+        formDataToSend.append('verification_questions', JSON.stringify(validQuestions));
+        console.log('Sending verification questions:', validQuestions);
+      }
 
       setUploadProgress(50);
       const response = await api.post('/api/posts/', formDataToSend);
@@ -64,6 +77,7 @@ const Post = () => {
         contactDetails: "",
         date: new Date().toISOString().split('T')[0],
         time: "",
+        verificationQuestions: [{ question: "", answer: "" }],
       });
       setTimeout(() => {
         setSuccess(false);
@@ -148,6 +162,72 @@ const Post = () => {
           <div className="form-group">
             <label>Time</label>
             <input type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} required />
+          </div>
+
+          {/* Always show verification questions section */}
+          <div className="form-group verification-questions-section" style={{ display: showVerificationQuestions ? 'block' : 'block' }}>
+            <label>Verification Questions <span className="optional-text">(Optional)</span></label>
+            <p className="verification-help-text">Add questions only the real owner would know the answer to (e.g., "What color is inside the wallet?")</p>
+            
+            {formData.verificationQuestions.map((q, index) => (
+              <div key={index} className="verification-question-group">
+                <div className="question-answer-pair">
+                  <div className="question-input">
+                    <input
+                      type="text"
+                      placeholder="Question"
+                      value={q.question}
+                      onChange={(e) => {
+                        const newQuestions = [...formData.verificationQuestions];
+                        newQuestions[index].question = e.target.value;
+                        setFormData({ ...formData, verificationQuestions: newQuestions });
+                      }}
+                    />
+                  </div>
+                  <div className="answer-input">
+                    <input
+                      type="text"
+                      placeholder="Answer"
+                      value={q.answer}
+                      onChange={(e) => {
+                        const newQuestions = [...formData.verificationQuestions];
+                        newQuestions[index].answer = e.target.value;
+                        setFormData({ ...formData, verificationQuestions: newQuestions });
+                      }}
+                    />
+                  </div>
+                  {formData.verificationQuestions.length > 1 && (
+                    <button 
+                      type="button" 
+                      className="remove-question-btn"
+                      onClick={() => {
+                        const newQuestions = formData.verificationQuestions.filter((_, i) => i !== index);
+                        setFormData({ ...formData, verificationQuestions: newQuestions });
+                      }}
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {formData.verificationQuestions.length < 3 && (
+              <button 
+                type="button" 
+                className="add-question-btn"
+                onClick={() => {
+                  if (formData.verificationQuestions.length < 3) {
+                    setFormData({
+                      ...formData,
+                      verificationQuestions: [...formData.verificationQuestions, { question: "", answer: "" }]
+                    });
+                  }
+                }}
+              >
+                <FaPlus /> Add Question
+              </button>
+            )}
           </div>
 
           {uploadProgress > 0 && uploadProgress < 100 && (
