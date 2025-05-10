@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { FaTrash } from 'react-icons/fa';
 import '../assets/notification.css';
 import api from '../utils/apiConfig';
+import { getNotifications } from '../utils/api';
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
@@ -12,8 +13,9 @@ const NotificationsPage = () => {
     if (!currentUser?.uid) return;
 
     try {
-      const response = await api.get(`/api/notifications/user/${currentUser.uid}`);
-      setNotifications(response.data);
+      // Use the getNotifications function with fallback
+      const notificationsData = await getNotifications(currentUser.uid);
+      setNotifications(notificationsData);
     } catch (error) {
       console.error('Error fetching notifications:', error);
       setNotifications([]);
