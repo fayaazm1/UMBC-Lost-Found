@@ -15,4 +15,5 @@ class User(Base):
     # Relationships
     posts = relationship("Post", back_populates="user")
     notifications = relationship("Notification", back_populates="user")
+    claims = relationship("Claim", back_populates="user")
    

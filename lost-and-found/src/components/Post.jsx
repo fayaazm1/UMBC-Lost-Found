@@ -3,6 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css";
 import api from "../utils/apiConfig";
+import { createPost } from "../utils/mockPostApi";
 import { FaPlus, FaTrash } from 'react-icons/fa';
 
 const Post = () => {
@@ -71,18 +72,22 @@ const Post = () => {
       
       setUploadProgress(50);
       
-      // Use fetch API directly instead of axios
-      const fetchResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/posts/`, {
-        method: 'POST',
-        body: formDataToSend
-      });
+      // Use mock API for testing instead of real backend
+      // This allows testing without needing the backend server
+      const postData = {
+        report_type: formData.reportType.toLowerCase().trim(),
+        item_name: formData.itemName,
+        description: formData.description,
+        location: formData.location,
+        contact_details: formData.contactDetails,
+        date: formData.date,
+        time: formData.time,
+        verification_questions: formData.verificationQuestions.filter(q => q.question.trim() && q.answer.trim())
+      };
       
-      const responseData = await fetchResponse.json();
-      console.log('API Response:', responseData);
-      
-      if (!fetchResponse.ok) {
-        throw new Error(`Server responded with ${fetchResponse.status}: ${JSON.stringify(responseData)}`);
-      }
+      // Call mock API
+      const responseData = await createPost(postData);
+      console.log('Mock API Response:', responseData);
       
       setUploadProgress(100);
 

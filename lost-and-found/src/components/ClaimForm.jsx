@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/apiConfig';
+import { createClaim } from '../utils/mockClaimsApi';
 import '../assets/claim.css';
 
 const ClaimForm = ({ postId, onClose, onSuccess }) => {
@@ -74,8 +75,10 @@ const ClaimForm = ({ postId, onClose, onSuccess }) => {
         }))
       };
 
-      // Submit claim
-      const response = await api.post('/api/claims/', claimData);
+      // Submit claim using mock API for testing
+      // You can switch back to the real API when backend is ready
+      // const response = await api.post('/api/claims/', claimData);
+      const response = { data: await createClaim(claimData) };
       
       setSuccess(true);
       if (onSuccess) {

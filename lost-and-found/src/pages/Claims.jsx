@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import api from '../utils/apiConfig';
+import { getPosts } from '../utils/mockPostApi';
 import '../assets/claims.css';
 
 const Claims = () => {
@@ -12,6 +13,7 @@ const Claims = () => {
   const [activeTab, setActiveTab] = useState('received'); // 'received' or 'submitted'
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [responseMessage, setResponseMessage] = useState('');
+  const [originalPost, setOriginalPost] = useState(null);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -27,8 +29,14 @@ const Claims = () => {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/api/claims/user/${currentUser.uid}`);
-      setClaims(response.data);
+      // For testing, we'll use the mock API
+      // In production, this would be:
+      // const response = await api.get(`/api/claims/user/${currentUser.uid}`);
+      // setClaims(response.data);
+      
+      // Using mock data from localStorage
+      const mockClaims = JSON.parse(localStorage.getItem('mockClaims') || '[]');
+      setClaims(mockClaims);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching claims:', error);
@@ -210,14 +218,38 @@ const Claims = () => {
               {selectedClaim.answers && selectedClaim.answers.length > 0 && (
                 <div className="verification-answers">
                   <h3>Verification Answers:</h3>
-                  <ul>
-                    {selectedClaim.answers.map((answer, index) => (
-                      <li key={index}>
-                        <strong>Q: {answer.question}</strong>
-                        <p>A: {answer.answer}</p>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="answer-comparison">
+                    <table className="comparison-table">
+                      <thead>
+                        <tr>
+                          <th>Question</th>
+                          <th>Correct Answer</th>
+                          <th>Claimant's Answer</th>
+                          <th>Match?</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedClaim.answers.map((answer, index) => {
+                          // Find the original question and answer from the post
+                          const originalQuestion = selectedClaim.post?.verification_questions?.[index] || {};
+                          const isMatch = originalQuestion.answer?.toLowerCase() === answer.answer?.toLowerCase();
+                          
+                          return (
+                            <tr key={index} className={isMatch ? 'match' : 'no-match'}>
+                              <td><strong>{answer.question}</strong></td>
+                              <td>{originalQuestion.answer || 'N/A'}</td>
+                              <td>{answer.answer}</td>
+                              <td>
+                                <span className={`match-indicator ${isMatch ? 'yes' : 'no'}`}>
+                                  {isMatch ? '✓' : '✗'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

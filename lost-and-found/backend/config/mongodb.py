@@ -24,3 +24,4 @@ users = db.users
 posts = db.posts
 notifications = db.notifications
 comments = db.comments
+claims = db.claims

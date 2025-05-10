@@ -3,6 +3,8 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from routes import user_routes, post_routes, message_routes, notification_routes, admin_routes
+from routes import claim_routes_file as claim_routes
+from app import claim_routes as app_claim_routes
 from config.db import engine, Base
 from models.user import User
 from models.post import Post
@@ -34,6 +36,8 @@ app.include_router(post_routes.router, prefix="/api")
 app.include_router(message_routes.router, prefix="/api")
 app.include_router(notification_routes.router, prefix="/api")
 app.include_router(admin_routes.router, prefix="/api")
+app.include_router(claim_routes.router, prefix="/api")
+app.include_router(app_claim_routes.router)
 
 @app.on_event("startup")
 async def startup_event():
