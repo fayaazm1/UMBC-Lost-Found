@@ -1,7 +1,68 @@
 // Import our API configuration
 import api from './apiConfig';
 import { getAuth } from 'firebase/auth';
-import { mockPosts, mockNotifications, mockUsers } from './mockData';
+
+// Inline mock data instead of importing from a separate file
+// This ensures the app will build even if mockData.js is missing
+const mockPosts = [
+  {
+    id: 1,
+    title: "Lost Laptop",
+    description: "I lost my MacBook Pro in the library. It has a UMBC sticker on it.",
+    report_type: "lost",
+    location: "Library",
+    date_reported: "2023-04-15T14:30:00Z",
+    status: "open",
+    user: {
+      id: 1,
+      username: "student123",
+      display_name: "John Student"
+    }
+  },
+  {
+    id: 2,
+    title: "Found Water Bottle",
+    description: "Found a blue Hydro Flask water bottle in ITE building.",
+    report_type: "found",
+    location: "ITE Building",
+    date_reported: "2023-04-16T10:15:00Z",
+    status: "open",
+    user: {
+      id: 2,
+      username: "helper456",
+      display_name: "Jane Helper"
+    }
+  }
+];
+
+const mockNotifications = [
+  {
+    id: 1,
+    user_id: 1,
+    message: 'Your lost item has a potential match!',
+    read: false,
+    created_at: '2025-05-07T11:00:00Z',
+    related_post_id: 1
+  },
+  {
+    id: 2,
+    user_id: 1,
+    message: 'Someone commented on your post',
+    read: true,
+    created_at: '2025-05-06T16:30:00Z',
+    related_post_id: 3
+  }
+];
+
+const mockUsers = [
+  {
+    id: 1,
+    email: 'fayaazm1@umbc.edu',
+    username: 'fayaazm1',
+    firebase_uid: '5PbKTaVLnmgGNl6Lxb92MhWsMOn1',
+    is_admin: false
+  }
+];
 
 // Flag to determine if we should use fallback data when backend fails
 const useFallbackWhenBackendFails = true;
