@@ -5,8 +5,11 @@ import axios from 'axios';
 const DEPLOYED_API_URL = 'https://umbc-lost-found-2-backend.onrender.com';
 const LOCAL_PROXY_URL = 'http://localhost:3001';
 
-// API Base URL - use the deployed backend directly
-export const API_BASE_URL = DEPLOYED_API_URL;
+// Choose the appropriate API URL based on environment
+const isLocalDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// API Base URL - use local server for development, direct backend for production
+export const API_BASE_URL = isLocalDevelopment ? LOCAL_PROXY_URL : DEPLOYED_API_URL;
 
 // Determine if we're in development mode based on URL
 const isDevelopment = window.location.hostname === 'localhost' || 

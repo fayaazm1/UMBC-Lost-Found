@@ -2,6 +2,8 @@ import os
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from middleware.cors_middleware import CustomCORSMiddleware
 from routes import user_routes, post_routes, message_routes, notification_routes, admin_routes
 from routes import claim_routes_file as claim_routes
 from app import claim_routes as app_claim_routes
@@ -15,22 +17,29 @@ app = FastAPI()
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-# Configure CORS
+# Configure CORS - ensure this is the first middleware added
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://umbc-lost-found-1.onrender.com",  # frontend domain
-        "http://localhost:5173",                   # local development
-        "http://127.0.0.1:5173",                   # alternative local development URL
-        "http://127.0.0.1:52220",                  # browser preview proxy
-        "*"                                        # allow all origins for testing
-    ],
+    allow_origins=["*"],                          # Allow all origins for simplicity
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],                         # Expose all headers
     max_age=86400                                # Cache preflight requests for 24 hours
 )
+
+# Add custom CORS middleware to ensure all responses have CORS headers
+app.add_middleware(CustomCORSMiddleware)
+
+# Add CORS preflight handler
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request, rest_of_path: str):
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With, Accept"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 # Include routers
 app.include_router(user_routes.router, prefix="/api")
