@@ -28,6 +28,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],                         # Expose all headers
+    max_age=86400                                # Cache preflight requests for 24 hours
 )
 
 # Include routers

@@ -1,18 +1,24 @@
-// Use environment variable with fallback
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://umbc-lost-found-2-backend.onrender.com';
+// Import our enhanced API configuration
+import apiWithFallback from './apiConfig';
+import { createPost, getPosts, getPost } from './mockPostApi';
+import { createClaim, getClaims, getClaim } from './mockClaimsApi';
+
+// Determine if we should use mock data
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// Only use mock data in local development, not in production
+const useMockData = isLocalhost && !window.location.hostname.includes('render.com');
 
 export async function getUserByEmail(email) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/users/email/${email}`);
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
-      throw new Error('Failed to fetch user');
-    }
-    return await response.json();
+    const response = await (useMockData ? 
+      getClaims().then(claims => claims.find(claim => claim.email === email)) : 
+      apiWithFallback.get(`/api/users/email/${email}`));
+    return response.data;
   } catch (error) {
     console.error('Error fetching user:', error);
+    if (error.response && error.response.status === 404) {
+      return null;
+    }
     return null;
   }
 }
@@ -20,22 +26,9 @@ export async function getUserByEmail(email) {
 export async function createDbUser(userData) {
   try{
     console.log('Creating database user:', userData);
-    const response = await fetch(`${API_BASE_URL}/api/users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('Failed to create user:', data);
-      throw new Error(data.detail || 'Failed to create user');
-    }
-
-    console.log('Successfully created user:', data);
-    return data;
+    const response = await apiWithFallback.post('/api/users', userData);
+    console.log('Successfully created user:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;

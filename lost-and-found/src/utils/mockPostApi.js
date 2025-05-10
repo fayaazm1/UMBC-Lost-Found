@@ -53,7 +53,22 @@ export const createPost = async (postData) => {
 };
 
 // Get all posts
-export const getPosts = async () => {
+export const getPosts = async (filter = null) => {
+  // Reload from localStorage to ensure we have the latest data
+  posts = JSON.parse(localStorage.getItem('mockPosts') || '[]');
+  
+  if (filter === 'user') {
+    // Get current user's posts
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      return [];
+    }
+    
+    return posts.filter(post => post.user_id === currentUser.uid);
+  }
+  
   return posts;
 };
 
