@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/apiConfig';
-import { createClaim } from '../utils/mockClaimsApi';
+import { createClaim } from '../utils/api';
 import '../assets/claim.css';
 
 const ClaimForm = ({ postId, onClose, onSuccess }) => {

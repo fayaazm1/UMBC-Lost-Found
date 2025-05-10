@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import postImage from "../assets/images/postHere_Image.jpg";
 import "../assets/post.css";
 import api from "../utils/apiConfig";
-import { createPost } from "../utils/mockPostApi";
+import { createPost } from "../utils/api";
 import { FaPlus, FaTrash } from 'react-icons/fa';
 
 const Post = () => {
